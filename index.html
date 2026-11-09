@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Millermatic 355 Setup Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* layout: fixed instruction rail on the left, 3D shop stage fills the rest; stage stacks on top on narrow screens */
+  --bg:#e9ecef; --panel:#f8f9fa; --raise:#eceff2; --line:#d4d9df; --ink:#1b1f24; --muted:#5d6772;
+  --accent:#f2a900; --accent-text:#9a6500; --accent-ink:#1d1600; --ok:#1e8a57; --bad:#c7392f;
+  --glass:rgba(248,249,250,.92);
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#app{display:grid;grid-template-columns:390px 1fr;height:100%}
+aside{display:flex;flex-direction:column;gap:0;background:var(--panel);border-right:1px solid var(--line);min-height:0;overflow-y:auto}
+.sec{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.brand h1{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.02em;margin:0;line-height:1;text-transform:uppercase}
+.brand h1 span{color:var(--accent-text)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{background:transparent;border:0;padding:6px 12px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+input[type=text]{background:var(--raise);border:1px solid var(--line);border-radius:6px;padding:6px 9px;flex:1;min-width:120px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat{background:var(--raise);border-radius:6px;padding:6px 8px}
+.stat b{display:block;font-family:var(--mono);font-size:16px;font-variant-numeric:tabular-nums}
+.stat small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.bar{height:6px;background:var(--raise);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+#card{gap:8px}
+#card .phase{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text)}
+#card h2{font-family:var(--display);font-weight:700;font-size:24px;line-height:1.1;margin:0;text-wrap:balance}
+#card .instr{margin:0;font-size:15px}
+#card details{background:var(--raise);border-radius:6px;padding:8px 10px;font-size:13.5px;color:#39424c}
+#card summary{cursor:pointer;font-weight:600;color:var(--ink)}
+#controls{display:flex;flex-direction:column;gap:10px}
+#controls:empty{display:none}
+.btn{background:var(--raise);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-weight:600}
+.btn{background:#fff}
+.btn:hover{border-color:#9aa4af}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.hold{user-select:none;-webkit-user-select:none;touch-action:none}
+.btn.hold.active{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.opts{display:grid;gap:6px}
+.opt{display:flex;gap:10px;align-items:center;text-align:left;background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.opt[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.opt svg{flex:none}
+.opt b{display:block}
+.opt small{color:var(--muted)}
+fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+legend{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.dial{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;background:var(--raise);border-radius:6px;padding:8px 10px}
+.dial .val{font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums;min-width:3ch;text-align:center}
+.dial .lab{font-weight:600}
+.scale{display:flex;gap:2px;height:14px;align-items:end}
+.scale i{flex:1;background:#c5ccd3;border-radius:1px}
+.scale i.on{background:var(--accent)}
+label.slide{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600}
+label.slide span{display:flex;justify-content:space-between}
+label.slide output{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--accent-text)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.meter{height:10px;background:var(--raise);border-radius:5px;position:relative;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#b8733a,#e0a06a);width:0}
+.meter-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--mono)}
+.lcdwrap{display:flex;flex-direction:column;gap:8px}
+.lcdwrap canvas{width:100%;border-radius:6px;border:6px solid #0a0b0d;background:#05070a}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.keys .btn{padding:7px 6px;font-size:13px}
+#feedback{padding:10px 18px;border-bottom:1px solid var(--line);font-size:14px;min-height:44px;display:flex;align-items:center;gap:8px}
+#feedback[data-kind=ok]{color:var(--ok)}
+#feedback[data-kind=bad]{color:var(--bad)}
+#feedback[data-kind=info]{color:var(--muted)}
+#steps{padding:10px 18px 4px;display:flex;flex-direction:column;gap:10px}
+#steps h3{margin:0;font-family:var(--display);font-size:16px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
+#steps ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+#steps li{display:grid;grid-template-columns:22px 1fr auto;gap:6px;font-size:13.5px;color:#8a939d;padding:2px 0}
+#steps li .n{font-family:var(--mono);font-size:11px;padding-top:2px}
+#steps li.done{color:#3d4650}
+#steps li.done .n{color:var(--ok)}
+#steps li.cur{color:var(--ink);font-weight:600}
+#steps li.cur .n{color:var(--accent-text)}
+#steps li .e{font-family:var(--mono);font-size:11px;color:var(--bad)}
+footer{padding:12px 18px 18px;font-size:12px;color:var(--muted)}
+footer a{color:var(--muted)}
+main{position:relative;min-width:0;min-height:0;overflow:hidden;background:#d5dade}
+#gl{display:block;width:100%;height:100%;touch-action:none}
+.toolbar{position:absolute;top:12px;right:12px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.toolbar .btn{background:var(--glass);backdrop-filter:blur(4px);font-size:13px;padding:6px 10px}
+#tip{position:absolute;pointer-events:none;background:var(--glass);box-shadow:0 2px 8px rgba(0,0,0,.15);border:1px solid var(--line);border-radius:5px;padding:4px 8px;font-size:12.5px;white-space:nowrap;transform:translate(12px,12px);display:none}
+#overlay{position:absolute;inset:0;pointer-events:none}
+.mk{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:3px solid var(--accent);box-shadow:0 0 0 4px rgba(242,169,0,.35),0 0 0 6px rgba(0,0,0,.25);animation:pulse 1.2s infinite ease-in-out}
+.mk::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--accent)}
+@keyframes pulse{50%{transform:scale(1.25);box-shadow:0 0 0 8px rgba(242,169,0,.08)}}
+.lbl{position:absolute;transform:translate(-50%,-130%);background:var(--glass);border:1px solid var(--line);border-radius:4px;font-size:11.5px;padding:2px 6px;white-space:nowrap;color:var(--ink)}
+#loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--mono);font-size:13px}
+.legend{position:absolute;left:12px;bottom:12px;font-size:12px;color:var(--muted);background:var(--glass);padding:6px 9px;border-radius:5px}
+#modal{position:fixed;inset:0;background:rgba(20,24,28,.45);display:none;place-items:center;z-index:10;padding:16px}
+#modal .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:22px;display:flex;flex-direction:column;gap:12px}
+#modal h2{font-family:var(--display);font-size:30px;margin:0;text-transform:uppercase}
+#modal table{width:100%;border-collapse:collapse;font-size:13px}
+#modal td,#modal th{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+#modal td.num{font-family:var(--mono);text-align:right}
+.big{display:flex;gap:10px;flex-wrap:wrap}
+.big div{background:var(--raise);border-radius:8px;padding:10px 14px;flex:1;min-width:100px}
+.big b{display:block;font-family:var(--display);font-size:32px;line-height:1}
+.big small{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+@media (max-width:860px){
+  html,body{height:auto}
+  #app{grid-template-columns:1fr;height:auto}
+  main{order:-1;height:56vh;position:sticky;top:0;z-index:3;border-bottom:1px solid var(--line)}
+  aside{overflow:visible;border-right:0}
+}
+@media (prefers-reduced-motion:reduce){.mk{animation:none}.bar i{transition:none}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<div id="app">
+  <aside>
+    <div class="sec">
+      <div class="brand"><h1>MM<span>355</span> Setup Trainer</h1><span class="eyebrow">GMAW · AVC Welding</span></div>
+      <div class="row">
+        <div class="seg" role="group" aria-label="Mode">
+          <button id="mGuided" aria-pressed="true">Guided</button>
+          <button id="mTest" aria-pressed="false">Test</button>
+        </div>
+        <input type="text" id="student" placeholder="Student name" aria-label="Student name">
+      </div>
+      <div class="bar" aria-hidden="true"><i id="progbar"></i></div>
+      <div class="stats">
+        <div class="stat"><small>Step</small><b id="stStep">1/30</b></div>
+        <div class="stat"><small>Errors</small><b id="stErr">0</b></div>
+        <div class="stat"><small>Hints</small><b id="stHint">0</b></div>
+        <div class="stat"><small>Time</small><b id="stTime">0:00</b></div>
+      </div>
+    </div>
+    <div class="sec" id="card" aria-live="polite">
+      <div class="phase" id="cPhase"></div>
+      <h2 id="cTitle"></h2>
+      <p class="instr" id="cInstr"></p>
+      <div id="controls"></div>
+      <details id="cWhy"><summary>Why this matters</summary><div id="cWhyText"></div></details>
+      <div class="row">
+        <button class="btn" id="hintBtn">Show hint</button>
+        <button class="btn" id="focusBtn">Focus view</button>
+      </div>
+    </div>
+    <div id="feedback" data-kind="info" role="status">Drag to orbit, scroll to zoom, right-drag to pan. Click parts on the machine.</div>
+    <nav id="steps" aria-label="Setup sequence"></nav>
+    <footer>Procedure follows the Millermatic 355 Owner's Manual, OM-288360 (sections 5-13 to 5-19, 6-3 to 6-5, 7-2, 9-2). Panel readouts are simulated for training. Always follow your shop's WPS and the manual for your serial number. <a href="https://www.millerwelds.com/en-US/equipment/welders/mig-gmaw/millermatic/millermatic-355-m90590/millermatic-355-907808">Miller product page</a></footer>
+  </aside>
+  <main id="stage">
+    <canvas id="gl" aria-label="3D model of the Millermatic 355 welding machine"></canvas>
+    <div id="overlay"></div>
+    <div id="tip"></div>
+    <div class="toolbar">
+      <button class="btn" id="labelsBtn" aria-pressed="false">Part labels</button>
+      <button class="btn" id="camBtn" aria-pressed="true">Auto camera</button>
+      <button class="btn" id="overviewBtn">Overview</button>
+      <button class="btn" id="restartBtn">Restart</button>
+    </div>
+    <div class="legend">Orbit: drag · Zoom: scroll/pinch · Pan: right-drag</div>
+    <div id="loading">Loading 3D shop…</div>
+  </main>
+</div>
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"><div class="box" id="modalBox"></div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+const $ = id => document.getElementById(id);
+const V = (x,y,z) => new THREE.Vector3(x,y,z);
+const INCH = 0.08; // scene units per inch at the gun tip (scaled up for visibility)
+
+/* ---------------- renderer / scene ---------------- */
+const stage = $('stage'), canvas = $('gl');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.3;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xd5dade);
+scene.fog = new THREE.Fog(0xd5dade, 14, 34);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.02, 80);
+camera.position.set(3.4, 3.0, 5.4);
+const controls = new OrbitControls(camera, canvas);
+controls.target.set(0, 1.5, 0.9); controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 0.2; controls.maxDistance = 14;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8d8576, 2.1));
+const sun = new THREE.DirectionalLight(0xffffff, 2.8);
+sun.position.set(4, 7.5, 5); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, {left:-4, right:4, top:4, bottom:-4, near:1, far:22});
+sun.shadow.bias = -0.0005; scene.add(sun);
+const fill = new THREE.DirectionalLight(0xe6eeff, 1.4); fill.position.set(-5, 3, -4); scene.add(fill);
+const front = new THREE.DirectionalLight(0xffffff, 1.2); front.position.set(1, 3, 8); scene.add(front);
+const bay = new THREE.PointLight(0xfff6e8, 5, 3.6, 1.0); bay.position.set(0.5, 2.3, 0.25); scene.add(bay);
+
+function mat(color, rough = .5, metal = .2, extra = {}) { return new THREE.MeshStandardMaterial({color, roughness:rough, metalness:metal, ...extra}); }
+const M = {
+  blue: mat(0x1d5fb4,.42,.35), bezel: mat(0x1b1e22,.62,.1), dark: mat(0x3b4148,.65,.25), interior: mat(0x9aa1aa,.7,.2),
+  alum: mat(0xbcc1c8,.3,.85), steel: mat(0x80878f,.45,.7), black: mat(0x141619,.75,.05), rubber: mat(0x0f1012,.92,0),
+  brass: mat(0xc9a14a,.35,.9), copper: mat(0xbf703c,.33,.85), red: mat(0xc0392b,.5,.1), wire: mat(0xd88d52,.28,.9),
+  table: mat(0x7d858e,.5,.6), wood: mat(0xa07f55,.85,0), gasCyl: mat(0x7c8893,.45,.4), flange: mat(0x25282c,.6,.05),
+  glass: new THREE.MeshStandardMaterial({color:0xd6ebff, transparent:true, opacity:.28, roughness:.1, metalness:0, depthWrite:false}),
+  green: mat(0x2f9e5b,.5,.1)
+};
+function shade(m){ m.castShadow = true; m.receiveShadow = true; return m; }
+function add(geo, m, x, y, z, parent = scene){ const o = shade(new THREE.Mesh(geo, m)); o.position.set(x, y, z); parent.add(o); return o; }
+const box = (w,h,d,m,x,y,z,p) => add(new THREE.BoxGeometry(w,h,d), m, x,y,z,p);
+const rbox = (w,h,d,r,m,x,y,z,p) => add(new RoundedBoxGeometry(w,h,d,3,r), m, x,y,z,p);
+function cyl(r, len, m, axis, x, y, z, p, seg = 28, r2){
+  const g = new THREE.CylinderGeometry(r, r2 ?? r, len, seg);
+  if (axis === 'x') g.rotateZ(Math.PI/2); else if (axis === 'z') g.rotateX(Math.PI/2);
+  return add(g, m, x, y, z, p);
+}
+function tube(pts, r, m, seg = 64, parent = scene){
+  const o = shade(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'centripetal'), seg, r, 10), m));
+  parent.add(o); return o;
+}
+function setTube(o, pts, r, seg = 64){ o.geometry.dispose(); o.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'centripetal'), seg, r, 10); }
+function sprite(text, {fg = '#fff', bg = null, scale = .07, font = 'bold 84px IBM Plex Sans, sans-serif'} = {}){
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, depthTest:true}));
+  s.scale.set(scale, scale, scale);
+  s.userData.draw = (t) => { const g = c.getContext('2d'); g.clearRect(0,0,128,128);
+    if (bg){ g.fillStyle = bg; g.beginPath(); g.roundRect(8,8,112,112,22); g.fill(); }
+    g.fillStyle = fg; g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, 64, 68); tex.needsUpdate = true; };
+  s.userData.draw(text); scene.add(s); return s;
+}
+const ghostMat = () => { const m = new THREE.MeshBasicMaterial({color:0x8a939d, transparent:true, opacity:.22, depthWrite:false}); m.userData.ghost = true; return m; };
+
+/* ---------------- shop ---------------- */
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), mat(0xa4abb2, .95, 0));
+floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+const grid = new THREE.GridHelper(40, 80, 0x8b929a, 0x959ca4); grid.position.y = .002; scene.add(grid);
+
+// welding bench in front of the machine
+box(1.9, .05, .8, M.table, -.35, .925, 2.6);
+for (const [x,z] of [[-1.24,2.26],[.54,2.26],[-1.24,2.94],[.54,2.94]]) box(.05, .9, .05, M.steel, x, .45, z);
+
+/* ---------------- running gear ---------------- */
+box(1.32, .06, 2.56, M.black, 0, .86, -.1);
+box(1.2, .05, 2.3, M.dark, 0, .32, -.05);
+for (const [x,z] of [[-.58,-1.05],[.58,-1.05],[-.58,1.05],[.58,1.05]]) cyl(.025, .54, M.black, 'y', x, .59, z);
+for (const s of [-1,1]){
+  cyl(.3, .1, M.rubber, 'x', s*.74, .3, -.95, scene, 36);
+  cyl(.15, .12, M.steel, 'x', s*.74, .3, -.95);
+  cyl(.1, .06, M.rubber, 'x', s*.5, .1, 1.0);
+  box(.05, .16, .08, M.black, s*.5, .2, 1.0);
+}
+cyl(.03, 1.6, M.steel, 'x', 0, .3, -.95);
+box(.62, .05, .6, M.black, 0, .09, -1.65);
+box(.62, .05, .5, M.black, 0, .3, -1.32);
+for (const s of [-1,1]) cyl(.025, 2.2, M.black, 'y', s*.3, 1.2, -1.9);
+box(.64, .04, .04, M.black, 0, 2.3, -1.9);
+for (const s of [-1,1]) box(.04, .04, .06, M.steel, s*.27, 2.1, -1.88);
+
+/* ---------------- cabinet ---------------- */
+rbox(.7, 1.6, 2.36, .03, M.blue, -.25, 1.7, 0);
+box(.01, 1.52, 2.32, M.interior, .106, 1.7, 0);
+box(.5, .04, 2.36, M.blue, .35, 2.48, 0);
+box(.5, .04, 2.36, M.interior, .35, .92, 0);
+rbox(1.26, 1.66, .08, .02, M.bezel, 0, 1.7, 1.22);
+box(1.26, 1.66, .06, M.dark, 0, 1.7, -1.22);
+for (let i = 0; i < 6; i++) box(1.0, .022, .02, M.black, 0, .98 + i*.055, 1.265);
+for (let i = 0; i < 8; i++) box(.9, .02, .02, M.black, 0, 1.0 + i*.12, -1.255);
+// lift handle on top
+for (const z of [-.8,.8]) box(.06, .1, .06, M.black, -.25, 2.55, z);
+box(.06, .05, 1.66, M.black, -.25, 2.62, 0);
+// model plate on front
+{ const c = document.createElement('canvas'); c.width = 256; c.height = 64; const g = c.getContext('2d');
+  g.fillStyle = '#1b1e22'; g.fillRect(0,0,256,64); g.fillStyle = '#e8eaed'; g.font = 'bold 40px Barlow Condensed, Arial Narrow, sans-serif'; g.textBaseline = 'middle'; g.fillText('MM 355', 12, 34);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(.32, .08), new THREE.MeshBasicMaterial({map:t})); p.position.set(.36, 2.42, 1.262); scene.add(p); }
+
+// front panel: LCD, buttons, knobs
+const lcdCanvas = document.createElement('canvas'); lcdCanvas.width = 512; lcdCanvas.height = 320;
+const lcdTex = new THREE.CanvasTexture(lcdCanvas); lcdTex.colorSpace = THREE.SRGBColorSpace;
+const lcd = new THREE.Mesh(new THREE.PlaneGeometry(.58, .3625), new THREE.MeshBasicMaterial({map:lcdTex, toneMapped:false}));
+lcd.position.set(-.12, 2.1, 1.27); scene.add(lcd);
+box(.64, .42, .01, M.black, -.12, 2.1, 1.259);
+const btnAuto = box(.12, .045, .02, mat(0x30353b,.5,.1,{emissive:0x000000}), -.28, 2.35, 1.265);
+const btnPulse = box(.12, .045, .02, mat(0x30353b,.5,.1,{emissive:0x000000}), .04, 2.35, 1.265);
+for (let i = 0; i < 4; i++) box(.1, .03, .02, M.dark, -.34 + i*.145, 1.885, 1.265);
+const knobL = cyl(.055, .05, M.black, 'z', -.3, 1.74, 1.285, scene, 24);
+const knobR = cyl(.055, .05, M.black, 'z', .06, 1.74, 1.285, scene, 24);
+for (const k of [knobL, knobR]) box(.01, .04, .01, M.alum, 0, .03, .026, k);
+// power switch
+const pwrBase = cyl(.06, .02, M.dark, 'z', -.42, 1.13, 1.265);
+const pwrLever = new THREE.Group(); pwrLever.position.set(-.42, 1.13, 1.28); scene.add(pwrLever);
+box(.035, .12, .03, M.black, 0, .03, 0, pwrLever);
+const sOn = sprite('I', {fg:'#e8eaed', scale:.05}); sOn.position.set(-.34, 1.2, 1.27);
+const sOff = sprite('O', {fg:'#e8eaed', scale:.05}); sOff.position.set(-.5, 1.2, 1.27);
+// gun port
+add(new THREE.TorusGeometry(.05, .012, 10, 28), M.black, .3, 1.52, 1.265);
+cyl(.045, .01, mat(0x050506,.9,0), 'z', .3, 1.52, 1.262);
+// work cable grommet + outside work cable + clamp
+add(new THREE.TorusGeometry(.03, .01, 8, 20), M.black, .45, 1.0, 1.265);
+tube([V(.45,1.0,1.24), V(.45,1.0,1.4), V(.6,.55,1.65), V(.75,.03,1.9), V(1.0,.03,2.1)], .018, M.black, 40);
+box(.14, .04, .06, M.copper, 1.07, .04, 2.13); box(.12, .03, .05, M.steel, 1.06, .07, 2.13);
+// gas fitting on rear
+const gasFitting = cyl(.025, .07, M.brass, 'z', -.3, 2.25, -1.28);
+
+/* ---------------- side door ---------------- */
+const doorPivot = new THREE.Group(); doorPivot.position.set(.6, 2.49, 0); scene.add(doorPivot);
+const door = rbox(.04, 1.58, 2.34, .015, M.blue, 0, -.79, 0, doorPivot); door.castShadow = false;
+const doorHandle = box(.03, .05, .2, M.black, .03, -1.5, 0, doorPivot);
+box(.012, .04, 2.2, M.steel, -.01, -.005, 0, doorPivot);
+const doorInner = new THREE.Mesh(new THREE.PlaneGeometry(1.0, .7), new THREE.MeshStandardMaterial({color:0xd9dde2, roughness:.8}));
+doorInner.rotation.y = -Math.PI/2; doorInner.position.set(-.025, -.7, -.3); doorPivot.add(doorInner);
+{ const c = document.createElement('canvas'); c.width = 512; c.height = 360; const g = c.getContext('2d');
+  g.fillStyle = '#e4e7ea'; g.fillRect(0,0,512,360); g.fillStyle = '#1b1e22'; g.font = 'bold 34px Barlow Condensed, sans-serif'; g.fillText('WIRE THREADING', 22, 50);
+  g.font = '22px IBM Plex Sans, sans-serif';
+  ['1  Power OFF before opening','2  Open pressure assemblies','3  Hold wire tight, cut end','4  Push wire through guides','5  Close, set pressure to 2','6  Remove nozzle + tip','7  Power ON, feed wire','8  Reinstall tip + nozzle'].forEach((l,i)=>g.fillText(l, 26, 95 + i*32));
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; doorInner.material.map = t; }
+
+/* ---------------- spool hub ---------------- */
+cyl(.03, .42, M.steel, 'x', .32, 1.95, -.55);
+cyl(.07, .03, M.dark, 'x', .125, 1.95, -.55);
+const hubKnob = cyl(.06, .05, M.black, 'x', .55, 1.95, -.55);
+const hubPin = cyl(.008, .04, M.steel, 'x', .14, 2.03, -.55);
+
+/* ---------------- drive assembly ---------------- */
+box(.05, .5, 1.0, M.dark, .14, 1.52, .45);
+cyl(.06, .14, M.dark, 'x', .2, 1.445, .25); cyl(.06, .14, M.dark, 'x', .2, 1.445, .6);
+const ZP = {rear:.25, front:.6};
+function rollMesh(parent, x, y, z, ghost = false){
+  const g = new THREE.Group(); g.position.set(x, y, z); parent.add(g);
+  const m = ghost ? ghostMat() : M.alum;
+  cyl(.07, .06, m, 'x', 0, 0, 0, g, 32);
+  if (!ghost){
+    const groove = new THREE.Mesh(new THREE.TorusGeometry(.07, .007, 6, 32), M.dark); groove.rotation.y = Math.PI/2; g.add(groove);
+    cyl(.025, .02, M.black, 'x', .04, 0, 0, g, 6);
+    box(.012, .1, .012, M.dark, .031, 0, 0, g);
+  }
+  return g;
+}
+// lower rolls + stub carriers
+const rolls = {}, rollGhosts = {};
+for (const [k,z] of [['LR',ZP.rear],['LF',ZP.front]]){
+  cyl(.022, .12, M.steel, 'x', .22, 1.445, z);
+  rolls[k] = rollMesh(scene, .3, 1.445, z); rolls[k].visible = false;
+  rollGhosts[k] = rollMesh(scene, .3, 1.445, z, true); rollGhosts[k].visible = false;
+}
+// pressure assemblies: arm (upper roll) + knob post
+const PA = {};
+for (const side of ['rear','front']){
+  const z = ZP[side];
+  const arm = new THREE.Group(); arm.position.set(.3, 1.595, z - .16); scene.add(arm);
+  box(.1, .035, .36, M.dark, 0, .085, .16, arm);
+  box(.1, .1, .04, M.dark, 0, .04, 0, arm);
+  cyl(.022, .1, M.steel, 'x', -.06, 0, .16, arm);
+  const key = side === 'rear' ? 'UR' : 'UF';
+  rolls[key] = rollMesh(arm, 0, 0, .16); rolls[key].visible = false;
+  rollGhosts[key] = rollMesh(arm, 0, 0, .16, true); rollGhosts[key].visible = false;
+  const post = new THREE.Group(); post.position.set(.3, 1.4, z + .12); scene.add(post);
+  cyl(.012, .52, M.steel, 'y', 0, .26, 0, post, 12);
+  const spring = add(new THREE.CylinderGeometry(.022, .022, .1, 14, 1, true), M.alum, 0, .36, 0, post);
+  const knob = new THREE.Group(); post.add(knob);
+  cyl(.045, .07, M.black, 'y', 0, 0, 0, knob, 18);
+  for (let i = 0; i < 9; i++){ const r = box(.008, .06, .012, M.black, Math.cos(i/9*Math.PI*2)*.046, 0, Math.sin(i/9*Math.PI*2)*.046, knob); r.rotation.y = -i/9*Math.PI*2; }
+  const ind = sprite('3.5', {fg:'#1d1600', bg:'#f2a900', scale:.06, font:'bold 62px IBM Plex Mono, monospace'});
+  PA[side] = {arm, post, knob, spring, ind, z};
+}
+// wire guides
+const guides = {
+  inlet: cyl(.02, .12, M.alum, 'z', .3, 1.52, .06),
+  mid: cyl(.017, .1, M.alum, 'z', .3, 1.52, .425)
+};
+const guideGhosts = { inlet: cyl(.02, .12, ghostMat(), 'z', .3, 1.52, .06), mid: cyl(.017, .1, ghostMat(), 'z', .3, 1.52, .425) };
+add(new THREE.TorusGeometry(.024, .006, 6, 18), M.alum, 0, 0, -.06, guides.inlet);
+for (const k in guides){ guides[k].visible = false; guideGhosts[k].visible = false; }
+// gun block + gun securing knob
+box(.12, .14, .23, M.alum, .3, 1.52, .835);
+box(.05, .12, .2, M.dark, .2, 1.52, .835);
+const gunKnob = new THREE.Group(); gunKnob.position.set(.3, 1.6, .86); scene.add(gunKnob);
+cyl(.01, .06, M.steel, 'y', 0, .03, 0, gunKnob, 10);
+cyl(.032, .04, M.black, 'y', 0, .07, 0, gunKnob, 16);
+box(.12, .025, .025, M.black, 0, .1, 0, gunKnob);
+// trigger receptacle
+const trigRecept = cyl(.035, .03, M.black, 'x', .125, 1.32, 1.0);
+for (const [dy,dz] of [[.012,.012],[-.012,.012],[.012,-.012],[-.012,-.012]]) cyl(.004, .02, M.brass, 'x', .145, 1.32+dy, 1.0+dz, scene, 6);
+// output receptacles (polarity)
+const termPos = cyl(.04, .04, M.red, 'x', .13, 1.08, .3);
+const termNeg = cyl(.04, .04, M.black, 'x', .13, 1.08, .62);
+cyl(.016, .045, M.brass, 'x', .14, 1.08, .3, scene, 12); cyl(.016, .045, M.brass, 'x', .14, 1.08, .62, scene, 12);
+const sPos = sprite('+', {fg:'#ff6b5e', scale:.08}); sPos.position.set(.14, 1.17, .3);
+const sNeg = sprite('−', {fg:'#e8eaed', scale:.08}); sNeg.position.set(.14, 1.17, .62);
+// leads
+function plug(color){ const g = new THREE.Group(); scene.add(g); cyl(.03, .09, color, 'x', .045, 0, 0, g, 16); cyl(.014, .03, M.brass, 'x', -.012, 0, 0, g, 10); return g; }
+const leadPlug = plug(M.black), workPlug = plug(M.black);
+const leadCable = tube([V(.3,1.45,.8), V(.3,1.2,.7), V(.36,.99,.5)], .016, M.black);
+const workCable = tube([V(.45,1.0,1.2), V(.45,.97,1.05), V(.45,.97,.9)], .018, M.black);
+const LEAD = {loose:V(.36,.985,.46), on:V(.175,1.08,.3)}, WORK = {loose:V(.45,.985,.88), on:V(.175,1.08,.62)};
+function placeLead(t){ const p = LEAD.loose.clone().lerp(LEAD.on, t); leadPlug.position.copy(p); setTube(leadCable, [V(.3,1.45,.8), V(.32,1.25,.72).lerp(V(.25,1.25,.5), t), p.clone().add(V(.09,0,0))], .016, 24); }
+function placeWork(t){ const p = WORK.loose.clone().lerp(WORK.on, t); workPlug.position.copy(p); setTube(workCable, [V(.45,1.0,1.2), V(.45,.98,1.02).lerp(V(.35,1.0,.95), t), p.clone().add(V(.09,0,0))], .018, 24); }
+
+/* ---------------- gun ---------------- */
+const CABLE_IN  = [V(.3,1.52,.82),V(.3,1.52,1.05),V(.3,1.52,1.3),V(.32,1.42,1.65),V(.28,1.12,2.02),V(.12,1.0,2.42),V(-.15,1.0,2.6),V(-.38,1.03,2.62)];
+const CABLE_MID = [V(.3,1.52,1.45),V(.3,1.5,1.7),V(.31,1.4,1.95),V(.33,1.22,2.15),V(.3,1.06,2.3),V(.15,1.0,2.48),V(-.15,1.0,2.6),V(-.38,1.03,2.62)];
+const CABLE_OUT = [V(.42,1.0,2.25),V(.4,1.0,2.33),V(.37,1.0,2.4),V(.34,1.0,2.46),V(.28,1.0,2.52),V(.12,1.0,2.58),V(-.15,1.0,2.6),V(-.38,1.03,2.62)];
+const gunCable = tube(CABLE_OUT, .03, M.black, 90);
+const connector = new THREE.Group(); scene.add(connector);
+cyl(.04, .06, M.black, 'z', 0, 0, .03, connector, 18);
+cyl(.022, .1, M.brass, 'z', 0, 0, -.05, connector, 16);
+let gunT = 0;
+function cablePts(t){ return CABLE_IN.map((p,i) => t < .5 ? CABLE_OUT[i].clone().lerp(CABLE_MID[i], t*2) : CABLE_MID[i].clone().lerp(p, (t-.5)*2)); }
+function updateGun(){ const pts = cablePts(gunT); setTube(gunCable, pts, .03, 90); connector.position.copy(pts[0]); connector.lookAt(pts[1]); }
+// handle, neck, consumables (gun lies on bench, nozzle pointing -x)
+const gun = new THREE.Group(); scene.add(gun);
+cyl(.04, .26, M.black, 'x', -.5, 1.03, 2.62, gun, 20);
+const gunTrigger = new THREE.Group(); scene.add(gunTrigger);
+box(.07, .03, .035, M.red, -.47, 1.025, 2.672, gunTrigger);
+box(.02, .02, .03, M.black, -.47, 1.025, 2.655, gunTrigger);
+tube([V(-.62,1.03,2.62), V(-.68,1.03,2.62), V(-.74,1.012,2.62), V(-.795,.99,2.62)], .017, M.steel, 20, gun);
+cyl(.016, .03, M.brass, 'x', -.805, .99, 2.62, gun, 16);
+const nozzle = new THREE.Group(); scene.add(nozzle);
+cyl(.026, .125, M.copper, 'x', 0, 0, 0, nozzle, 28, .03);
+const tipObj = new THREE.Group(); scene.add(tipObj);
+cyl(.009, .1, M.copper, 'x', 0, 0, 0, tipObj, 14, .011);
+const NOZ = {on:V(-.8625,.99,2.62), off:V(-.1,.982,2.85)}, TIP = {on:V(-.865,.99,2.62), off:V(-.3,.962,2.88)};
+nozzle.position.copy(NOZ.on); tipObj.position.copy(TIP.on);
+const trigCable = tube([V(.3,1.46,1.15), V(.35,1.25,1.1), V(.38,1.12,1.05)], .008, M.black, 20);
+const trigPlug = new THREE.Group(); scene.add(trigPlug);
+cyl(.028, .06, M.black, 'x', .03, 0, 0, trigPlug, 14);
+const TRIG = {loose:V(.38,1.1,1.05), on:V(.17,1.32,1.0)};
+function placeTrig(t){ const p = TRIG.loose.clone().lerp(TRIG.on, t); trigPlug.position.copy(p); setTube(trigCable, [V(.3,1.46,1.15), V(.33,1.3,1.1).lerp(V(.28,1.36,1.05), t), p.clone().add(V(.06,0,0))], .008, 20); }
+// wood block for feed check
+const wood = box(.07, .14, .2, M.wood, -1.0, 1.02, 2.62); wood.visible = false;
+
+/* ---------------- gas cylinder ---------------- */
+cyl(.2, 2.64, M.gasCyl, 'y', 0, 1.43, -1.65, scene, 32);
+{ const d = add(new THREE.SphereGeometry(.2, 32, 16, 0, Math.PI*2, 0, Math.PI/2), M.gasCyl, 0, 2.75, -1.65); d.scale.y = .5; }
+cyl(.201, .12, M.green, 'y', 0, 2.55, -1.65, scene, 32);
+const valve = new THREE.Group(); valve.position.set(0, 2.93, -1.65); scene.add(valve);
+cyl(.035, .12, M.brass, 'y', 0, 0, 0, valve, 16); cyl(.05, .02, M.black, 'y', 0, .07, 0, valve, 16); cyl(.014, .07, M.brass, 'z', 0, -.01, .05, valve, 10);
+const cap = cyl(.13, .24, M.steel, 'y', 0, 2.97, -1.65, scene, 24, .1);
+const chain = add(new THREE.TorusGeometry(.215, .009, 6, 48), M.steel, 0, 2.1, -1.65); chain.rotation.x = Math.PI/2; chain.visible = false;
+const chainGhost = add(new THREE.TorusGeometry(.215, .014, 6, 48), ghostMat(), 0, 2.1, -1.65); chainGhost.rotation.x = Math.PI/2; chainGhost.visible = false;
+const chainLoose = tube([V(-.27,2.1,-1.88), V(-.3,1.8,-1.85), V(-.28,1.55,-1.86)], .008, M.steel, 12);
+function regulatorMesh(ghost){
+  const g = new THREE.Group(); g.position.set(0, 2.94, -1.56); scene.add(g);
+  const m1 = ghost ? ghostMat() : M.brass, m2 = ghost ? ghostMat() : M.glass;
+  cyl(.04, .1, m1, 'z', 0, 0, 0, g, 16);
+  cyl(.03, .26, m2, 'y', 0, .2, .02, g, 16);
+  cyl(.035, .03, m1, 'y', 0, .07, .02, g, 16); cyl(.035, .03, m1, 'y', 0, .33, .02, g, 16);
+  if (!ghost){ const ball = add(new THREE.SphereGeometry(.014, 12, 8), M.green, 0, .09, .02, g); g.userData.ball = ball;
+    const kn = new THREE.Group(); kn.position.set(0, .37, .02); g.add(kn);
+    cyl(.034, .045, M.black, 'y', 0, 0, 0, kn, 18);
+    for (let i = 0; i < 10; i++){ const r = box(.008, .04, .01, M.black, Math.cos(i/10*Math.PI*2)*.035, 0, Math.sin(i/10*Math.PI*2)*.035, kn); r.rotation.y = -i/10*Math.PI*2; }
+    box(.05, .008, .008, M.alum, 0, .024, 0, kn);
+    g.userData.knob = kn;
+    const c = document.createElement('canvas'); c.width = 128; c.height = 320; const x = c.getContext('2d');
+    x.fillStyle = '#f4f5f2'; x.fillRect(0,0,128,320); x.fillStyle = '#1b1e22'; x.font = 'bold 22px IBM Plex Sans, sans-serif'; x.textBaseline = 'middle';
+    for (let v = 0; v <= 60; v += 5){ const y = 290 - v/60*250; x.fillRect(0, y-1, v % 10 ? 18 : 30, 2); if (v % 10 === 0) x.fillText(v, 40, y); }
+    x.font = 'bold 18px IBM Plex Sans, sans-serif'; x.fillText('CFH', 74, 22);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const plate = new THREE.Mesh(new THREE.PlaneGeometry(.1, .25), new THREE.MeshStandardMaterial({map:t, roughness:.8}));
+    plate.rotation.y = Math.PI; plate.position.set(-.035, .2, .058); g.add(plate); }
+  return g;
+}
+const regulator = regulatorMesh(false); regulator.visible = false;
+const regGhost = regulatorMesh(true); regGhost.visible = false;
+const flowRead = sprite('0', {fg:'#1d1600', bg:'#f2a900', scale:.085, font:'bold 46px IBM Plex Mono, monospace'}); flowRead.visible = false;
+const hose = tube([V(0,2.94,-1.49), V(0,2.9,-1.38), V(-.15,2.55,-1.32), V(-.3,2.25,-1.33)], .012, M.green, 30); hose.visible = false;
+
+/* ---------------- wire spool ---------------- */
+const spool = new THREE.Group(); scene.add(spool);
+cyl(.475, .015, M.flange, 'x', -.16, 0, 0, spool, 48); cyl(.475, .015, M.flange, 'x', .16, 0, 0, spool, 48);
+cyl(.43, .3, M.wire, 'x', 0, 0, 0, spool, 48);
+cyl(.06, .32, M.flange, 'x', 0, 0, 0, spool, 16);
+{ const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d');
+  g.fillStyle = '#f1f1ee'; g.fillRect(0,0,256,128); g.fillStyle = '#1b1e22'; g.font = 'bold 34px Barlow Condensed, sans-serif'; g.fillText('ER70S-6', 18, 48);
+  g.font = '24px IBM Plex Sans, sans-serif'; g.fillText('.035 in · 33 lb', 18, 90);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(.26, .13), new THREE.MeshBasicMaterial({map:t})); p.rotation.y = Math.PI/2; p.position.set(.169, .2, 0); spool.add(p); }
+const SPOOL = {floor:V(1.55,.477,-1.0), hub:V(.32,1.95,-.55)};
+spool.position.copy(SPOOL.floor);
+const wireEnd = add(new THREE.SphereGeometry(.018, 12, 8), M.wire, 0, -.43, .02, spool); wireEnd.visible = true;
+const wireTail = tube([V(0,-.43,.0), V(.02,-.44,.06), V(.03,-.42,.11)], .006, M.wire, 10, spool);
+
+/* ---------------- welding wire path ---------------- */
+const WIRE_PTS = [V(.3,1.52,-.55),V(.3,1.52,-.3),V(.3,1.52,0),V(.3,1.52,.25),V(.3,1.52,.425),V(.3,1.52,.6),V(.3,1.52,.72),
+  ...CABLE_IN, V(-.5,1.03,2.62),V(-.62,1.03,2.62),V(-.68,1.03,2.62),V(-.74,1.012,2.62),V(-.8,.99,2.62),V(-.86,.99,2.62),V(-.915,.99,2.62),V(-1.0,.99,2.62),V(-1.3,.99,2.62)];
+const wireCurve = new THREE.CatmullRomCurve3(WIRE_PTS, false, 'centripetal');
+const WSEG = 1400, LENS = wireCurve.getLengths(4000), WTOTAL = LENS[4000];
+const lenAt = i => LENS[Math.round(i/(WIRE_PTS.length-1)*4000)];
+const iDiff = WIRE_PTS.length - 5, iTip = WIRE_PTS.length - 3;
+const L = { block: lenAt(6) + .02, diff: lenAt(iDiff), tip: lenAt(iTip) };
+const wireMesh = new THREE.Mesh(new THREE.TubeGeometry(wireCurve, WSEG, .006, 6, false), M.wire); scene.add(wireMesh);
+function drawWire(){ const f = Math.max(0, Math.min(1, S.wireLen / WTOTAL)); wireMesh.geometry.setDrawRange(0, Math.floor(f*WSEG)*6*6); wireMesh.visible = S.wireLen > 0; }
+// buckled wire coil for the feed check
+const coilPts = []; for (let i = 0; i <= 200; i++){ const a = i/200*Math.PI*2*5; coilPts.push(V(-.918 - i/200*.042, .99 + Math.sin(a)*.022, 2.62 + (1-Math.cos(a))*.022 - .022)); }
+const coil = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(coilPts), 400, .005, 6), M.wire); scene.add(coil); coil.visible = false;
+
+/* ---------------- state ---------------- */
+const MATS = ['Steel · 75/25 Ar/CO₂ (C25)','Steel · 90/10 Ar/CO₂','Steel · 100% CO₂','Stainless · Tri-Mix','Aluminum · 100% Ar'];
+const DIAS = ['.023 in','.030 in','.035 in','.045 in'], IPMA = [3.5, 2, 1.6, 1];
+const THKS = [['22 ga',.030],['18 ga',.048],['16 ga',.060],['14 ga',.075],['1/8 in',.125],['3/16 in',.1875],['1/4 in',.25],['3/8 in',.375],['1/2 in',.5]];
+let S;
+function freshState(){ return {
+  power:true, door:false, gunLoose:false, gunIn:false, trig:false, lead:false, work:false,
+  chain:false, cap:true, reg:false, hose:false,
+  pa:{front:{open:false, p:3.5, a:0}, rear:{open:false, p:3.5, a:0}},
+  guide:{inlet:false, mid:false}, rolls:{LR:false, LF:false, UR:false, UF:false}, rollChoice:null, groove:null,
+  spool:false, hub:2, spinV:0, wireCut:false, wireLen:0, nozzleOn:true, tipOn:true, tipChoice:null,
+  coilF:0, stick:.75, flow:8, flowing:false, purged:false, feeding:false,
+  autoSet:false, mat:0, dia:1, thk:2, wfs:300, volts:21.0, ind:50
+}; }
+function autoVals(){ const a = THKS[S.thk][1]*1000; const w = Math.max(50, Math.min(700, Math.round(a*IPMA[S.dia]/5)*5)); const v = 14 + a*.04 + (S.mat === 2 ? 1 : 0) + (S.mat === 4 ? 1.5 : 0); return {amps:a, wfs:w, volts:+v.toFixed(1)}; }
+
+/* ---------------- LCD ---------------- */
+let lcdDirty = true;
+function drawLCD(c){
+  const g = c.getContext('2d'), W = c.width, H = c.height, k = W/512;
+  g.setTransform(k,0,0,k,0,0);
+  g.fillStyle = '#04060a'; g.fillRect(0,0,512,320);
+  if (!S.power) return;
+  g.fillStyle = '#0b1828'; g.fillRect(6,6,500,308);
+  g.fillStyle = S.autoSet ? '#f2a900' : '#3b5a7d'; g.fillRect(6,6,500,42);
+  g.fillStyle = S.autoSet ? '#1d1600' : '#e8eaed'; g.font = 'bold 26px Barlow Condensed, Arial Narrow, sans-serif'; g.textBaseline = 'middle';
+  g.fillText(S.autoSet ? 'AUTO-SET  ·  MIG' : 'MANUAL  ·  MIG', 18, 28);
+  g.textAlign = 'right'; g.fillText(S.feeding ? (S.flowing ? 'GAS + WIRE' : 'FEEDING') : 'READY', 494, 28); g.textAlign = 'left';
+  g.fillStyle = '#c9d6e6'; g.font = '19px IBM Plex Sans, sans-serif';
+  g.fillText(MATS[S.mat], 18, 72);
+  g.fillText('Wire ' + DIAS[S.dia], 18, 100);
+  g.fillText(S.autoSet ? 'Thickness ' + THKS[S.thk][0] : 'Inductance ' + S.ind, 250, 100);
+  const vals = S.autoSet ? autoVals() : {wfs:S.wfs, volts:S.volts};
+  g.fillStyle = '#16304d'; g.fillRect(18,122,228,130); g.fillRect(266,122,228,130);
+  g.fillStyle = '#8fb3d9'; g.font = '600 18px IBM Plex Sans, sans-serif'; g.fillText('VOLTS', 32, 144); g.fillText('WIRE SPEED  ipm', 280, 144);
+  g.fillStyle = '#ffffff'; g.font = '600 64px IBM Plex Mono, monospace'; g.fillText(vals.volts.toFixed(1), 32, 205); g.fillText(String(vals.wfs), 280, 205);
+  if (S.autoSet){ g.fillStyle = '#8fb3d9'; g.font = '15px IBM Plex Sans, sans-serif'; g.fillText('fine-tune with knobs', 32, 240); g.fillText('≈ ' + Math.round(autoVals().amps) + ' A target', 280, 240); }
+  g.fillStyle = '#22384f'; ['Setup','Program','P. Chart','Jog'].forEach((t,i) => { g.fillRect(18 + i*122, 268, 112, 36); });
+  g.fillStyle = '#c9d6e6'; g.font = '17px IBM Plex Sans, sans-serif'; g.textAlign = 'center';
+  ['Setup','Program','P. Chart','Jog'].forEach((t,i) => g.fillText(t, 74 + i*122, 287)); g.textAlign = 'left';
+}
+
+/* ---------------- part registry ---------------- */
+const parts = {}, pickables = [];
+function reg(name, label, objs){
+  objs = [].concat(objs); parts[name] = {label, objs};
+  for (const o of objs) o.traverse(m => { if (!m.isMesh) return; m.userData.part = name; if (!m.material.userData.ghost) { m.material = m.material.clone(); } else { m.material = ghostMat(); } pickables.push(m); });
+}
+reg('powerSwitch', 'Power switch', [pwrLever, pwrBase]);
+reg('door', 'Wire drive compartment door', [door, doorInner, doorHandle]);
+reg('gunKnob', 'Gun securing knob', [gunKnob]);
+reg('gunConnector', 'MIG gun power pin (gun end)', [connector, gunCable]);
+reg('trigger', '4-pin trigger receptacle', [trigRecept, trigPlug]);
+reg('posTerm', 'Positive (+) output receptacle', [termPos]);
+reg('negTerm', 'Negative (−) output receptacle', [termNeg]);
+reg('chain', 'Cylinder safety chain', [chain, chainGhost, chainLoose]);
+reg('valve', 'Cylinder valve and cap', [valve, cap]);
+reg('regulator', 'Regulator / flowmeter', [regulator, regGhost]);
+reg('flowKnob', 'Flowmeter adjust knob (drag up/down)', [regulator.userData.knob]);
+reg('gasFitting', 'Gas inlet fitting (rear)', [gasFitting]);
+reg('paRear', 'Rear pressure adjustment knob', [PA.rear.post]);
+reg('paFront', 'Front pressure adjustment knob', [PA.front.post]);
+reg('inletGuide', 'Inlet wire guide', [guides.inlet, guideGhosts.inlet]);
+reg('midGuide', 'Intermediate wire guide', [guides.mid, guideGhosts.mid]);
+reg('rollLR', 'Lower drive roll (rear)', [rolls.LR, rollGhosts.LR]);
+reg('rollLF', 'Lower drive roll (front)', [rolls.LF, rollGhosts.LF]);
+reg('rollUR', 'Upper pressure roll (rear)', [rolls.UR, rollGhosts.UR]);
+reg('rollUF', 'Upper pressure roll (front)', [rolls.UF, rollGhosts.UF]);
+reg('spool', '12 in. wire spool', [spool]);
+reg('hub', 'Spool hub and tension knob', [hubKnob]);
+reg('wireEnd', 'Loose wire end', [wireEnd, wireTail]);
+reg('nozzle', 'Gun nozzle', [nozzle]);
+reg('contactTip', 'Contact tip', [tipObj]);
+reg('lcd', 'Color LCD display', [lcd]);
+reg('knobs', 'Voltage / wire speed knobs', [knobL, knobR]);
+reg('gunHandle', 'MIG gun handle (hold to feed)', [gun]);
+reg('gunTrigger', 'Gun trigger (press and hold)', [gunTrigger]);
+
+/* ---------------- tweens ---------------- */
+const tweens = [];
+const ease = t => t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+function tween(dur, fn, done){ tweens.push({t:0, dur, fn, done}); }
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------------- state → scene ---------------- */
+function setPower(on){ S.power = on; pwrLever.rotation.z = on ? -.8 : .8; lcdDirty = true; }
+function setDoor(open, anim = true){ S.door = open; const a0 = doorPivot.rotation.z, a1 = open ? 1.95 : 0;
+  if (anim) tween(1.0, t => doorPivot.rotation.z = a0 + (a1 - a0)*ease(t)); else doorPivot.rotation.z = a1; }
+function setGunKnob(loose, anim = true){ S.gunLoose = loose; const y0 = gunKnob.position.y, y1 = loose ? 1.64 : 1.6, r0 = gunKnob.rotation.y, r1 = loose ? Math.PI*1.5 : 0;
+  if (anim) tween(.6, t => { gunKnob.position.y = y0 + (y1-y0)*ease(t); gunKnob.rotation.y = r0 + (r1-r0)*ease(t); });
+  else { gunKnob.position.y = y1; gunKnob.rotation.y = r1; } }
+function setPA(side, open, anim = true){
+  const a = S.pa[side]; a.open = open; const pa = PA[side];
+  const from = a.a, to = open ? 1 : 0;
+  const apply = v => { a.a = v; pa.arm.rotation.x = -.5*v; pa.post.rotation.x = 1.0*v; };
+  if (anim) tween(.6, t => apply(from + (to-from)*ease(t))); else apply(to);
+}
+function setPressure(side, p){ S.pa[side].p = p; PA[side].knob.position.y = .47 - p*.012; PA[side].spring.scale.y = 1 - p*.08; PA[side].spring.position.y = .4 - p*.006; PA[side].ind.userData.draw(p.toFixed(1)); }
+function placeInd(){ for (const side of ['rear','front']){ const k = new THREE.Vector3(); PA[side].knob.getWorldPosition(k); PA[side].ind.position.copy(k).add(V(.09, .02, 0)); } }
+function syncScene(){
+  setPower(S.power); setDoor(S.door, false); setGunKnob(S.gunLoose, false);
+  gunT = S.gunIn ? 1 : 0; updateGun();
+  trigPlug.visible = trigCable.visible = S.gunIn; placeTrig(S.trig ? 1 : 0);
+  placeLead(S.lead ? 1 : 0); placeWork(S.work ? 1 : 0);
+  chain.visible = S.chain; chainLoose.visible = !S.chain; cap.visible = S.cap; regulator.visible = S.reg; hose.visible = S.hose;
+  for (const side of ['rear','front']){ setPA(side, S.pa[side].open, false); setPressure(side, S.pa[side].p); }
+  for (const k in guides) guides[k].visible = S.guide[k];
+  for (const k in rolls){ rolls[k].visible = S.rolls[k]; rolls[k].position.x = k[0] === 'L' ? .3 : 0; }
+  spool.position.copy(S.spool ? SPOOL.hub : SPOOL.floor); spool.rotation.set(0,0,0);
+  wireEnd.visible = wireTail.visible = !S.wireCut;
+  nozzle.position.copy(S.nozzleOn ? NOZ.on : NOZ.off); tipObj.position.copy(S.tipOn ? TIP.on : TIP.off);
+  nozzle.rotation.set(0,0,0); tipObj.rotation.set(0,0,0);
+  wood.visible = false; coil.visible = false; drawWire(); lcdDirty = true;
+}
+function moveTo(obj, to, dur = .6, lift = 0, done){ const from = obj.position.clone();
+  tween(dur, t => { const e = ease(t); obj.position.lerpVectors(from, to, e); obj.position.y += Math.sin(Math.PI*e)*lift; }, done); }
+
+/* ---------------- steps ---------------- */
+const PHASES = ['Safety','Gun & polarity','Shielding gas','Drive rolls & guides','Wire spool','Thread the wire','Machine settings'];
+const pressureDial = (side, label) => `<div class="dial" data-side="${side}"><span class="lab">${label}</span><div class="scale">${Array.from({length:10},(_,i)=>`<i style="height:${30+i*7}%"></i>`).join('')}</div><span class="val">0</span><span class="row" style="gap:4px"><button class="btn" data-d="-0.5" aria-label="Loosen ${label} knob">−</button><button class="btn" data-d="0.5" aria-label="Tighten ${label} knob">+</button></span></div>`;
+function wireDials(el, onChange){
+  el.querySelectorAll('.dial').forEach(d => {
+    const side = d.dataset.side, render = () => { const p = S.pa[side].p; d.querySelector('.val').textContent = p.toFixed(1); d.querySelectorAll('.scale i').forEach((i,n) => i.classList.toggle('on', n < Math.round(p*2))); };
+    d.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { setPressure(side, Math.max(0, Math.min(5, S.pa[side].p + +b.dataset.d))); render(); onChange?.(); }));
+    render();
+  });
+}
+function holdButton(btn, set){
+  const on = () => { btn.classList.add('active'); set(true); }, off = () => { btn.classList.remove('active'); set(false); };
+  btn.addEventListener('pointerdown', e => { e.preventDefault(); btn.setPointerCapture?.(e.pointerId); on(); });
+  for (const ev of ['pointerup','pointercancel','lostpointercapture']) btn.addEventListener(ev, off);
+  btn.addEventListener('pointerdown', () => window.addEventListener('pointerup', off, {once:true}));
+  btn.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat){ e.preventDefault(); on(); } });
+  btn.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') off(); });
+}
+const grooveSVG = k => {
+  const paths = {V:'M4 6 L20 6 L28 22 L36 6 L52 6', U:'M4 6 L18 6 Q18 24 28 24 Q38 24 38 6 L52 6', K:'M4 6 L20 6 L28 22 L36 6 L52 6'};
+  const extra = k === 'K' ? '<path d="M22 10 l3 2 M24 15 l3 2 M32 15 l-3 2 M34 10 l-3 2" stroke="#f2a900" stroke-width="1.5"/>' : '';
+  return `<svg width="56" height="30" viewBox="0 0 56 30" aria-hidden="true"><rect x="0" y="0" width="56" height="30" rx="4" fill="#2a3038"/><path d="${paths[k]}" fill="none" stroke="#e3e7eb" stroke-width="2.5"/>${extra}</svg>`;
+};
+
+const steps = [
+/* ---- Safety ---- */
+{ id:'power_off', phase:0, title:'Turn the machine off', type:'click', targets:['powerSwitch'], view:'power',
+  instr:'Turn the power switch to OFF (O) before opening the wire drive compartment.',
+  test:'Make the machine safe before you work inside it.',
+  why:'Inside the compartment the drive rolls, gun block and welding wire are electrically live and the rolls are a pinch point whenever the unit is on. The owner\'s manual has you turn the unit off before threading and only power up to feed the wire out.',
+  hint:'The rotary power switch is on the lower left of the front panel.',
+  act(){ setPower(false); }, done:'Power is off. The display went dark.' },
+{ id:'open_door', phase:0, title:'Open the side door', type:'click', targets:['door'], view:'door',
+  instr:'Lift the wire drive compartment door on the right side of the machine. It hinges at the top and swings up.',
+  why:'Gun connection, polarity leads, spool hub and the four-roll drive are all behind this door.',
+  hint:'Click the large blue side panel.',
+  act(){ setDoor(true); }, done:'Door open. You can see the spool hub, drive rolls and gun block.' },
+/* ---- Gun & polarity ---- */
+{ id:'loosen_gun', phase:1, title:'Loosen the gun securing knob', type:'click', targets:['gunKnob'], view:'drive',
+  instr:'Loosen the gun securing knob on top of the gun block so the gun end can slide in.',
+  test:'Prepare the gun block to accept the gun.',
+  why:'OM-288360 §5-16, step 1: loosen the gun securing knob before inserting the gun end.',
+  hint:'The black T-knob sits on top of the aluminum gun block at the front of the drive.',
+  act(){ setGunKnob(true); }, done:'Knob loosened.' },
+{ id:'insert_gun', phase:1, title:'Insert the MIG gun', type:'click', targets:['gunConnector'], view:'interior',
+  instr:'Push the gun end through the front panel opening until it bottoms against the gun block.',
+  test:'Install the MIG gun.',
+  why:'§5-16, step 2. If the power pin doesn\'t bottom out, there\'s a gap between the drive and the gun liner. The wire can kink there and feed poorly.',
+  hint:'Click the brass power pin at the end of the gun cable lying on the bench.',
+  act(){ tween(1.4, t => { gunT = ease(t); updateGun(); }, () => { S.gunIn = true; trigPlug.visible = trigCable.visible = true; placeTrig(0); }); },
+  delay:1500, done:'Gun end is seated against the gun block.' },
+{ id:'tighten_gun', phase:1, title:'Tighten the gun securing knob', type:'click', targets:['gunKnob'], view:'drive',
+  instr:'Tighten the gun securing knob, then confirm the gun end is tight against the drive assembly.',
+  test:'Lock the gun in place.',
+  why:'§5-16, steps 3–4. A loose gun gives a poor power connection, which means heat at the gun block and an erratic arc.',
+  hint:'Same knob you loosened.',
+  act(){ setGunKnob(false); }, done:'Gun locked in.' },
+{ id:'trigger', phase:1, title:'Connect the trigger plug', type:'click', targets:['trigger'], view:'drive',
+  instr:'Route the trigger control cable through the MIG gun hole and plug it into the 4-pin receptacle inside the unit.',
+  test:'Connect the gun so the trigger works.',
+  why:'§5-14. Without the trigger plug the machine never sees the trigger, so you get no wire feed, no gas and no weld output.',
+  hint:'The round black 4-pin receptacle is on the divider wall just behind the gun block.',
+  act(){ tween(.6, t => placeTrig(ease(t)), () => S.trig = true); }, done:'Trigger cable connected.' },
+{ id:'polarity_lead', phase:1, title:'Set polarity: wire drive lead', type:'click', targets:['posTerm'], view:'term',
+  instr:'Solid wire with shielding gas (GMAW) runs DCEP (reverse polarity). Plug the wire drive assembly lead into the POSITIVE (+) receptacle.',
+  test:'This job is solid ER70S-6 wire with 75/25 gas. Connect the wire drive assembly lead to the correct output receptacle.',
+  why:'§5-13 process/polarity table: GMAW solid wire, DCEP, so the drive lead goes to + and the work cable to −. Self-shielded flux-cored (FCAW-S) is the opposite, DCEN. The 355 shows an Improper Weld Polarity icon if these are swapped.',
+  hint:'DCEP means Electrode Positive. The electrode (wire) gets its current through the drive lead.',
+  act(){ tween(.6, t => placeLead(ease(t)), () => S.lead = true); }, done:'Drive lead on (+). Electrode positive.' },
+{ id:'polarity_work', phase:1, title:'Set polarity: work cable', type:'click', targets:['negTerm'], view:'term',
+  instr:'Plug the work cable into the NEGATIVE (−) receptacle to complete DCEP.',
+  test:'Connect the work cable to complete the circuit for this process.',
+  why:'The work clamp side must be the opposite polarity from the electrode. For GMAW that is negative.',
+  hint:'Only one receptacle is left.',
+  act(){ tween(.6, t => placeWork(ease(t)), () => S.work = true); }, done:'Work cable on (−). Polarity is DCEP.' },
+/* ---- Shielding gas ---- */
+{ id:'chain', phase:2, title:'Chain the cylinder', type:'click', targets:['chain'], view:'rear',
+  instr:'Secure the gas cylinder to the running gear with the chain.',
+  why:'§5-17: chain the cylinder so it can\'t fall over. A cylinder that falls and snaps its valve turns into a projectile.',
+  hint:'Click the outline of the chain around the upper part of the cylinder.',
+  act(){ S.chain = true; chain.visible = true; chainLoose.visible = false; }, done:'Cylinder secured.' },
+{ id:'crack', phase:2, title:'Remove the cap and crack the valve', type:'click', targets:['valve'], view:'rear',
+  instr:'Remove the cylinder cap. Stand to the side of the valve, open it slightly to blow out dust, then close it.',
+  test:'Prepare the cylinder valve before installing the regulator.',
+  why:'§5-17. Dirt blown into a regulator can damage the seat. Stand to the side, never in front of the outlet.',
+  hint:'Click the cap on top of the cylinder.',
+  act(){ S.cap = false; moveTo(cap, V(.5, .14, -2.2), .8, .5); const v0 = valve.rotation.y; tween(.8, t => valve.rotation.y = v0 + Math.sin(Math.PI*t)*2); }, delay:900, done:'Valve cleared and closed.' },
+{ id:'regulator', phase:2, title:'Install regulator and gas hose', type:'click', targets:['regulator','gasFitting'], ordered:true, view:'rear',
+  instr:'Install the regulator/flowmeter with its face vertical, then connect the gas hose to the fitting on the rear of the machine.',
+  test:'Hook up shielding gas from the cylinder to the machine.',
+  why:'§5-17. The flowmeter tube has to be vertical to read correctly. For solid steel wire use 75/25, 90/10 or CO₂.',
+  hint:'First click the outline on the valve outlet, then the brass fitting on the back panel.',
+  act(n){ if (n === 'regulator'){ S.reg = true; regulator.visible = true; } else { S.hose = true; hose.visible = true; } }, done:'Gas is connected. You\'ll set the flow once the wire is threaded.' },
+/* ---- Drive rolls & guides ---- */
+{ id:'open_pa', phase:3, title:'Open both pressure assemblies', type:'click', targets:['paRear','paFront'], view:'drive',
+  instr:'Pull each pressure adjustment knob out and down to open the upper drive roll carriers.',
+  test:'Open the drive so you can get to the roll carriers.',
+  why:'§7-2. The 355 has a four-roll drive: two lower drive rolls and two upper pressure rolls on hinged carriers.',
+  hint:'There are two knobs with yellow pressure indicators, one over each pair of rolls.',
+  act(n){ setPA(n === 'paRear' ? 'rear' : 'front', true); }, done:'Both upper carriers are open.' },
+{ id:'guides', phase:3, title:'Install the wire guides', type:'click', targets:['inletGuide','midGuide'], ordered:true, view:'drive',
+  instr:'Push the inlet wire guide into the wire entry, then install the intermediate guide between the roll pairs.',
+  test:'Install the guides that support the wire through the drive.',
+  why:'§7-2. Guides keep the wire lined up with the roll grooves. A missing intermediate guide lets the wire wander between the pairs and bird-nest.',
+  hint:'Inlet guide first (spool side), then the short guide between the two roll pairs.',
+  act(n){ const k = n === 'inletGuide' ? 'inlet' : 'mid'; S.guide[k] = true; guides[k].visible = true; const z1 = guides[k].position.z; guides[k].position.z = z1 - .15; moveTo(guides[k], V(.3, 1.52, z1), .4); }, done:'Guides are in.' },
+{ id:'choose_rolls', phase:3, title:'Choose the drive rolls', type:'ui', view:'drive',
+  instr:'Pick the drive roll type and groove for this job.',
+  why:'Machine drive roll kits come in V-groove (hard wire), U-groove (aluminum) and V-knurled (flux-cored or hard-to-feed wire). The standard 355 kit is a reversible .035/.045 V-groove roll. Turn it so the groove that matches your wire size lines up with the wire path.',
+  hint:'Solid steel is hard wire. Match the groove to the wire diameter on the spool label.',
+  ui(el){
+    const test = mode === 'test';
+    el.innerHTML = `<p class="note">Job: <b style="color:var(--ink)">ER70S-6 solid steel, .035 in. diameter</b></p>
+    <fieldset><legend>Roll type</legend><div class="opts" id="rt">${[['V','V-groove','Solid steel and stainless'],['U','U-groove','Soft aluminum wire'],['K','V-knurled','Flux-cored / hard-to-feed wire']].map(([k,n,d]) => `<button class="opt" data-k="${k}" aria-pressed="${S.rollChoice===k}">${grooveSVG(k)}<span><b>${n}</b>${test ? '' : `<small>${d}</small>`}</span></button>`).join('')}</div></fieldset>
+    <fieldset><legend>Groove lined up with the wire</legend><div class="row" id="gr">${['.035','.045'].map(g => `<button class="btn" data-g="${g}" aria-pressed="${S.groove===g}">${g} in.</button>`).join('')}</div></fieldset>`;
+    el.querySelectorAll('#rt .opt').forEach(b => b.onclick = () => { S.rollChoice = b.dataset.k; el.querySelectorAll('#rt .opt').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+    el.querySelectorAll('#gr .btn').forEach(b => b.onclick = () => { S.groove = b.dataset.g; el.querySelectorAll('#gr .btn').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+  },
+  validate(){
+    if (!S.rollChoice || !S.groove) return {ok:false, msg:'Pick a roll type and a groove size.', soft:true};
+    if (S.rollChoice === 'U') return {ok:false, msg:'U-groove rolls are for soft aluminum. They cradle the wire without biting, so hard steel wire tends to slip.'};
+    if (S.rollChoice === 'K') return {ok:false, msg:'Knurled rolls bite into the wire. They\'re for flux-cored wire. On solid wire they shave the copper coating and the shavings clog the liner.'};
+    if (S.groove !== '.035') return {ok:false, msg:'A .045 groove is too big for .035 wire, so it won\'t grip consistently. Flip the roll to the .035 groove.'};
+    return {ok:true};
+  }, done:'Right: .035 V-groove for .035 solid steel.' },
+{ id:'install_rolls', phase:3, title:'Install all four drive rolls', type:'click', targets:['rollLR','rollLF','rollUR','rollUF'], view:'drive',
+  instr:'Slide each drive roll onto its carrier with the .035 groove facing the wire path, then turn the retaining nut one click to lock it. Install all four.',
+  test:'Mount the drive rolls.',
+  why:'§7-2. The rolls are self-aligning and need no other adjustment. Clean the grooves with a wire brush when you change rolls.',
+  hint:'Click each outlined roll position: two lower, two upper.',
+  act(n){ const k = n.slice(4); S.rolls[k] = true; const r = rolls[k]; r.visible = true; const x1 = r.position.x; r.position.x = x1 + .18; moveTo(r, V(x1, r.position.y, r.position.z), .45, 0, () => { const r0 = r.rotation.x; tween(.25, t => r.rotation.x = r0 + .5*t); }); },
+  done:'All four rolls installed and locked.' },
+/* ---- Spool ---- */
+{ id:'mount_spool', phase:4, title:'Mount the wire spool', type:'click', targets:['spool'], view:'spool',
+  instr:'Remove the hub retaining knob and slide the 12 in. spool onto the hub so the hub pin drops into the hole in the spool. Wire should come off toward the inlet guide in a straight line. Reinstall the knob.',
+  test:'Load the wire spool.',
+  why:'§5-18. If the hub pin isn\'t in the spool hole, the spool spins on the hub with no brake drag and the wire can overrun.',
+  hint:'The spool is on the floor beside the machine.',
+  act(){ const k0 = hubKnob.position.x; tween(.3, t => hubKnob.position.x = k0 + .15*t, () => moveTo(spool, SPOOL.hub, 1.1, .5, () => { S.spool = true; tween(.3, t => hubKnob.position.x = k0 + .15*(1-t)); })); },
+  delay:1900, done:'Spool is on the hub and the knob is back on.' },
+{ id:'hub_tension', phase:4, title:'Set hub tension', type:'ui', view:'hub',
+  instr:'Hand-tighten the hub knob clockwise. Use Spin test to check how the spool coasts. Tension is right when a slight force is needed to turn the spool.',
+  test:'Adjust the spool hub tension, then confirm.',
+  why:'§5-18. Too loose and the spool keeps spinning when the drive stops, so wire spills off and tangles. Too tight and the drive has to drag the spool, which gives erratic feed and slipping.',
+  hint:'Aim for slight drag: the spool should stop almost as soon as you let go.',
+  ui(el){
+    el.innerHTML = `<label class="slide" for="hubR"><span>Hub knob (turns clockwise) <output id="hubO"></output></span><input type="range" id="hubR" min="1" max="10" step="1"></label>
+    <div class="row"><button class="btn" id="spinB">Spin test</button><span class="note" id="spinN">Spin the spool by hand and watch it coast.</span></div>`;
+    const r = el.querySelector('#hubR'), o = el.querySelector('#hubO'); r.value = S.hub;
+    const lab = v => v <= 3 ? 'loose' : v <= 6 ? 'slight drag' : 'heavy drag';
+    const show = () => o.textContent = mode === 'test' ? `${S.hub}` : `${S.hub} · ${lab(S.hub)}`; show();
+    r.oninput = () => { S.hub = +r.value; show(); };
+    el.querySelector('#spinB').onclick = () => { S.spinV = 9; const n = el.querySelector('#spinN');
+      n.textContent = S.hub <= 3 ? 'The spool keeps coasting after you let go. Wire is loosening on the spool.' : S.hub <= 6 ? 'Slight drag. The spool stops right after you let go.' : 'Stiff. The spool barely turns. The drive would have to fight it.'; };
+  },
+  tick(dt){ if (S.spinV > 0){ spool.rotation.x -= S.spinV*dt; S.spinV = Math.max(0, S.spinV - (1.2 + S.hub*2.2)*dt); } },
+  validate(){ if (S.hub <= 3) return {ok:false, msg:'Too loose. The spool will overrun and dump wire when the drive stops.'};
+    if (S.hub >= 7) return {ok:false, msg:'Too tight. The drive rolls will slip or feed erratically against that drag.'}; return {ok:true}; },
+  done:'Hub tension set: slight drag.' },
+/* ---- Threading ---- */
+{ id:'cut_end', phase:5, title:'Hold the wire and cut the end', type:'click', targets:['wireEnd'], view:'spool',
+  instr:'Pull and hold the wire, then cut off the bent end. Keep holding the wire tight so it doesn\'t unravel off the spool.',
+  test:'Prepare the end of the wire for threading.',
+  why:'§5-19, step 2. A bent or burred end catches in the guides and liner. Let go of a loaded spool and the wire springs loose.',
+  hint:'The wire end is taped to the spool flange near the bottom.',
+  act(){ S.wireCut = true; wireEnd.visible = wireTail.visible = false; S.wireLen = .02; drawWire(); }, done:'Clean end. Keep holding it.' },
+{ id:'push_wire', phase:5, title:'Push wire through the guides', type:'click', targets:['inletGuide'], view:'drive',
+  instr:'Push the wire through the inlet guide, along the drive roll grooves, through the intermediate guide and into the gun. Keep holding it.',
+  test:'Thread the wire through the drive and into the gun.',
+  why:'§5-19, step 3. With the pressure assemblies still open you can see the wire sit in the bottom of each groove.',
+  hint:'Start the wire into the inlet guide on the spool side of the drive.',
+  act(){ const l0 = S.wireLen, l1 = L.block + .25; tween(1.6, t => { const d = (l1 - l0)*ease(t) + l0 - S.wireLen; S.wireLen += d; spool.rotation.x -= d/.43; drawWire(); }); },
+  delay:1700, done:'The wire is in the grooves and in the gun liner.' },
+{ id:'close_pa', phase:5, title:'Close both pressure assemblies', type:'click', targets:['paRear','paFront'], view:'drive',
+  instr:'Close the front and rear pressure assemblies over the wire.',
+  test:'Clamp the wire in the drive.',
+  why:'§5-19, step 4. Close and tighten both assemblies before you let go of the wire.',
+  hint:'The same two knobs you opened earlier.',
+  act(n){ setPA(n === 'paRear' ? 'rear' : 'front', false); }, done:'Both assemblies closed. Now you can let go of the wire.' },
+{ id:'set_pressure', phase:5, title:'Set drive roll pressure', type:'ui', view:'drive',
+  instr:'Use the pressure indicator scale on each knob. The manual says to start at 2 on both front and rear, then adjust after a test feed.',
+  test:'Set the starting drive roll pressure on both assemblies.',
+  why:'§5-19: "Begin with a setting of 2." Too little pressure and the rolls slip. Too much flattens the wire, shaves it, and wears the liner and drive motor.',
+  hint:'Set both indicators to 2.0.',
+  ui(el){ el.innerHTML = pressureDial('rear','Rear') + pressureDial('front','Front'); wireDials(el); },
+  validate(){ const r = S.pa.rear.p, f = S.pa.front.p;
+    if (r === 2 && f === 2) return {ok:true};
+    if (r < 2 || f < 2) return {ok:false, msg:`Rear ${r}, front ${f}. Below the starting setting, so the rolls will slip.`};
+    return {ok:false, msg:`Rear ${r}, front ${f}. Too much pressure to start with. It can flatten or shave the wire.`}; },
+  done:'Both set to 2.' },
+{ id:'remove_consumables', phase:5, title:'Remove nozzle and contact tip', type:'click', targets:['nozzle','contactTip'], ordered:true, view:'gun',
+  instr:'Remove the gun nozzle, then the contact tip.',
+  test:'Prepare the gun so the wire can feed out freely.',
+  why:'§5-19, step 5. The wire end can catch on the back of the tip. With the tip off it feeds straight out of the diffuser.',
+  hint:'The nozzle has to come off before you can reach the tip.',
+  act(n){ if (n === 'nozzle'){ S.nozzleOn = false; moveTo(nozzle, NOZ.off, .7, .25); } else { S.tipOn = false; moveTo(tipObj, TIP.off, .7, .2); } }, done:'Nozzle and tip are on the bench.' },
+{ id:'power_on', phase:5, title:'Turn the machine on', type:'click', targets:['powerSwitch'], view:'power',
+  instr:'Turn the power switch ON (I) so you can feed wire.',
+  why:'§5-19, step 6. Keep your hands clear of the drive rolls from here on.',
+  hint:'Same switch, lower left front.',
+  act(){ setPower(true); }, done:'Power on. Display is live.' },
+{ id:'feed', phase:5, title:'Feed wire through the gun', type:'ui', view:'gun', confirm:false, holdTargets:['gunTrigger'],
+  instr:'Lay the gun cable out as straight as you can. Press and hold the red trigger on the gun (or the button below) until the wire comes out.',
+  test:'Get the wire out to the end of the gun.',
+  why:'§5-19, step 7. Kinks and coils in the cable add drag. JOG in the manual menu feeds wire without weld output or gas (§6-4), which is a good habit in a shared shop.',
+  hint:'Click and hold the red trigger on the gun handle. Keep holding until the meter fills.',
+  ui(el){ el.innerHTML = `<button class="btn hold primary" id="holdF">Hold gun trigger</button>
+    <div><div class="meter"><i id="fm"></i></div><div class="meter-labels"><span>drive</span><span>liner</span><span>gun</span><span>out</span></div></div>`;
+    holdButton(el.querySelector('#holdF'), v => { S.feeding = v; lcdDirty = true; }); },
+  tick(dt){ const target = L.diff + .12;
+    if (S.feeding && S.wireLen < target){ const d = Math.min(1.2*dt, target - S.wireLen); S.wireLen += d; spool.rotation.x -= d/.43; for (const k of ['LR','LF']) rolls[k].rotation.x -= d/.07; drawWire(); }
+    const m = $('fm'); if (m) m.style.width = Math.min(100, (S.wireLen - L.block)/(target - L.block)*100) + '%';
+    if (S.wireLen >= target - 1e-4 && !this._fired){ this._fired = true; S.feeding = false; lcdDirty = true; complete(); } },
+  done:'Wire is out of the gun.' },
+{ id:'choose_tip', phase:5, title:'Pick the contact tip', type:'ui', view:'gun',
+  instr:'Choose the contact tip that matches the wire.',
+  why:'The tip bore has to match the wire diameter. Too big and the arc wanders and the tip arcs inside. Too small and the wire drags or welds itself to the tip (burnback).',
+  hint:'Check the spool label.',
+  ui(el){ el.innerHTML = `<div class="row" id="tc">${['.030','.035','.045'].map(t => `<button class="btn" data-t="${t}" aria-pressed="${S.tipChoice===t}">T-A${t.slice(1)}CH · ${t} in.</button>`).join('')}</div>`;
+    el.querySelectorAll('#tc .btn').forEach(b => b.onclick = () => { S.tipChoice = b.dataset.t; el.querySelectorAll('#tc .btn').forEach(x => x.setAttribute('aria-pressed', x === b)); }); },
+  validate(){ if (!S.tipChoice) return {ok:false, msg:'Pick a tip.', soft:true}; if (S.tipChoice === '.030') return {ok:false, msg:'A .030 tip is too tight for .035 wire. It will drag and burn back.'}; if (S.tipChoice === '.045') return {ok:false, msg:'A .045 tip is too loose. Poor current transfer and a wandering arc.'}; return {ok:true}; },
+  done:'.035 tip for .035 wire.' },
+{ id:'reinstall', phase:5, title:'Reinstall tip and nozzle', type:'click', targets:['contactTip','nozzle'], ordered:true, view:'gun',
+  instr:'Slide the contact tip over the wire and lock it, then put the nozzle back on.',
+  test:'Put the gun back together.',
+  why:'§5-19, step 7. On the BTB gun the AccuLock tip installs with a single turn.',
+  hint:'Tip first, then the nozzle. Both are on the bench.',
+  act(n){ if (n === 'contactTip'){ S.tipOn = true; moveTo(tipObj, TIP.on, .7, .2); } else { S.nozzleOn = true; moveTo(nozzle, NOZ.on, .7, .25); } }, done:'Gun is reassembled.' },
+{ id:'feed_check', phase:5, title:'Check drive roll pressure', type:'ui', view:'check', confirm:false, holdTargets:['gunTrigger'],
+  instr:'Hold the gun nozzle near the wood block and feed wire against it. The rolls should keep driving so the wire coils up without slipping. Adjust pressure if needed.',
+  test:'Test-feed the wire to verify drive roll pressure.',
+  why:'§5-19, step 8: "Feed wire to check drive roll pressure." The rolls should drive the wire against a block without slipping. Only use as much pressure as it takes to stop slip.',
+  hint:'If the rolls slip, go up half a number at a time. Stay at or under 3.',
+  onEnter(){ wood.visible = true; S.wireLen = L.tip + .004; drawWire(); S.coilF = 0; coil.visible = true; coil.geometry.setDrawRange(0, 0); },
+  ui(el){ el.innerHTML = `${pressureDial('rear','Rear')}${pressureDial('front','Front')}
+    <button class="btn hold primary" id="holdC">Hold gun trigger</button><p class="note" id="fcN">Wire against the block. Hold the red trigger on the gun or this button.</p>`;
+    wireDials(el, () => { S.coilF = 0; coil.geometry.setDrawRange(0,0); });
+    holdButton(el.querySelector('#holdC'), v => { S.feeding = v; lcdDirty = true; }); },
+  tick(dt){ const p = Math.min(S.pa.rear.p, S.pa.front.p), n = $('fcN'); if (!n) return;
+    if (!S.feeding) return;
+    if (p < 2){ for (const k of ['LR','LF']) rolls[k].rotation.x -= 6*dt; n.textContent = 'Rolls spin but the wire stops at the block. They\'re slipping. Increase pressure.'; return; }
+    S.coilF = Math.min(1, S.coilF + dt*.6); coil.geometry.setDrawRange(0, Math.floor(S.coilF*400)*36); for (const k of ['LR','LF']) rolls[k].rotation.x -= 4*dt;
+    if (p > 3){ n.textContent = 'It feeds, but this much pressure flattens the wire and loads the motor. Back it off.'; return; }
+    n.textContent = 'Wire coils against the block with no slip. Pressure is good.';
+    if (S.coilF >= 1 && !this._fired){ this._fired = true; S.feeding = false; lcdDirty = true; complete(); } },
+  done:'Pressure verified: no slip.' },
+{ id:'gas_flow', phase:5, title:'Set shielding gas flow', type:'ui', view:'flow', holdTargets:['flowKnob'],
+  instr:'Open the cylinder valve. Point the gun away from the work clamp and anything grounded and start gas flowing. Then drag the black knob on top of the flowmeter up or down until the ball reads in range for 75/25 mixed gas.',
+  test:'Set the gas flow for C25 shielding gas.',
+  why:'§5-17: CO₂ and MIG are typically 15–30 CFH, and mixed gas is 25–45 CFH. Too low gives porosity. Too high causes turbulence that pulls in air, and wastes gas.',
+  hint:'Mixed gas: 25–45 CFH. Read the scale at the center of the ball. Drag up on the knob to open it.',
+  ui(el){ el.innerHTML = `<button class="btn primary" id="gasT" aria-pressed="false">Start gas flow (trigger held)</button>
+    <p class="note">In the sim this holds the trigger for you, so your hand is free for the flowmeter. On the meter, drag the knob up to open it and down to close it.</p>
+    <label class="slide" for="flR"><span>Or use this slider <output id="flO">—</output></span><input type="range" id="flR" min="0" max="60" step="1"></label>`;
+    const r = el.querySelector('#flR'), o = el.querySelector('#flO'), b = el.querySelector('#gasT'); r.value = S.flow;
+    flowUI = () => { r.value = S.flow; o.textContent = S.flowing ? `${S.flow} CFH` : `knob at ${S.flow} · no flow`; }; flowUI();
+    r.oninput = () => { S.flow = +r.value; flowUI(); };
+    b.onclick = () => { S.flowing = !S.flowing; S.feeding = S.flowing; if (S.flowing) S.purged = true; b.textContent = S.flowing ? 'Stop gas flow (release trigger)' : 'Start gas flow (trigger held)'; b.setAttribute('aria-pressed', S.flowing); flowUI(); lcdDirty = true; }; },
+  tick(){ const b = regulator.userData.ball; const y = .098 + (S.flowing ? S.flow/60*.196 : 0); b.position.y += (y - b.position.y)*.2;
+    regulator.userData.knob.rotation.y = -S.flow/60*Math.PI*3;
+    flowRead.visible = true; flowRead.userData.draw(S.flowing ? `${S.flow}` : 'OFF'); const w = new THREE.Vector3(); regulator.getWorldPosition(w); flowRead.position.copy(w).add(V(.2, .22, -.05)); },
+  validate(){ if (!S.purged) return {ok:false, msg:'Pull the trigger so gas is flowing while you set the flowmeter.', soft:true};
+    if (S.flow < 25) return {ok:false, msg:`${S.flow} CFH is low for mixed gas. Expect porosity.`};
+    if (S.flow > 45) return {ok:false, msg:`${S.flow} CFH is high. Turbulence pulls air into the shield and wastes gas.`}; return {ok:true}; },
+  done:'Gas flow set.' },
+{ id:'trim', phase:5, title:'Trim the wire', type:'ui', view:'tip',
+  instr:'Cut the wire to the right stick-out for short-circuit MIG.',
+  test:'Trim the wire for short-circuit transfer.',
+  why:'§9-2: contact tip to work distance is 1/4–1/2 in. for short circuit and 1/2–3/4 in. for spray. Too much stick-out makes a cold, unstable start.',
+  hint:'Between 1/4 and 1/2 in.',
+  onEnter(){ wood.visible = false; coil.visible = false; S.wireLen = L.tip + S.stick*INCH; drawWire(); },
+  ui(el){ el.innerHTML = `<label class="slide" for="stR"><span>Stick-out past contact tip <output id="stO"></output></span><input type="range" id="stR" min="0.125" max="1" step="0.125"></label>`;
+    const r = el.querySelector('#stR'), o = el.querySelector('#stO'); r.value = S.stick;
+    const fr = v => ({.125:'1/8',.25:'1/4',.375:'3/8',.5:'1/2',.625:'5/8',.75:'3/4',.875:'7/8',1:'1'})[v] + ' in.';
+    const show = () => { o.textContent = fr(S.stick); S.wireLen = L.tip + S.stick*INCH; drawWire(); }; show();
+    r.oninput = () => { S.stick = +r.value; show(); }; },
+  validate(){ if (S.stick < .25) return {ok:false, msg:'Too short. The tip will sit right on the puddle and burn back.'}; if (S.stick > .5) return {ok:false, msg:'Too long for short circuit. More resistance heating, a cold start and spatter.'}; return {ok:true}; },
+  confirmLabel:'Cut wire', done:'Wire trimmed.' },
+{ id:'close_door', phase:5, title:'Close and latch the door', type:'click', targets:['door'], view:'door',
+  instr:'Close and latch the wire drive compartment door.',
+  why:'§5-19, step 9. The door keeps hands out of the drive and keeps dust and grinding grit off the wire.',
+  hint:'Click the open side door.',
+  act(){ setDoor(false); }, done:'Door closed. The machine is threaded.' },
+/* ---- Settings ---- */
+{ id:'autoset', phase:6, title:'Program Auto-Set', type:'ui', view:'panel',
+  instr:'Turn on Auto-Set, then select the material and gas, wire diameter and material thickness for: mild steel, 75/25 gas, .035 wire, 1/8 in. plate.',
+  test:'Use Auto-Set to set up for 1/8 in. mild steel with .035 ER70S-6 and C25 gas.',
+  why:'§6-3. Auto-Set picks voltage and wire speed from material/gas, wire size and thickness. The knobs then fine-tune: left is voltage, right is wire feed speed.',
+  hint:'Auto-Set button on, Material/Gas to Steel C25, Diameter to .035, Thickness to 1/8 in.',
+  ui(el){ panelUI(el, 'auto'); },
+  validate(){ const e = [];
+    if (!S.autoSet) e.push('Auto-Set is off'); if (S.mat !== 0) e.push('material/gas should be Steel · C25'); if (S.dia !== 2) e.push('wire should be .035'); if (S.thk !== 4) e.push('thickness should be 1/8 in.');
+    return e.length ? {ok:false, msg:'Not yet: ' + e.join(', ') + '.'} : {ok:true}; },
+  done:'Auto-Set programmed. About 200 ipm for 1/8 in. steel.' },
+{ id:'manual', phase:6, title:'Set it manually', type:'ui', view:'panel',
+  instr:'Turn Auto-Set off and set the same job by hand. Rule of thumb: 1 A per .001 in. of thickness, and .035 wire needs about 1.6 ipm per amp. Start voltage mid-range (18–20 V), and leave inductance at the default of 50.',
+  test:'With Auto-Set off, set wire speed and voltage for 1/8 in. steel with .035 wire. Leave inductance at the default.',
+  why:'§9-2: 1/8 in. is 0.125 in., so about 125 A. At 1.6 ipm/A that\'s 200 ipm. Set voltage mid-range and tune by sound: too low stubs, too high gets unstable and spattery. Inductance (§6-5) defaults to 50. Higher wets out the puddle, lower stiffens the arc.',
+  hint:'125 A × 1.6 = 200 ipm. Voltage between 18 and 20.',
+  ui(el){ panelUI(el, 'manual'); },
+  validate(){ const e = [];
+    if (S.autoSet) e.push('Auto-Set is still on'); if (Math.abs(S.wfs - 200) > 10) e.push(`wire speed ${S.wfs} ipm is outside 190–210`); if (S.volts < 18 || S.volts > 20) e.push(`${S.volts.toFixed(1)} V is outside 18–20`); if (S.ind !== 50) e.push('inductance should stay at 50');
+    return e.length ? {ok:false, msg:'Check: ' + e.join('; ') + '.'} : {ok:true}; },
+  done:'Manual settings are in range. Ready to run a test bead.' }
+];
+
+function panelUI(el, which){
+  el.innerHTML = `<div class="lcdwrap"><canvas id="lcd2" width="512" height="320" aria-label="Machine display"></canvas>
+    <div class="keys">
+      <button class="btn" id="kAuto" aria-pressed="${S.autoSet}">Auto-Set</button>
+      <button class="btn" id="kMatL">◀ Mat/Gas</button><button class="btn" id="kMatR">Mat/Gas ▶</button>
+      <button class="btn" id="kDia">Diameter</button>
+      <button class="btn" id="kThL">◀ Thickness</button><button class="btn" id="kThR">Thickness ▶</button>
+    </div>
+    ${which === 'manual' ? `<label class="slide" for="kV"><span>Left knob · voltage <output id="oV"></output></span><input type="range" id="kV" min="10" max="30" step="0.1"></label>
+    <label class="slide" for="kW"><span>Right knob · wire speed <output id="oW"></output></span><input type="range" id="kW" min="50" max="700" step="5"></label>
+    <label class="slide" for="kI"><span>Inductance (Setup menu) <output id="oI"></output></span><input type="range" id="kI" min="0" max="99" step="1"></label>` : ''}
+    <p class="note">Display values are simulated for training.</p></div>`;
+  const c2 = el.querySelector('#lcd2');
+  const refresh = () => { lcdDirty = true; drawLCD(c2); el.querySelector('#kAuto').setAttribute('aria-pressed', S.autoSet);
+    if (which === 'manual'){ el.querySelector('#kV').value = S.volts; el.querySelector('#kW').value = S.wfs; el.querySelector('#kI').value = S.ind;
+      el.querySelector('#oV').textContent = S.volts.toFixed(1) + ' V'; el.querySelector('#oW').textContent = S.wfs + ' ipm'; el.querySelector('#oI').textContent = S.ind;
+      for (const id of ['kV','kW']) el.querySelector('#'+id).disabled = S.autoSet; } };
+  el.querySelector('#kAuto').onclick = () => { S.autoSet = !S.autoSet; if (!S.autoSet && which === 'manual'){ S.wfs = 320; S.volts = 21.6; } refresh(); };
+  el.querySelector('#kMatL').onclick = () => { S.mat = (S.mat + MATS.length - 1) % MATS.length; refresh(); };
+  el.querySelector('#kMatR').onclick = () => { S.mat = (S.mat + 1) % MATS.length; refresh(); };
+  el.querySelector('#kDia').onclick = () => { S.dia = (S.dia + 1) % DIAS.length; refresh(); };
+  el.querySelector('#kThL').onclick = () => { S.thk = Math.max(0, S.thk - 1); refresh(); };
+  el.querySelector('#kThR').onclick = () => { S.thk = Math.min(THKS.length - 1, S.thk + 1); refresh(); };
+  if (which === 'manual'){
+    el.querySelector('#kV').oninput = e => { S.volts = +(+e.target.value).toFixed(1); refresh(); };
+    el.querySelector('#kW').oninput = e => { S.wfs = +e.target.value; refresh(); };
+    el.querySelector('#kI').oninput = e => { S.ind = +e.target.value; refresh(); };
+  }
+  refresh(); panelRefresh = refresh;
+}
+let panelRefresh = null;
+
+/* ---------------- camera views ---------------- */
+const VIEWS = {
+  overview:[[3.4,3.0,5.4],[0,1.5,.9]], power:[[1.1,1.9,3.6],[-.25,1.5,1.2]], door:[[3.4,2.5,2.9],[.4,1.6,.1]],
+  interior:[[3.0,2.1,.9],[.25,1.5,.3]], drive:[[1.55,1.9,1.05],[.27,1.5,.42]], term:[[1.7,1.5,1.1],[.2,1.1,.48]],
+  rear:[[2.0,3.2,-3.7],[0,2.5,-1.55]], spool:[[3.9,2.5,.9],[.8,1.3,-.6]], hub:[[2.1,2.15,-.15],[.32,1.85,-.55]],
+  gun:[[-.1,1.7,3.9],[-.6,1.0,2.7]], tip:[[-.7,1.2,3.25],[-.95,.99,2.62]], check:[[-.45,1.45,3.6],[-.75,1.0,2.64]], flow:[[.75,3.35,-2.75],[0,3.1,-1.55]], panel:[[.15,2.25,2.85],[-.12,1.95,1.2]]
+};
+function flyTo(name){ const v = VIEWS[name]; if (!v) return; const p0 = camera.position.clone(), t0 = controls.target.clone(), p1 = V(...v[0]), t1 = V(...v[1]);
+  if (reduceMotion){ camera.position.copy(p1); controls.target.copy(t1); return; }
+  tween(1.0, t => { const e = ease(t); camera.position.lerpVectors(p0, p1, e); controls.target.lerpVectors(t0, t1, e); }); }
+
+/* ---------------- flow / UI ---------------- */
+let mode = 'guided', cur = 0, stepErr = [], hintsUsed = [], totalErr = 0, totalHints = 0, t0 = null, tEnd = null, autoCam = true, showLabels = false, busy = false;
+const stepDone = new Set();
+function fmtTime(ms){ const s = Math.floor(ms/1000); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
+function say(msg, kind = 'info'){ const f = $('feedback'); f.dataset.kind = kind; f.textContent = msg; }
+function startTimer(){ if (!t0) t0 = performance.now(); }
+function err(msg){ stepErr[cur]++; totalErr++; say((mode === 'guided' ? '' : '✗ ') + msg, 'bad'); updateStats(); }
+function updateStats(){ $('stStep').textContent = `${Math.min(cur+1, steps.length)}/${steps.length}`; $('stErr').textContent = totalErr; $('stHint').textContent = totalHints;
+  $('progbar').style.width = (cur/steps.length*100) + '%'; }
+function renderSteps(){
+  const nav = $('steps'); nav.innerHTML = '';
+  PHASES.forEach((ph, pi) => { const list = steps.map((s,i) => [s,i]).filter(([s]) => s.phase === pi);
+    const doneN = list.filter(([,i]) => i < cur).length;
+    const sec = document.createElement('div');
+    sec.innerHTML = `<h3><span>${ph}</span><span>${doneN}/${list.length}</span></h3><ol>${list.map(([s,i]) => `<li class="${i < cur ? 'done' : i === cur ? 'cur' : ''}"><span class="n">${i < cur ? '✓' : String(i+1).padStart(2,'0')}</span><span>${s.title}</span><span class="e">${stepErr[i] ? '×' + stepErr[i] : ''}</span></li>`).join('')}</ol>`;
+    nav.appendChild(sec); });
+}
+function refreshGhosts(){ const id = steps[cur]?.id;
+  for (const k in guideGhosts) guideGhosts[k].visible = id === 'guides' && !S.guide[k];
+  for (const k in rollGhosts) rollGhosts[k].visible = id === 'install_rolls' && !S.rolls[k];
+  chainGhost.visible = id === 'chain' && !S.chain; regGhost.visible = id === 'regulator' && !S.reg; }
+function enterStep(){
+  const st = steps[cur]; busy = false;
+  if (!st){ finish(); return; }
+  st._done = new Set(); st._fired = false; S.feeding = false; S.flowing = false; flowRead.visible = false; flowUI = null;
+  $('cPhase').textContent = `Phase ${st.phase+1} · ${PHASES[st.phase]}`;
+  $('cTitle').textContent = `${cur+1}. ${st.title}`;
+  $('cInstr').textContent = mode === 'test' && st.test ? st.test : st.instr;
+  $('cWhyText').textContent = st.why; $('cWhy').style.display = mode === 'test' ? 'none' : ''; $('cWhy').open = false;
+  $('hintBtn').textContent = mode === 'test' ? 'Use a hint (counts)' : 'Show hint';
+  const c = $('controls'); c.innerHTML = ''; panelRefresh = null;
+  st.onEnter?.();
+  if (st.type === 'ui'){ const box = document.createElement('div'); box.style.cssText = 'display:flex;flex-direction:column;gap:10px'; c.appendChild(box); st.ui(box);
+    if (st.confirm !== false){ const b = document.createElement('button'); b.className = 'btn primary'; b.textContent = st.confirmLabel || 'Confirm'; b.onclick = () => tryConfirm(); c.appendChild(b); } }
+  refreshGhosts(); renderSteps(); updateStats();
+  if (autoCam) flyTo(st.view);
+}
+function tryConfirm(){ startTimer(); const st = steps[cur]; const r = st.validate();
+  if (r.ok) complete(); else if (r.soft) say(r.msg, 'info'); else err(r.msg); }
+function complete(){ if (busy) return; busy = true; const st = steps[cur]; stepDone.add(cur);
+  say('✓ ' + (st.done || 'Done.'), 'ok'); lcdDirty = true;
+  cur++; setTimeout(enterStep, 650); updateStats(); }
+function onPartClick(name){
+  startTimer(); const st = steps[cur]; if (!st || busy) return;
+  const label = parts[name].label;
+  if (st.type === 'click' && st.targets.includes(name)){
+    if (st._done.has(name)){ say(`${label}: already done.`); return; }
+    if (st.ordered){ const next = st.targets.find(t => !st._done.has(t)); if (next !== name){ err(`Do the ${parts[next].label.toLowerCase()} first.`); return; } }
+    st._done.add(name); st.act(name); refreshGhosts();
+    if (st._done.size === st.targets.length){ busy = true; setTimeout(() => { busy = false; complete(); }, st.delay ?? 750); }
+    else say(`${label}: done. ${st.targets.length - st._done.size} more to go.`, 'ok');
+    return;
+  }
+  if (st.holdTargets?.includes(name) || (name === 'gunHandle' && st.holdTargets?.includes('gunTrigger'))) return;
+  if (st.type === 'ui') { say(`That's the ${label.toLowerCase()}. This step uses the controls in the panel.`); return; }
+  err(`That's the ${label.toLowerCase()}. It isn't the next step.${mode === 'guided' ? ' Look for the pulsing amber marker.' : ''}`);
+}
+function finish(){
+  tEnd = performance.now(); $('progbar').style.width = '100%';
+  const time = fmtTime(tEnd - (t0 ?? tEnd)), score = Math.max(0, 100 - totalErr*3 - totalHints*2);
+  const rows = steps.map((s,i) => `<tr><td>${i+1}. ${s.title}</td><td class="num">${stepErr[i] || ''}</td><td class="num">${hintsUsed[i] ? '•' : ''}</td></tr>`).join('');
+  $('modalBox').innerHTML = `<span class="eyebrow">${mode === 'test' ? 'Test' : 'Guided practice'} complete</span><h2 id="mTitle">Machine is set up</h2>
+    <div class="big"><div><small>Score</small><b>${score}</b></div><div><small>Errors</small><b>${totalErr}</b></div><div><small>Hints</small><b>${totalHints}</b></div><div><small>Time</small><b>${time}</b></div></div>
+    <p class="note">Score = 100 − 3 per error − 2 per hint. ${$('student').value ? 'Student: ' + escapeHTML($('student').value) : 'Add your name in the sidebar before copying results.'}</p>
+    <div style="overflow-x:auto"><table><thead><tr><th>Step</th><th>Errors</th><th>Hint</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="row"><button class="btn primary" id="copyR">Copy results</button><button class="btn" id="againR">Run again</button><button class="btn" id="testR">Start test mode</button></div>`;
+  $('modal').style.display = 'grid';
+  $('copyR').onclick = async e => { const txt = `MM355 Setup Trainer\nStudent: ${$('student').value || '(no name)'}\nMode: ${mode}\nScore: ${score}\nErrors: ${totalErr}\nHints: ${totalHints}\nTime: ${time}\nDate: ${new Date().toLocaleString()}\n` + steps.map((s,i) => stepErr[i] || hintsUsed[i] ? `  ${i+1}. ${s.title}: ${stepErr[i]} error(s)${hintsUsed[i] ? ', hint' : ''}` : '').filter(Boolean).join('\n');
+    try { await navigator.clipboard.writeText(txt); e.target.textContent = 'Copied'; } catch { e.target.textContent = 'Copy blocked: select and copy the table'; } };
+  $('againR').onclick = () => { $('modal').style.display = 'none'; restart(); };
+  $('testR').onclick = () => { $('modal').style.display = 'none'; setMode('test'); };
+  $('againR').focus();
+}
+const escapeHTML = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+function restart(){
+  S = freshState(); cur = 0; stepErr = steps.map(() => 0); hintsUsed = steps.map(() => false); totalErr = 0; totalHints = 0; t0 = null; tEnd = null; tweens.length = 0;
+  for (const s of steps){ s._fired = false; }
+  hubKnob.position.x = .55; valve.rotation.y = 0; cap.position.set(0, 2.97, -1.65);
+  syncScene(); say(mode === 'test' ? 'Test mode: no markers or explanations. Each wrong action and each hint lowers your score.' : 'Guided mode: click the pulsing amber part, or use the controls in this panel.', 'info');
+  enterStep();
+}
+function setMode(m){ mode = m; $('mGuided').setAttribute('aria-pressed', m === 'guided'); $('mTest').setAttribute('aria-pressed', m === 'test'); restart(); }
+$('mGuided').onclick = () => setMode('guided'); $('mTest').onclick = () => setMode('test');
+$('hintBtn').onclick = () => { const st = steps[cur]; if (!st) return; if (mode === 'test' && !hintsUsed[cur]){ hintsUsed[cur] = true; totalHints++; updateStats(); } else if (mode === 'guided') hintsUsed[cur] = true; say('Hint: ' + st.hint, 'info'); };
+$('focusBtn').onclick = () => steps[cur] && flyTo(steps[cur].view);
+$('overviewBtn').onclick = () => flyTo('overview');
+$('restartBtn').onclick = () => restart();
+$('camBtn').onclick = e => { autoCam = !autoCam; e.currentTarget.setAttribute('aria-pressed', autoCam); };
+$('labelsBtn').onclick = e => { showLabels = !showLabels; e.currentTarget.setAttribute('aria-pressed', showLabels); };
+
+/* ---------------- picking ---------------- */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function visibleChain(o){ for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; }
+function pick(e){ const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1);
+  ray.setFromCamera(ndc, camera); const hits = ray.intersectObjects(scene.children, true);
+  for (const h of hits){ if (!visibleChain(h.object)) continue; if (h.object.isSprite) continue; return h.object.userData.part || null; } return null; }
+let down = null;
+let flowUI = null, grab = null;
+function endGrab(){ if (!grab) return; if (grab.kind === 'trigger'){ S.feeding = false; lcdDirty = true; } grab = null; controls.enabled = true; canvas.style.cursor = ''; }
+canvas.addEventListener('pointerdown', e => { down = {x:e.clientX, y:e.clientY};
+  const st = steps[cur]; if (!st?.holdTargets || busy) return; const p = pick(e);
+  if (st.holdTargets.includes('gunTrigger') && (p === 'gunTrigger' || p === 'gunHandle')){ startTimer(); grab = {kind:'trigger'}; S.feeding = true; lcdDirty = true; controls.enabled = false; canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'grabbing'; }
+  else if (st.holdTargets.includes('flowKnob') && p === 'flowKnob'){ startTimer(); grab = {kind:'knob', y:e.clientY, f:S.flow}; controls.enabled = false; canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'ns-resize'; }
+});
+canvas.addEventListener('pointercancel', endGrab);
+window.addEventListener('pointerup', () => { if (grab) setTimeout(endGrab, 0); });
+canvas.addEventListener('pointerup', e => { if (grab){ down = null; endGrab(); return; } if (!down) return; const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y); down = null; if (moved > 6) return; const p = pick(e); if (p) onPartClick(p); });
+const tipEl = $('tip');
+canvas.addEventListener('pointermove', e => { if (grab?.kind === 'knob'){ S.flow = Math.max(0, Math.min(60, Math.round(grab.f + (grab.y - e.clientY)/4))); flowUI?.(); return; } if (e.buttons) { tipEl.style.display = 'none'; return; } const p = pick(e); const r = stage.getBoundingClientRect();
+  if (p){ tipEl.textContent = parts[p].label; tipEl.style.left = (e.clientX - r.left) + 'px'; tipEl.style.top = (e.clientY - r.top) + 'px'; tipEl.style.display = 'block'; canvas.style.cursor = 'pointer'; }
+  else { tipEl.style.display = 'none'; canvas.style.cursor = ''; } });
+canvas.addEventListener('pointerleave', () => tipEl.style.display = 'none');
+
+/* ---------------- overlay markers / labels ---------------- */
+const overlay = $('overlay'), _b = new THREE.Box3(), _v = new THREE.Vector3();
+function partCenter(name){ _b.makeEmpty(); for (const o of parts[name].objs){ if (!visibleChain(o)) continue; o.updateWorldMatrix(true, true); _b.expandByObject(o); } return _b.isEmpty() ? null : _b.getCenter(new THREE.Vector3()); }
+function toScreen(p){ _v.copy(p).project(camera); if (_v.z > 1) return null; const r = canvas.getBoundingClientRect(); return {x:(_v.x*.5 + .5)*r.width, y:(-_v.y*.5 + .5)*r.height}; }
+const LABEL_PARTS = ['powerSwitch','door','gunKnob','gunConnector','trigger','posTerm','negTerm','valve','regulator','gasFitting','paRear','paFront','inletGuide','midGuide','spool','hub','nozzle','contactTip','lcd','knobs'];
+function drawOverlay(){
+  let html = '';
+  const st = steps[cur];
+  if (mode === 'guided' && st && st.holdTargets && !busy) for (const t of st.holdTargets){ const c = partCenter(t); const s = c && toScreen(c); if (s) html += `<div class="mk" style="left:${s.x}px;top:${s.y}px"></div>`; }
+  if (mode === 'guided' && st && st.type === 'click' && !busy){
+    for (const t of st.targets){ if (st._done?.has(t)) continue; if (st.ordered && st.targets.find(x => !st._done.has(x)) !== t) continue; const c = partCenter(t); const s = c && toScreen(c); if (s) html += `<div class="mk" style="left:${s.x}px;top:${s.y}px"></div>`; }
+  }
+  if (showLabels) for (const n of LABEL_PARTS){ const c = partCenter(n); const s = c && toScreen(c); if (s) html += `<div class="lbl" style="left:${s.x}px;top:${s.y}px">${parts[n].label}</div>`; }
+  overlay.innerHTML = html;
+}
+function updateHighlights(t){
+  const st = steps[cur]; const on = new Set();
+  if (mode === 'guided' && st && st.type === 'click' && !busy) for (const x of st.targets){ if (st._done?.has(x)) continue; if (st.ordered && st.targets.find(y => !st._done.has(y)) !== x) continue; on.add(x); }
+  if (mode === 'guided' && st?.holdTargets && !busy) for (const x of st.holdTargets) on.add(x);
+  const k = .35 + .3*Math.sin(t*5);
+  for (const [name, p] of Object.entries(parts)){ const h = on.has(name);
+    for (const o of p.objs) o.traverse(m => { if (!m.isMesh) return; const mt = m.material;
+      if (mt.userData.ghost){ mt.color.setHex(h ? 0xf2a900 : 0x8a939d); mt.opacity = h ? .3 + .2*Math.sin(t*5) : .22; }
+      else if (mt.emissive) mt.emissive.setRGB(h ? .9*k : 0, h ? .55*k : 0, 0); }); }
+  btnAuto.material.emissive.setHex(S.power && S.autoSet ? 0xf2a900 : 0x000000);
+}
+
+/* ---------------- loop ---------------- */
+function resize(){ const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / Math.max(1, r.height); camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage);
+const clock = new THREE.Clock(); let lastHud = 0;
+function loop(){
+  const dt = Math.min(clock.getDelta(), .1), t = clock.elapsedTime;
+  for (let i = tweens.length - 1; i >= 0; i--){ const w = tweens[i]; w.t = Math.min(1, w.t + dt/(reduceMotion ? w.dur*.35 : w.dur)); w.fn(w.t); if (w.t >= 1){ tweens.splice(i,1); w.done?.(); } }
+  const st = steps[cur]; st?.tick?.call(st, dt);
+  knobL.rotation.z = -(S.volts - 10)/20*4.5; knobR.rotation.z = -(S.wfs - 50)/650*4.5;
+  placeInd();
+  if (lcdDirty){ drawLCD(lcdCanvas); lcdTex.needsUpdate = true; if (panelRefresh){ const c2 = document.getElementById('lcd2'); if (c2) drawLCD(c2); } lcdDirty = false; }
+  updateHighlights(t);
+  controls.update(); renderer.render(scene, camera); drawOverlay();
+  if (t - lastHud > .25){ lastHud = t; $('stTime').textContent = fmtTime(t0 ? ((tEnd ?? performance.now()) - t0) : 0); }
+  requestAnimationFrame(loop);
+}
+document.fonts?.ready.then(() => { lcdDirty = true; });
+resize(); restart(); $('loading').remove(); loop();
+window.__mm = {screenOf:n=>{const c=partCenter(n); const q=c&&toScreen(c); const r=canvas.getBoundingClientRect(); return q&&{x:q.x+r.left,y:q.y+r.top};}, steps, get cur(){ return cur; }, onPartClick, tryConfirm, S:() => S, L};
+</script>
+</body>
+</html>
