@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dynasty 210 TIG Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* layout: fixed instruction rail on the left, 3D shop stage fills the rest; stage stacks on top on narrow screens */
+  --bg:#e9ecef; --panel:#f8f9fa; --raise:#eceff2; --line:#d4d9df; --ink:#1b1f24; --muted:#5d6772;
+  --accent:#f2a900; --accent-text:#9a6500; --accent-ink:#1d1600; --ok:#17784a; --bad:#c7392f;
+  --glass:rgba(248,249,250,.92);
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#app{display:grid;grid-template-columns:390px 1fr;height:100%}
+aside{display:flex;flex-direction:column;gap:0;background:var(--panel);border-right:1px solid var(--line);min-height:0;overflow-y:auto}
+.sec{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.brand h1{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.02em;margin:0;line-height:1;text-transform:uppercase}
+.brand h1 span{color:var(--accent-text)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{background:transparent;border:0;padding:6px 12px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+input[type=text]{background:var(--raise);border:1px solid var(--line);border-radius:6px;padding:6px 9px;flex:1;min-width:120px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat{background:var(--raise);border-radius:6px;padding:6px 8px}
+.stat b{display:block;font-family:var(--mono);font-size:16px;font-variant-numeric:tabular-nums}
+.stat small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.bar{height:6px;background:var(--raise);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+#card{gap:8px}
+#card .phase{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text)}
+#card h2:focus{outline:none}
+#card h2{font-family:var(--display);font-weight:700;font-size:24px;line-height:1.1;margin:0;text-wrap:balance}
+#card .instr{margin:0;font-size:15px}
+#card details{background:var(--raise);border-radius:6px;padding:8px 10px;font-size:13.5px;color:#39424c}
+#card summary{cursor:pointer;font-weight:600;color:var(--ink)}
+#controls{display:flex;flex-direction:column;gap:10px}
+#controls:empty{display:none}
+.btn{background:var(--raise);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-weight:600}
+.btn{background:#fff}
+.btn:hover{border-color:#9aa4af}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.hold{user-select:none;-webkit-user-select:none;touch-action:none}
+.btn.hold.active{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.opts{display:grid;gap:6px}
+.opt{display:flex;gap:10px;align-items:center;text-align:left;background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.opt[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.opt svg{flex:none}
+.opt b{display:block}
+.opt small{color:var(--muted)}
+fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+legend{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.dial{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;background:var(--raise);border-radius:6px;padding:8px 10px}
+.dial .val{font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums;min-width:3ch;text-align:center}
+.dial .lab{font-weight:600}
+.scale{display:flex;gap:2px;height:14px;align-items:end}
+.scale i{flex:1;background:#c5ccd3;border-radius:1px}
+.scale i.on{background:var(--accent)}
+label.slide{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600}
+label.slide span{display:flex;justify-content:space-between}
+label.slide output{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--accent-text)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.meter{height:10px;background:var(--raise);border-radius:5px;position:relative;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#b8733a,#e0a06a);width:0}
+.meter-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--mono)}
+.lcdwrap{display:flex;flex-direction:column;gap:8px}
+.lcdwrap canvas{width:100%;border-radius:6px;border:6px solid #0a0b0d;background:#05070a}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.keys .btn{padding:7px 6px;font-size:13px}
+#feedback{padding:10px 18px;border-bottom:1px solid var(--line);font-size:14px;min-height:44px;display:flex;align-items:center;gap:8px}
+#feedback[data-kind=ok]{color:var(--ok)}
+#feedback[data-kind=bad]{color:var(--bad)}
+#feedback[data-kind=info]{color:var(--muted)}
+#steps{padding:10px 18px 4px;display:flex;flex-direction:column;gap:10px}
+#steps h3{margin:0;font-family:var(--display);font-size:16px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
+#steps ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+#steps li{display:grid;grid-template-columns:22px 1fr auto;gap:6px;font-size:13.5px;color:#66707b;padding:2px 0}
+#steps li .n{font-family:var(--mono);font-size:11px;padding-top:2px}
+#steps li.done{color:#3d4650}
+#steps li.done .n{color:var(--ok)}
+#steps li.cur{color:var(--ink);font-weight:600}
+#steps li.cur .n{color:var(--accent-text)}
+#steps li .e{font-family:var(--mono);font-size:11px;color:var(--bad)}
+footer{padding:12px 18px 18px;font-size:12px;color:var(--muted)}
+footer a{color:var(--muted)}
+main{position:relative;min-width:0;min-height:0;overflow:hidden;background:#d5dade}
+#gl{display:block;width:100%;height:100%;touch-action:none}
+.toolbar{position:absolute;top:12px;right:12px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.toolbar .btn{background:var(--glass);backdrop-filter:blur(4px);font-size:13px;padding:6px 10px}
+#tip{position:absolute;pointer-events:none;background:var(--glass);box-shadow:0 2px 8px rgba(0,0,0,.15);border:1px solid var(--line);border-radius:5px;padding:4px 8px;font-size:12.5px;white-space:nowrap;transform:translate(12px,12px);display:none}
+#overlay{position:absolute;inset:0;pointer-events:none}
+.mk{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:3px solid var(--accent);box-shadow:0 0 0 4px rgba(242,169,0,.35),0 0 0 6px rgba(0,0,0,.25);animation:pulse 1.2s infinite ease-in-out}
+.mk::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--accent)}
+@keyframes pulse{50%{transform:scale(1.25);box-shadow:0 0 0 8px rgba(242,169,0,.08)}}
+.lbl{position:absolute;transform:translate(-50%,-130%);background:var(--glass);border:1px solid var(--line);border-radius:4px;font-size:11.5px;padding:2px 6px;white-space:nowrap;color:var(--ink)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip{position:absolute;left:8px;top:-60px;z-index:20;background:var(--ink);color:#fff;padding:8px 12px;border-radius:6px;font-weight:600}
+.skip:focus{top:8px}
+#gl:focus-visible{outline:3px solid #1f6feb;outline-offset:-3px}
+.kf{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:3px solid #1f6feb;box-shadow:0 0 0 3px #fff}
+.kfl{position:absolute;transform:translate(-50%,28px);background:#1f6feb;color:#fff;font-size:12.5px;font-weight:600;padding:3px 8px;border-radius:4px;white-space:nowrap}
+#kbHint{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1f6feb;color:#fff;font-size:13px;padding:6px 10px;border-radius:6px;display:none;white-space:nowrap}
+#kbHint kbd{color:var(--ink)}
+#gl:focus-visible ~ #kbHint{display:block}
+.pick{display:flex;flex-direction:column;gap:6px;background:var(--raise);border-radius:6px;padding:10px}
+.pick label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.pick select{flex:1;min-width:0;background:#fff;border:1px solid var(--line);border-radius:6px;padding:7px 8px}
+kbd{font-family:var(--mono);font-size:11.5px;background:#fff;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px}
+#loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--mono);font-size:13px}
+.legend{position:absolute;left:12px;bottom:12px;font-size:12px;color:var(--muted);background:var(--glass);padding:6px 9px;border-radius:5px}
+#modal{position:fixed;inset:0;background:rgba(20,24,28,.45);display:none;place-items:center;z-index:10;padding:16px}
+#modal .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:22px;display:flex;flex-direction:column;gap:12px}
+#modal h2{font-family:var(--display);font-size:30px;margin:0;text-transform:uppercase}
+#modal table{width:100%;border-collapse:collapse;font-size:13px}
+#modal td,#modal th{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+#modal td.num{font-family:var(--mono);text-align:right}
+.big{display:flex;gap:10px;flex-wrap:wrap}
+.big div{background:var(--raise);border-radius:8px;padding:10px 14px;flex:1;min-width:100px}
+.big b{display:block;font-family:var(--display);font-size:32px;line-height:1}
+.big small{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+@media (max-width:860px){
+  html,body{height:auto}
+  #app{grid-template-columns:1fr;height:auto}
+  main{order:-1;height:56vh;position:sticky;top:0;z-index:3;border-bottom:1px solid var(--line)}
+  aside{overflow:visible;border-right:0}
+}
+@media (prefers-reduced-motion:reduce){.mk{animation:none}.bar i{transition:none}}
+</style>
+<style>
+.dpanel{background:#23272c;border-radius:10px;padding:10px;display:grid;grid-template-columns:1fr auto;gap:10px}
+.dpanel canvas{width:100%;border-radius:4px;border:4px solid #0b0c0e;background:#000;display:block}
+.dside{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.dside .btn{padding:7px 8px;font-size:13px}
+.softkeys{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.softkeys .btn{background:#2f3540;color:#fff;border-color:#454c57;font-size:12.5px;padding:7px 2px}
+.softkeys .btn:disabled{opacity:.35}
+.knobrow{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.guide{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.guide dt{font-weight:700}
+.guide dd{margin:0 0 6px;color:#39424c}
+.guide .tgt{display:inline-block;font-family:var(--mono);font-size:12px;background:#fff4d6;color:#6b4700;border:1px solid #f2c95a;border-radius:4px;padding:0 5px;margin-left:4px}
+.found{display:flex;flex-wrap:wrap;gap:5px}
+.found span{font-size:12px;background:#e3f5ec;color:#0f5a36;border-radius:10px;padding:2px 8px}
+.infocard{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px}
+.infocard b{display:block;margin-bottom:3px}
+.check{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:14px}
+.check li{display:flex;gap:8px}
+.check li::before{content:"✓";color:var(--ok);font-weight:700}
+.check li.no::before{content:"✗";color:var(--bad)}
+.backlink{font-size:12.5px;color:var(--muted);text-decoration:none;font-weight:600}
+.backlink:hover{color:var(--ink)}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#cTitle">Skip to current step</a>
+<div id="sr" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+<div id="app">
+  <aside>
+    <div class="sec">
+      <a class="backlink" href="index.html">← All machines</a>
+      <div class="brand"><h1>Dynasty<span>210</span> TIG Trainer</h1><span class="eyebrow">GTAW · AVC Welding</span></div>
+      <div class="row">
+        <div class="seg" role="group" aria-label="Mode">
+          <button id="mGuided" aria-pressed="true">Guided</button>
+          <button id="mTest" aria-pressed="false">Test</button>
+        </div>
+        <input type="text" id="student" placeholder="Student name" aria-label="Student name">
+      </div>
+      <div class="bar" aria-hidden="true"><i id="progbar"></i></div>
+      <div class="stats">
+        <div class="stat"><small>Step</small><b id="stStep">1</b></div>
+        <div class="stat"><small>Errors</small><b id="stErr">0</b></div>
+        <div class="stat"><small>Hints</small><b id="stHint">0</b></div>
+        <div class="stat"><small>Time</small><b id="stTime">0:00</b></div>
+      </div>
+    </div>
+    <section class="sec" id="card" aria-labelledby="cTitle">
+      <div class="phase" id="cPhase"></div>
+      <h2 id="cTitle" tabindex="-1"></h2>
+      <p class="instr" id="cInstr"></p>
+      <div id="controls"></div>
+      <details id="cWhy"><summary>Why this matters</summary><div id="cWhyText"></div></details>
+      <div class="row">
+        <button class="btn" id="hintBtn">Show hint</button>
+        <button class="btn" id="focusBtn">Focus view</button>
+      </div>
+      <details><summary>Keyboard shortcuts</summary><div class="note" style="display:flex;flex-direction:column;gap:4px;margin-top:6px">
+        <span>Press <kbd>Tab</kbd> to move into the 3D view, then <kbd>←</kbd> <kbd>→</kbd> select a part and <kbd>Enter</kbd> use it.</span>
+        <span>Control knob or flowmeter knob selected: <kbd>↑</kbd> <kbd>↓</kbd> turn it, <kbd>Enter</kbd> presses the control knob.</span>
+        <span>Camera: <kbd>A</kbd> <kbd>D</kbd> rotate, <kbd>W</kbd> <kbd>S</kbd> tilt, <kbd>+</kbd> <kbd>−</kbd> zoom, <kbd>F</kbd> focus on the step.</span>
+      </div></details>
+    </section>
+    <div id="feedback" data-kind="info" role="status" aria-live="polite">Click parts on the machine. Drag to look around.</div>
+    <nav id="steps" aria-label="Setup sequence"></nav>
+    <footer>Procedure follows the Miller Dynasty 210 Owner's Manual, OM-290023 (sections 5-3, 6-1 to 6-8, 11, 12). Tungsten ranges are from the manual's selection table (§12-1). Amperage targets are typical shop starting points, not manual values; follow your WPS. Screen readouts are simulated for training.</footer>
+  </aside>
+  <main id="stage" aria-label="3D machine view">
+    <canvas id="gl" tabindex="0" role="application" aria-roledescription="3D machine view" aria-label="3D model of the Miller Dynasty 210. Use left and right arrows to select a part, Enter to use it." aria-describedby="kbState"></canvas>
+    <div id="kbState" class="sr-only"></div>
+    <div id="kbHint" aria-hidden="true">Keyboard: <kbd>←</kbd> <kbd>→</kbd> pick a part · <kbd>Enter</kbd> use or press · <kbd>↑</kbd> <kbd>↓</kbd> turn a knob · <kbd>A</kbd><kbd>D</kbd><kbd>W</kbd><kbd>S</kbd> camera</div>
+    <div id="overlay" aria-hidden="true"></div>
+    <div id="tip" aria-hidden="true"></div>
+    <div class="toolbar">
+      <button class="btn" id="rotL" aria-label="Rotate view left">⟲</button>
+      <button class="btn" id="rotR" aria-label="Rotate view right">⟳</button>
+      <button class="btn" id="zIn" aria-label="Zoom in">+</button>
+      <button class="btn" id="zOut" aria-label="Zoom out">−</button>
+      <button class="btn" id="labelsBtn" aria-pressed="false">Part labels</button>
+      <button class="btn" id="camBtn" aria-pressed="true">Auto camera</button>
+      <button class="btn" id="overviewBtn">Overview</button>
+      <button class="btn" id="restartBtn">Restart</button>
+    </div>
+    <div class="legend" aria-hidden="true">Orbit: drag or A/D · Zoom: scroll or +/− · Pan: right-drag</div>
+    <div id="loading">Loading 3D shop…</div>
+  </main>
+</div>
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"><div class="box" id="modalBox"></div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+const $ = id => document.getElementById(id);
+const V = (x,y,z) => new THREE.Vector3(x,y,z);
+
+/* ================= renderer / scene ================= */
+const stage = $('stage'), canvas = $('gl');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.3;
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xd5dade); scene.fog = new THREE.Fog(0xd5dade, 14, 34);
+const camera = new THREE.PerspectiveCamera(40, 1, .02, 80); camera.position.set(2.4, 2.4, 4.2);
+const controls = new OrbitControls(camera, canvas); controls.target.set(.4, 1.2, .6); controls.enableDamping = true; controls.maxPolarAngle = Math.PI*.495; controls.minDistance = .2; controls.maxDistance = 14;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8d8576, 2.1));
+const sun = new THREE.DirectionalLight(0xffffff, 2.8); sun.position.set(4, 7.5, 5); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, {left:-5, right:5, top:5, bottom:-5, near:1, far:24}); sun.shadow.bias = -.0005; scene.add(sun);
+const fill = new THREE.DirectionalLight(0xe6eeff, 1.4); fill.position.set(-5, 3, -4); scene.add(fill);
+const frontL = new THREE.DirectionalLight(0xffffff, 1.2); frontL.position.set(1, 3, 8); scene.add(frontL);
+function mat(color, rough = .5, metal = .2, extra = {}){ return new THREE.MeshStandardMaterial({color, roughness:rough, metalness:metal, ...extra}); }
+const M = { blue:mat(0x1d5fb4,.42,.35), frame:mat(0x1b1e22,.6,.15), dark:mat(0x3b4148,.65,.25), steel:mat(0x80878f,.45,.7), black:mat(0x141619,.75,.05), rubber:mat(0x0f1012,.92,0),
+  brass:mat(0xc9a14a,.35,.9), copper:mat(0xbf703c,.33,.85), table:mat(0x7d858e,.5,.6), plate:mat(0x6f767d,.4,.75), green:mat(0x2f9e5b,.5,.1), gasCyl:mat(0x7c8893,.45,.4), alum:mat(0xbcc1c8,.3,.85),
+  glass:new THREE.MeshStandardMaterial({color:0xd6ebff, transparent:true, opacity:.28, roughness:.1, metalness:0, depthWrite:false}), cup:mat(0xd47b4a,.6,.1), tung:mat(0x9aa0a6,.3,.9) };
+const shade = m => { m.castShadow = true; m.receiveShadow = true; return m; };
+function add(geo, m, x, y, z, parent = scene){ const o = shade(new THREE.Mesh(geo, m)); o.position.set(x, y, z); parent.add(o); return o; }
+const box = (w,h,d,m,x,y,z,p) => add(new THREE.BoxGeometry(w,h,d), m, x,y,z,p);
+const rbox = (w,h,d,r,m,x,y,z,p) => add(new RoundedBoxGeometry(w,h,d,3,r), m, x,y,z,p);
+function cyl(r, len, m, axis, x, y, z, p, seg = 24, r2){ const g = new THREE.CylinderGeometry(r, r2 ?? r, len, seg); if (axis === 'x') g.rotateZ(Math.PI/2); else if (axis === 'z') g.rotateX(Math.PI/2); return add(g, m, x, y, z, p); }
+function tube(pts, r, m, seg = 48, parent = scene){ return shade(add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'centripetal'), seg, r, 8), m, 0, 0, 0, parent)); }
+function setTube(o, pts, r, seg = 48){ o.geometry.dispose(); o.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'centripetal'), seg, r, 8); }
+function sprite(text, {fg = '#fff', bg = null, scale = .07, font = 'bold 64px IBM Plex Sans, sans-serif'} = {}, parent = scene){
+  const c = document.createElement('canvas'); c.width = c.height = 128; const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({map:tex})); s.scale.set(scale, scale, scale);
+  s.userData.draw = t => { const g = c.getContext('2d'); g.clearRect(0,0,128,128); if (bg){ g.fillStyle = bg; g.beginPath(); g.roundRect(6,6,116,116,22); g.fill(); }
+    g.fillStyle = fg; g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, 64, 68); tex.needsUpdate = true; };
+  s.userData.draw(text); parent.add(s); return s; }
+
+/* ================= shop ================= */
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), mat(0xa4abb2, .95, 0)); floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+const grid = new THREE.GridHelper(40, 80, 0x8b929a, 0x959ca4); grid.position.y = .002; scene.add(grid);
+// cart under the machine
+box(1.0, .05, 1.8, M.table, 0, .875, 0); box(.95, .04, 1.7, M.table, 0, .25, 0);
+for (const [x,z] of [[-.45,-.82],[.45,-.82],[-.45,.82],[.45,.82]]){ box(.04, .85, .04, M.steel, x, .45, z); cyl(.06, .05, M.rubber, 'x', x, .06, z, scene, 16); }
+// welding table + workpiece
+box(1.4, .05, 1.0, M.table, 1.9, .88, 1.5);
+for (const [x,z] of [[1.25,1.05],[2.55,1.05],[1.25,1.95],[2.55,1.95]]) box(.05, .86, .05, M.steel, x, .43, z);
+const workpiece = box(.5, .02, .3, M.plate.clone(), 1.95, .915, 1.45);
+const plateTag = sprite('14 ga mild steel', {fg:'#1b1e22', bg:'#ffffff', scale:.3, font:'bold 15px IBM Plex Sans, sans-serif'}); plateTag.position.set(1.95, 1.1, 1.45);
+
+/* ================= Dynasty 210 =================
+   approx. 13.6 in H x 8.6 in W x 19 in D (1 unit ≈ 12.5 in) */
+const BASE = .9, H = 1.09, W = .69, D = 1.52, ZF = D/2 + .052;
+rbox(W, H*.86, D*.9, .03, M.blue, 0, BASE + H/2, 0);
+rbox(W + .05, H, .1, .04, M.frame, 0, BASE + H/2, D/2);
+rbox(W + .05, H, .1, .04, M.frame, 0, BASE + H/2, -D/2);
+box(.12, .05, D*.8, M.frame, 0, BASE + H + .06, 0); for (const z of [-.5,.5]) box(.1, .08, .06, M.frame, 0, BASE + H + .02, z);
+const PX = (px, py, dz = 0) => V(-W/2 + px/800, BASE + H - py/800, ZF + dz); // 552 x 872 px panel
+{ const c = document.createElement('canvas'); c.width = 552; c.height = 872; const g = c.getContext('2d');
+  g.fillStyle = '#202327'; g.fillRect(0,0,552,872); g.fillStyle = '#2b2f35'; g.beginPath(); g.roundRect(18, 40, 516, 420, 22); g.fill();
+  g.fillStyle = '#e8eaed'; g.font = 'bold 20px IBM Plex Sans, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('REMOTE', 130, 615); g.fillText('GAS OUT', 420, 600); g.fillText('WORK', 130, 790); g.fillText('TORCH', 420, 790);
+  g.font = 'bold 40px IBM Plex Sans, sans-serif'; g.fillText('Dynasty 210', 276, 22 + 470);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshStandardMaterial({map:t, roughness:.7})); p.position.set(0, BASE + H/2, ZF - .0005); scene.add(p); }
+// LCD
+const lcdC = document.createElement('canvas'); lcdC.width = 480; lcdC.height = 300; const lcdT = new THREE.CanvasTexture(lcdC); lcdT.colorSpace = THREE.SRGBColorSpace;
+const lcd = new THREE.Mesh(new THREE.PlaneGeometry(.45, .28125), new THREE.MeshBasicMaterial({map:lcdT, toneMapped:false})); lcd.position.copy(PX(230, 205, .009)); scene.add(lcd);
+box(.49, .32, .01, M.black, lcd.position.x, lcd.position.y, ZF + .001);
+// control knob, home, memory, usb, soft keys
+const knob = new THREE.Group(); knob.position.copy(PX(470, 140, .03)); scene.add(knob);
+cyl(.052, .05, M.black, 'z', 0, 0, 0, knob, 28); for (let i = 0; i < 14; i++){ const r = box(.007, .012, .045, M.black, Math.cos(i/14*Math.PI*2)*.053, Math.sin(i/14*Math.PI*2)*.053, 0, knob); r.rotation.z = i/14*Math.PI*2; }
+cyl(.03, .01, M.dark, 'z', 0, 0, .026, knob, 20);
+const homeBtn = rbox(.075, .065, .03, .01, M.black, ...PX(470, 255, .015).toArray());
+const memBtn = rbox(.075, .065, .03, .01, M.black, ...PX(470, 330, .015).toArray());
+for (const [b, ch] of [[homeBtn, '⌂'], [memBtn, '❐']]){ const s = sprite(ch, {fg:'#e8eaed', scale:.05, font:'bold 80px IBM Plex Sans, sans-serif'}); s.position.copy(b.position).add(V(0, 0, .02)); }
+const usb = box(.06, .02, .02, M.steel, ...PX(470, 400, .01).toArray());
+const softKeys = [0,1,2,3,4].map(i => rbox(.07, .05, .03, .01, M.black, ...PX(80 + i*75, 380, .015).toArray()));
+// connections
+const remote = cyl(.045, .04, M.black, 'z', ...PX(130, 560, .02).toArray(), scene, 28);
+for (let i = 0; i < 14; i++){ const a = i/14*Math.PI*2; cyl(.003, .01, M.brass, 'z', remote.position.x + Math.cos(a)*.025, remote.position.y + Math.sin(a)*.025, ZF + .042, scene, 6); }
+const gasOut = cyl(.018, .06, M.brass, 'z', ...PX(420, 560, .03).toArray(), scene, 12);
+const workSock = new THREE.Group(), torchSock = new THREE.Group(); scene.add(workSock, torchSock);
+for (const [g, px] of [[workSock, 130], [torchSock, 420]]){ g.position.copy(PX(px, 720, 0)); cyl(.05, .03, M.black, 'z', 0, 0, .015, g, 28); cyl(.02, .02, M.brass, 'z', 0, 0, .03, g, 16); }
+// rear: main power switch, gas in
+const pwr = new THREE.Group(); pwr.position.set(-.18, BASE + .8, -D/2 - .055); scene.add(pwr); box(.1, .14, .02, M.black, 0, 0, 0, pwr); const rocker = box(.07, .11, .03, mat(0xc0392b,.5,.1), 0, 0, -.015, pwr);
+const sOn = sprite('ON = I', {fg:'#e8eaed', scale:.12, font:'bold 26px IBM Plex Sans, sans-serif'}); sOn.position.set(-.18, BASE + .93, -D/2 - .07);
+const gasIn = cyl(.018, .06, M.brass, 'z', .18, BASE + .25, -D/2 - .08, scene, 12);
+tube([V(-.18, BASE + .2, -D/2 - .06), V(-.18, BASE - .1, -D/2 - .25), V(-.2, .03, -1.3), V(-.2, .03, -3)], .022, M.black, 30);
+
+/* ---- argon cylinder with flowmeter (gas already plumbed to GAS IN) ---- */
+const cylG = new THREE.Group(); cylG.position.set(.75, 0, -.95); scene.add(cylG);
+cyl(.2, 2.4, M.gasCyl, 'y', 0, 1.2, 0, cylG, 28); { const d = add(new THREE.SphereGeometry(.2, 24, 12, 0, Math.PI*2, 0, Math.PI/2), M.gasCyl, 0, 2.4, 0, cylG); d.scale.y = .5; }
+cyl(.035, .12, M.brass, 'y', 0, 2.56, 0, cylG, 14);
+const chain = add(new THREE.TorusGeometry(.21, .008, 6, 40), M.steel, 0, 1.9, 0, cylG); chain.rotation.x = Math.PI/2;
+const regG = new THREE.Group(); regG.position.set(0, 2.6, .08); cylG.add(regG);
+cyl(.04, .1, M.brass, 'z', 0, 0, 0, regG, 14); cyl(.03, .26, M.glass, 'y', 0, .2, .02, regG, 14);
+const ball = add(new THREE.SphereGeometry(.014, 10, 8), M.green, 0, .098, .02, regG);
+const flowKnob = new THREE.Group(); flowKnob.position.set(0, .37, .02); regG.add(flowKnob); cyl(.034, .045, M.black, 'y', 0, 0, 0, flowKnob, 16); box(.05, .008, .008, M.alum, 0, .024, 0, flowKnob);
+{ const c = document.createElement('canvas'); c.width = 128; c.height = 320; const x = c.getContext('2d'); x.fillStyle = '#f4f5f2'; x.fillRect(0,0,128,320); x.fillStyle = '#1b1e22'; x.font = 'bold 22px IBM Plex Sans, sans-serif'; x.textBaseline = 'middle';
+  for (let v = 0; v <= 60; v += 5){ const y = 290 - v/60*250; x.fillRect(0, y-1, v % 10 ? 18 : 30, 2); if (v % 10 === 0) x.fillText(v, 40, y); } x.fillText('CFH', 70, 22);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; const pl = new THREE.Mesh(new THREE.PlaneGeometry(.1, .25), new THREE.MeshStandardMaterial({map:t, roughness:.8})); pl.position.set(.035, .2, -.018); regG.add(pl); }
+{ const tag = sprite('ARGON', {fg:'#1b1e22', bg:'#ffffff', scale:.2, font:'bold 24px IBM Plex Sans, sans-serif'}, cylG); tag.position.set(0, 1.5, .22); }
+tube([V(.75, 2.6, -.85), V(.6, 2.3, -.85), V(.35, 1.4, -.95), V(.18, BASE + .25, -D/2 - .11)], .012, M.green, 40);
+const flowRead = sprite('OFF', {fg:'#1d1600', bg:'#f2a900', scale:.085, font:'bold 46px IBM Plex Mono, monospace'}); flowRead.visible = false;
+
+/* ---- torch, work clamp, foot control (students connect these) ---- */
+const torch = new THREE.Group(); torch.position.set(1.6, .935, 1.75); scene.add(torch);
+cyl(.028, .22, M.black, 'x', 0, 0, 0, torch, 16); cyl(.028, .08, M.black, 'y', .13, -.01, 0, torch, 16); cyl(.022, .05, M.cup, 'y', .13, -.065, 0, torch, 16); cyl(.004, .03, M.tung, 'y', .13, -.1, 0, torch, 8);
+tube([V(1.5, .93, 1.75), V(1.2, .6, 1.85), V(.7, .04, 1.7), V(.42, .3, 1.15), PX(420, 560, .065)], .009, M.green, 50); // torch gas hose already on GAS OUT
+const clamp = new THREE.Group(); clamp.position.set(1.72, .93, 1.45); scene.add(clamp); box(.1, .05, .06, M.copper, 0, 0, 0, clamp); box(.12, .03, .05, M.steel, -.02, .035, 0, clamp);
+const ped = new THREE.Group(); ped.position.set(-.5, .05, 1.6); scene.add(ped); box(.3, .05, .45, M.black, 0, 0, 0, ped); { const top = box(.26, .03, .36, M.dark, 0, .06, 0, ped); top.rotation.x = -.15; }
+function plug(kind){ const g = new THREE.Group(); scene.add(g); if (kind === 'dinse'){ cyl(.04, .1, M.rubber, 'z', 0, 0, .06, g, 16); cyl(.016, .04, M.brass, 'z', 0, 0, -.01, g, 12); } else cyl(.03, .06, M.black, 'z', 0, 0, .03, g, 14); return g; }
+function lead(kind, loose, tail, r){ const L = {g:plug(kind), cable:null, tail, r};
+  L.place = p => { L.g.position.copy(p); const mid = p.y > BASE ? p.clone().add(V(0, -.3, .3)) : p.clone().add(V(0, .02, .2)); const pts = [p.clone().add(V(0, 0, .1)), mid, ...tail];
+    if (L.cable) setTube(L.cable, pts, r, 60); else L.cable = tube(pts, r, M.rubber, 60); };
+  L.place(loose); return L; }
+const torchLead = lead('dinse', V(.35, .06, 1.55), [V(.7, .04, 1.95), V(1.2, .3, 1.95), V(1.48, .93, 1.76)], .016);
+const workLead = lead('dinse', V(-.15, .06, 1.6), [V(.4, .04, 2.0), V(1.3, .3, 1.7), V(1.66, .93, 1.46)], .02);
+const pedLead = lead('pin', V(-.2, .06, 1.3), [V(-.35, .04, 1.5), V(-.45, .06, 1.6)], .01);
+function plugTo(L, p){ const from = L.g.position.clone(); tween(.6, t => L.place(from.clone().lerp(p, ease(t)))); }
+
+/* ================= LCD logic ================= */
+const PROCS = ['AC TIG - HF Start','DC TIG - HF Start','AC TIG - Lift Arc','DC TIG - Lift Arc','AC Stick','DC Stick','Carbon Arc Gouge'];
+const TRIGS = [['Foot','Remote amperage control through the foot pedal.'],['Finger','Remote amperage control through a fingertip control on the torch.'],['Pushbutton Standard','Torch switch: hold to weld, release to stop.'],['Pushbutton Hold (2T)','Torch switch: press and release to start, press and release again to stop.'],['3T','Torch-switch sequence that steps through initial, weld and final amperage (see the sequencer, §6-8).'],['4T','Four-step torch-switch sequence through initial, weld and final amperage (§6-8).'],['4TE','Extended 4T sequence (§6-8).']];
+const WAVES = ['Advanced Square','Soft Square','Sine','Triangle'];
+const DIAS = ['General','.020 in (0.5 mm)','.040 in (1.0 mm)','1/16 in (1.6 mm)','3/32 in (2.4 mm)','1/8 in (3.2 mm)'];
+const MENU_ITEMS = ['Languages','Gas','System Information','Lock','Cooler Power Supply','External Pulse Control','Sleep Timer','USB','Weld Timers'];
+let S;
+function freshState(){ return { power:false, scr:'home', hi:0, edit:false, process:'AC TIG - HF Start', trigger:'Pushbutton Standard', amps:150,
+  pulse:{on:'Off', pps:1.0, peak:50, bkg:25}, ac:{freq:180, bal:60, wave:'Soft Square', adv:'Disabled'}, dia:'3/32 in (2.4 mm)',
+  flow:6, flowing:false, purged:false, visited:{}, conn:{}, tour:new Set(), tq:{} }; }
+const isAC = () => S.process.startsWith('AC');
+const isTIG = () => S.process.includes('TIG');
+const KEYS = () => S.scr === 'home' ? ['Process','Trigger','Pulse','AC Wave','Menu'] : ['Process','Trigger','Pulse','AC Wave','Tungsten'];
+const TITLES = {process:'Process Selection', trigger:'Trigger Selection', pulse:'Pulser', acwave:'AC Wave', tungsten:'Tungsten Selection', menu:'Menu'};
+function rows(){ // [label, value, editable]
+  if (S.scr === 'pulse') return [['Pulser', S.pulse.on, true], ['Pulses Per Second', S.pulse.pps.toFixed(1) + ' PPS', S.pulse.on === 'On'], ['% Peak On Time', S.pulse.peak + ' %', S.pulse.on === 'On'], ['% Background Amps', S.pulse.bkg + ' %', S.pulse.on === 'On']];
+  if (S.scr === 'acwave') return [['AC Frequency', S.ac.freq + ' Hz', isAC()], ['AC Balance', S.ac.bal + ' %', isAC()], ['AC Waveform', S.ac.wave, isAC()], ['Advanced AC', S.ac.adv, isAC()]];
+  if (S.scr === 'tungsten'){ const ac = isAC(); return [['Diameter', S.dia, true], ['Start Polarity', ac ? 'EP' : 'EN', false], ['Start Amperage', (ac ? 30 : 25) + ' A', false], ['Start Time', '120 ms', false], ['Start Slope Time', '120 ms', false], ['Preset Minimum Amperage', '10 A', false]]; }
+  if (S.scr === 'menu') return MENU_ITEMS.map(m => [m, '›', false]);
+  return []; }
+const listLen = () => S.scr === 'process' ? PROCS.length : S.scr === 'trigger' ? TRIGS.length : rows().length;
+function softKey(i){ if (!S.power) return; const k = KEYS()[i];
+  const to = {Process:'process', Trigger:'trigger', Pulse:'pulse', 'AC Wave':'acwave', Menu:'menu', Tungsten:'tungsten'}[k];
+  S.scr = to; S.edit = false; S.hi = to === 'process' ? PROCS.indexOf(S.process) : to === 'trigger' ? TRIGS.findIndex(t => t[0] === S.trigger) : 0; S.visited[to] = true;
+  if (to === 'acwave' && !isAC()) dmsg('AC Wave settings only apply to AC processes. The current process is DC.');
+  dirty = true; }
+function homeKey(){ if (!S.power) return; S.scr = 'home'; S.edit = false; S.visited.homeAfter = !!S.visited.process; dirty = true; }
+function memKey(){ if (!S.power) return; dmsg('Memory/Program: Recall, Save and Delete weld settings in 99 slots (§6-11). Not needed for this lesson.'); }
+function turn(d){ if (!S.power) return; const cl = (v, a, b) => Math.max(a, Math.min(b, v)); knob.rotation.z -= d*.12;
+  if (S.scr === 'home'){ S.amps = cl(S.amps + d, isTIG() ? 1 : 5, 210); }
+  else if (!S.edit){ S.hi = cl(S.hi + Math.sign(d), 0, listLen() - 1); }
+  else { const r = rows()[S.hi][0], cyc = (arr, v) => arr[(arr.indexOf(v) + Math.sign(d) + arr.length) % arr.length];
+    if (r === 'Pulser') S.pulse.on = S.pulse.on === 'On' ? 'Off' : 'On';
+    if (r === 'Pulses Per Second') S.pulse.pps = +cl(S.pulse.pps + d*.1, .1, 500).toFixed(1);
+    if (r === '% Peak On Time') S.pulse.peak = cl(S.pulse.peak + d, 5, 95);
+    if (r === '% Background Amps') S.pulse.bkg = cl(S.pulse.bkg + d, 5, 95);
+    if (r === 'AC Frequency') S.ac.freq = cl(S.ac.freq + d*5, 20, 400);
+    if (r === 'AC Balance') S.ac.bal = cl(S.ac.bal + d, 30, 99);
+    if (r === 'AC Waveform') S.ac.wave = cyc(WAVES, S.ac.wave);
+    if (r === 'Advanced AC') S.ac.adv = S.ac.adv === 'Enabled' ? 'Disabled' : 'Enabled';
+    if (r === 'Diameter') S.dia = cyc(DIAS, S.dia); }
+  dirty = true; }
+function pressKnob(){ if (!S.power) return;
+  if (S.scr === 'process'){ S.process = PROCS[S.hi]; dmsg(`Process selected: ${S.process}.`); }
+  else if (S.scr === 'trigger'){ S.trigger = TRIGS[S.hi][0]; dmsg(`Trigger selected: ${S.trigger}.`); }
+  else if (S.scr === 'home'){ dmsg('On the home screen, just turn the knob to set amperage.'); }
+  else if (S.scr === 'menu'){ dmsg('The Tech menu holds gas, lock, USB and system settings (§6-9). Not needed for this lesson.'); }
+  else { const r = rows()[S.hi]; if (!r[2]){ dmsg(S.scr === 'acwave' ? 'AC Wave settings are locked in DC processes.' : `${r[0]} is set by the tungsten diameter.`); } else { S.edit = !S.edit; } }
+  dirty = true; }
+let dirty = true, panelRefresh = null;
+function dmsg(t){ say(t, 'info'); }
+function drawLCD(c){ const g = c.getContext('2d'), k = c.width/480; g.setTransform(k,0,0,k,0,0);
+  g.fillStyle = '#000'; g.fillRect(0,0,480,300); if (!S.power) return;
+  g.fillStyle = '#16181b'; g.fillRect(0,0,480,300);
+  g.fillStyle = '#2f6fc6'; g.fillRect(0,0,480,34); g.fillStyle = '#fff'; g.font = '600 20px IBM Plex Sans, sans-serif'; g.textBaseline = 'middle';
+  if (S.scr === 'home'){ g.fillText('⌂', 10, 18); g.textAlign = 'right'; g.font = '14px IBM Plex Sans, sans-serif'; g.fillText('Ready', 470, 18); g.textAlign = 'left';
+    g.strokeStyle = '#555'; g.strokeRect(6, 40, 104, 196); g.fillStyle = '#fff'; g.font = 'bold 44px IBM Plex Sans, sans-serif'; g.textAlign = 'center';
+    g.fillText(isAC() ? '∿' : '—', 58, 110); g.font = '13px IBM Plex Sans, sans-serif'; S.process.split(' - ').forEach((l, i) => g.fillText(l, 58, 170 + i*17)); g.fillText(S.dia.split(' (')[0], 58, 212);
+    g.font = 'bold 110px IBM Plex Sans, sans-serif'; g.fillText(String(S.amps), 290, 120); g.font = '600 26px IBM Plex Sans, sans-serif'; g.fillText('Amps', 290, 195);
+    g.font = '13px IBM Plex Sans, sans-serif'; g.fillStyle = '#c9d0d8';
+    const trg = {'Pushbutton Standard':'PB Std', 'Pushbutton Hold (2T)':'PB 2T'}[S.trigger] || S.trigger;
+    const info = [trg, 'Pulse ' + S.pulse.on, isAC() ? `${S.ac.freq} Hz` : 'DC', isAC() ? `BAL ${S.ac.bal}%` : ''];
+    info.forEach((t, i) => g.fillText(t, 160 + i*82, 232)); g.textAlign = 'left';
+  } else {
+    g.textAlign = 'center'; g.fillText(TITLES[S.scr], 240, 18); g.textAlign = 'left';
+    const isList = S.scr === 'process' || S.scr === 'trigger';
+    const items = S.scr === 'process' ? PROCS.map(p => [p, '', true]) : S.scr === 'trigger' ? TRIGS.map(t => [t[0], '', true]) : rows();
+    const top = Math.max(0, Math.min(S.hi - 3, items.length - 7));
+    items.slice(top, top + 7).forEach(([l, v, en], j) => { const i = top + j, y = 46 + j*29;
+      if (i === S.hi){ g.fillStyle = S.edit ? '#f2a900' : '#55606d'; g.fillRect(4, y - 2, isList ? 300 : 472, 27); }
+      const chosen = (S.scr === 'process' && l === S.process) || (S.scr === 'trigger' && l === S.trigger);
+      g.fillStyle = i === S.hi && S.edit ? '#1d1600' : en ? '#fff' : '#6b7480'; g.font = '17px IBM Plex Sans, sans-serif';
+      g.fillText((chosen ? '✓ ' : '   ') + l, 10, y + 12); if (v){ g.textAlign = 'right'; g.fillText(v, 466, y + 12); g.textAlign = 'left'; } });
+    if (S.scr === 'trigger'){ g.fillStyle = '#c9d0d8'; g.font = '13px IBM Plex Sans, sans-serif'; wrap(g, TRIGS[S.hi][1], 318, 120, 150, 17); }
+    if (S.scr === 'process'){ g.fillStyle = '#fff'; g.font = 'bold 56px IBM Plex Sans, sans-serif'; g.textAlign = 'center'; g.fillText(PROCS[S.hi].startsWith('AC') ? '∿' : '—', 390, 130); g.textAlign = 'left'; }
+  }
+  const ks = KEYS(); ks.forEach((t, i) => { const x = 4 + i*95; g.fillStyle = S.scr !== 'home' && TITLES[S.scr] && t === Object.keys(TITLES).find(k => k === S.scr) ? '#16181b' : '#2f6fc6';
+    const active = ({Process:'process', Trigger:'trigger', Pulse:'pulse', 'AC Wave':'acwave', Tungsten:'tungsten', Menu:'menu'})[t] === S.scr;
+    g.fillStyle = active ? '#16181b' : '#2f6fc6'; g.fillRect(x, 268, 90, 30); g.fillStyle = '#fff'; g.font = '600 15px IBM Plex Sans, sans-serif'; g.textAlign = 'center'; g.fillText(t, x + 45, 283); g.textAlign = 'left'; });
+}
+function wrap(g, text, x, y, w, lh){ let line = ''; for (const word of text.split(' ')){ const t = line + word + ' '; if (g.measureText(t).width > w && line){ g.fillText(line, x, y); line = word + ' '; y += lh; } else line = t; } g.fillText(line, x, y); }
+function lcdText(){ if (!S.power) return 'Display off.'; if (S.scr === 'home') return `Home screen. ${S.amps} amps. ${S.process}. Trigger ${S.trigger}. Pulse ${S.pulse.on}.${isAC() ? ` AC frequency ${S.ac.freq} hertz, balance ${S.ac.bal} percent.` : ''} Tungsten ${S.dia}.`;
+  const items = S.scr === 'process' ? PROCS : S.scr === 'trigger' ? TRIGS.map(t => t[0]) : rows().map(r => `${r[0]} ${r[1]}`);
+  return `${TITLES[S.scr]} screen. Highlighted: ${items[S.hi]}${S.edit ? ', editing' : ''}.`; }
+function renderLCD(){ drawLCD(lcdC); lcdT.needsUpdate = true; softKeys.forEach(() => {}); panelRefresh?.(); }
+
+/* ================= parts ================= */
+const parts = {};
+function reg(name, label, objs){ objs = [].concat(objs); parts[name] = {label, objs}; for (const o of objs) o.traverse(m => { if (m.isMesh){ m.userData.part = name; m.material = m.material.clone(); } }); }
+reg('lcd', 'Color LCD display', [lcd]); reg('knob', 'Control knob (turn and press)', [knob]); reg('home', 'Home button', [homeBtn]); reg('memory', 'Memory/Program button', [memBtn]); reg('usb', 'USB port', [usb]);
+softKeys.forEach((k, i) => reg('soft' + i, `Soft key ${i+1}`, [k]));
+reg('remote', 'Remote control receptacle', [remote]); reg('gasOut', 'Gas Out to torch', [gasOut]); reg('workSock', 'Work lead connection', [workSock]); reg('torchSock', 'TIG torch / electrode holder connection', [torchSock]);
+reg('power', 'Main power switch (rear)', [pwr]); reg('gasIn', 'Gas In (rear)', [gasIn]); reg('flowKnob', 'Flowmeter adjust knob (drag up/down)', [flowKnob]);
+reg('torchLead', 'TIG torch power cable', [torchLead.g, torch]); reg('workLead', 'Work lead and clamp', [workLead.g, clamp]); reg('pedalLead', 'Foot control', [pedLead.g, ped]);
+reg('workpiece', 'Workpiece', [workpiece]);
+const softLabel = i => `Soft key ${i+1}: ${S.power ? KEYS()[i] : 'off'}`;
+
+/* ================= tweens ================= */
+const tweens = []; const ease = t => t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+function tween(dur, fn, done){ tweens.push({t:0, dur, fn, done}); }
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================= content ================= */
+const TOUR = {
+  lcd:['Color LCD display', 'Shows the program name and output status in the top header and previews your settings (§6-1). The labels along the bottom tell you what each soft key does right now.'],
+  knob:['Control knob', 'Turn it to adjust the highlighted value (amperage on the home screen) or to move through a menu. Press it to select, or to open and lock in a value (§6-1).'],
+  soft:['Soft keys', 'Five keys under the screen. Their job changes with the screen: on the home screen they open Process, Trigger, Pulse, AC Wave and Menu (§6-1).'],
+  home:['Home button', 'Returns to the home screen from any menu (§6-1).'],
+  memory:['Memory/Program button', 'Opens Recall, Save and Delete for up to 99 stored programs (§6-1, 6-11).'],
+  usb:['USB port', 'Software updates, transferring programs and collecting error codes (§6-1, 6-12).'],
+  remote:['Remote control receptacle', 'Foot, finger or hand controls plug in here (§5-3, 5-10).'],
+  gasOut:['Gas Out to torch', 'Shielding gas leaves the machine here to the torch. Needs an 11/16 in. wrench (§5-3).'],
+  workSock:['Work lead connection', 'The work clamp cable connects here (§5-3).'],
+  torchSock:['TIG torch / electrode holder connection', 'The torch power cable (or a stick holder) connects here. The Dynasty sets polarity electronically from the process you pick; you never swap cables (§5-3).'],
+  power:['Main power switch (rear)', 'Turns the machine on and off (§5-3).'],
+  gasIn:['Gas In (rear)', 'Hose from the regulator/flowmeter. 5/8-18 RH threads, 125 psi maximum (§5-3). Already connected in this shop.']
+};
+const TOUR_KEYS = Object.keys(TOUR);
+const tourPart = n => n.startsWith('soft') ? 'soft' : n;
+const DJOBS = [
+ {id:'steel', short:'14 ga mild steel', thk:'0.075 in.', plate:0x6f767d, procs:['DC TIG - HF Start','DC TIG - Lift Arc'], pol:'DCEN', amps:[60,100], ac:null,
+  ampsNote:'Rule of thumb: about 1 A per .001 in. of thickness, so 0.075 in. ≈ 75 A. With the foot pedal, the panel amperage is your maximum, so set a little above what you expect to use.'},
+ {id:'alum', short:'14 ga aluminum', thk:'0.064 in.', plate:0xd9dde2, procs:['AC TIG - HF Start','AC TIG - Lift Arc'], pol:'AC', amps:[75,120], ac:{freq:[100,150], bal:[65,80]},
+  ampsNote:'Aluminum pulls heat away fast and needs more current than steel of the same thickness. Around 90–110 A maximum is typical for 0.064 in.'},
+ {id:'ss', short:'15 ga stainless', thk:'0.072 in.', plate:0xb7bcc2, procs:['DC TIG - HF Start','DC TIG - Lift Arc'], pol:'DCEN', amps:[50,85], ac:null,
+  ampsNote:'Stainless holds heat and distorts easily, so run roughly 20% less than mild steel: about 60–70 A for 15 ga.'}
+];
+const PHASES = ['General operation', 'Job 1 · 14 ga mild steel', 'Job 2 · 14 ga aluminum', 'Job 3 · 15 ga stainless'];
+const LIVE = ['knob','home','soft0','soft1','soft2','soft3','soft4'];
+const GUIDE = {
+  process:['Process', 'Rotate the knob to highlight a process and press to select (§6-2). Use DC TIG (DCEN) on steel and stainless; use AC TIG on aluminum. The manual says to use DC whenever possible (§12-1). HF Start starts the arc without touching; Lift-Arc touches and lifts (§11-1).'],
+  trigger:['Trigger', 'Foot = remote amperage control through the foot pedal (§6-3). The pedal varies amps up to the panel setting.'],
+  tungsten:['Tungsten', 'Pick the diameter you installed. The Dynasty loads starting parameters to suit it: start polarity, start amps, start time, slope and minimum amps (§6-6).'],
+  acwave:['AC Wave', 'AC Frequency narrows (higher) or widens (lower) the arc cone. AC Balance sets % EN: more EN means more penetration and less cleaning; less EN widens the etched cleaning zone. Set balance for adequate cleaning at the sides and front of the puddle (§6-5).'],
+  amps:['Amperage', 'Turn the knob on the home screen. With the Foot trigger the pedal gives you 0 up to this value.']
+};
+function jobSteps(J, ph){
+  const L = [];
+  L.push({ id:J.id + '_tung', phase:ph, title:'Pick and prepare the tungsten', type:'ui', view:'table',
+    instr:`You're welding ${J.short} (${J.thk}). You have 1/16 in. and 3/32 in. lanthanated tungsten. Pick the size and the grind.`,
+    why:'From the manual\'s selection table (§12-1), for 1.5% lanthanum or 2% ceriated tungsten in argon: 1/16 in. covers 70–150 A on DCEN or AC; 3/32 in. covers 150–200 A on DCEN and 140–235 A on AC. Grind lengthwise, not radially, to a 15°–30° point (30° recommended) with a taper 1.5–4 times the diameter. Blunting the tip slightly helps hold the shape, especially on AC (§12-2).',
+    hint:'Compare your amperage for this job to the ranges for each size.',
+    ui(el){ const o1 = [['1/16','1/16 in. (1.6 mm) lanthanated', '70–150 A DCEN or AC'], ['3/32','3/32 in. (2.4 mm) lanthanated', '150–200 A DCEN · 140–235 A AC']];
+      const o2 = [['point','Ground lengthwise to a point, 30° taper'], ['blunt','Ground lengthwise to a point, tip lightly blunted'], ['radial','Ground around the circumference (radially)'], ['ball','Balled end']];
+      el.innerHTML = `<fieldset><legend>Tungsten size</legend><div class="opts" id="tsz">${o1.map(([k,n,r]) => `<button class="opt" data-k="${k}" aria-pressed="${S.tq[J.id+'sz']===k}"><span><b>${n}</b>${mode === 'test' ? '' : `<small>${r}</small>`}</span></button>`).join('')}</div></fieldset>
+        <fieldset><legend>Tip preparation</legend><div class="opts" id="tgr">${o2.map(([k,n]) => `<button class="opt" data-k="${k}" aria-pressed="${S.tq[J.id+'gr']===k}"><span><b>${n}</b></span></button>`).join('')}</div></fieldset>`;
+      for (const [id, key] of [['#tsz','sz'],['#tgr','gr']]) el.querySelectorAll(id + ' .opt').forEach(b => b.onclick = () => { S.tq[J.id+key] = b.dataset.k; el.querySelectorAll(id + ' .opt').forEach(x => x.setAttribute('aria-pressed', x === b)); }); },
+    validate(){ const sz = S.tq[J.id+'sz'], gr = S.tq[J.id+'gr'];
+      if (!sz || !gr) return {ok:false, msg:'Pick a size and a tip preparation.', soft:true};
+      if (sz === '3/32') return {ok:false, msg:`3/32 in. starts at ${J.pol === 'AC' ? '140' : '150'} A on ${J.pol}. This job runs around ${J.amps[0]}–${J.amps[1]} A, far below that. Use 1/16 in. (70–150 A). A tungsten that is too big for the current gives a wandering, hard-to-start arc.`};
+      if (gr === 'radial') return {ok:false, msg:'Radial grinding leaves rings around the tip that make the arc wander. Grind lengthwise (§12-2).'};
+      if (gr === 'ball') return {ok:false, msg:'A balled end is an old practice for pure tungsten on transformer machines. Pure tungsten is not recommended for inverters; use a sharpened lanthanated tip (§12-1).'};
+      return {ok:true}; },
+    done:'1/16 in. lanthanated, ground lengthwise.' });
+  L.push({ id:J.id + '_proc', phase:ph, title:'Select the process', type:'ui', view:'panel', live:LIVE,
+    instr:`Press the Process soft key, turn the control knob to the right TIG process for ${J.short}, and press the knob to select it.`,
+    test:`Select the welding process for ${J.short}.`,
+    why:GUIDE.process[1], hint:J.pol === 'AC' ? 'Aluminum needs AC for oxide cleaning.' : 'Steel and stainless run DC. Either HF Start or Lift-Arc works.',
+    ui(el){ panelUI(el, ['process']); },
+    validate(){ if (J.procs.includes(S.process)) return {ok:true};
+      if (!S.process.includes('TIG')) return {ok:false, msg:`${S.process} is a stick or gouging process. Pick a TIG process.`};
+      return {ok:false, msg: J.pol === 'AC' ? 'DC TIG won\'t break up aluminum\'s oxide layer. Aluminum needs AC.' : 'AC TIG is for aluminum. On steel and stainless use DC TIG (DCEN); the manual says to use DC whenever possible (§12-1).'}; },
+    get done(){ return `Process: ${S.process}.`; } });
+  L.push({ id:J.id + '_pol', phase:ph, title:'Check polarity', type:'ui', view:'panel',
+    instr:'What output polarity does this process run?',
+    why:'DCEN (electrode negative) puts most of the heat into the work and keeps the tungsten cool: used for steel and stainless. AC alternates EN for penetration and EP for cleaning action that breaks up aluminum oxide; AC Balance sets the % EN. DCEP overheats a tungsten and is not used for TIG welding. On the Dynasty, polarity comes from the process you select, so you never move cables.',
+    hint:J.pol === 'AC' ? 'Aluminum needs cleaning action.' : 'Keep the tungsten cool.',
+    ui(el){ el.innerHTML = `<div class="opts" id="pq">${[['DCEN','DCEN · electrode negative'],['DCEP','DCEP · electrode positive'],['AC','AC · alternating EN and EP']].map(([k,t]) => `<button class="opt" data-k="${k}" aria-pressed="${S.tq[J.id+'pol']===k}"><span><b>${t}</b></span></button>`).join('')}</div>`;
+      el.querySelectorAll('.opt').forEach(b => b.onclick = () => { S.tq[J.id+'pol'] = b.dataset.k; el.querySelectorAll('.opt').forEach(x => x.setAttribute('aria-pressed', x === b)); }); },
+    validate(){ const a = S.tq[J.id+'pol']; if (!a) return {ok:false, msg:'Pick one.', soft:true}; if (a === J.pol) return {ok:true};
+      if (a === 'DCEP') return {ok:false, msg:'DCEP puts most of the heat into the tungsten and melts it back. It is not used for TIG welding here.'};
+      return {ok:false, msg: J.pol === 'AC' ? 'DCEN gives no cleaning action, so the oxide on aluminum stays put. Aluminum is welded on AC.' : 'AC is for aluminum. Steel and stainless are welded DCEN.'}; },
+    done:`Polarity: ${J.pol}.` });
+  L.push({ id:J.id + '_trig', phase:ph, title:'Select the trigger', type:'ui', view:'panel', live:LIVE,
+    instr:'Open Trigger with its soft key and select Foot, so the foot pedal turns the arc on and controls amperage.',
+    test:'Set the trigger for the foot pedal you connected.',
+    why:GUIDE.trigger[1], hint:'Trigger soft key, then the first item.',
+    ui(el){ panelUI(el, ['trigger']); },
+    validate(){ return S.trigger === 'Foot' ? {ok:true} : {ok:false, msg:`Trigger is ${S.trigger}. You connected a foot pedal, so pick Foot.`}; },
+    done:'Trigger: Foot.' });
+  L.push({ id:J.id + '_tmenu', phase:ph, title:'Set the tungsten size', type:'ui', view:'panel', live:LIVE,
+    instr:'From any menu screen, press the Tungsten soft key. Highlight Diameter, press the knob, turn to 1/16 in. (1.6 mm), and press again to lock it in.',
+    test:'Tell the machine which tungsten you installed.',
+    why:GUIDE.tungsten[1], hint:'Diameter must match the 1/16 in. tungsten in the torch.',
+    ui(el){ panelUI(el, ['tungsten']); },
+    validate(){ if (S.dia !== '1/16 in (1.6 mm)') return {ok:false, msg:`Diameter is ${S.dia}. It should match the 1/16 in. tungsten in the torch.`}; if (S.edit) return {ok:false, msg:'Press the knob to lock in the value.', soft:true}; return {ok:true}; },
+    done:'Tungsten diameter: 1/16 in.' });
+  if (J.ac) L.push({ id:J.id + '_ac', phase:ph, title:'Set AC frequency and balance', type:'ui', view:'panel', live:LIVE,
+    instr:'Press AC Wave. Set AC Frequency and AC Balance for 14 ga aluminum, pressing the knob to edit each value and again to lock it in.',
+    test:'Set the AC wave for 14 ga aluminum.',
+    why:GUIDE.acwave[1] + ' The factory settings are 120 Hz and 75% (§6-6, manual figures); the tungsten table is based on a 75% EN balance (§12-1).',
+    hint:`Frequency ${J.ac.freq[0]}–${J.ac.freq[1]} Hz, balance ${J.ac.bal[0]}–${J.ac.bal[1]}% EN.`,
+    ui(el){ panelUI(el, ['acwave']); },
+    validate(){ const e = []; if (S.ac.freq < J.ac.freq[0] || S.ac.freq > J.ac.freq[1]) e.push(`AC Frequency ${S.ac.freq} Hz (${S.ac.freq > J.ac.freq[1] ? 'very tight, narrow arc for thin sheet' : 'too soft and wide'}; aim ${J.ac.freq[0]}–${J.ac.freq[1]})`);
+      if (S.ac.bal < J.ac.bal[0] || S.ac.bal > J.ac.bal[1]) e.push(`AC Balance ${S.ac.bal}% EN (${S.ac.bal < J.ac.bal[0] ? 'too much cleaning: wide etched zone and extra heat in the tungsten' : 'too little cleaning action'}; aim ${J.ac.bal[0]}–${J.ac.bal[1]}%)`);
+      if (S.edit) e.push('press the knob to lock in the value');
+      return e.length ? {ok:false, msg:'Check: ' + e.join('; ') + '.'} : {ok:true}; },
+    get done(){ return `AC Wave: ${S.ac.freq} Hz, ${S.ac.bal}% EN.`; } });
+  L.push({ id:J.id + '_amps', phase:ph, title:'Set the amperage', type:'ui', view:'panel', live:LIVE,
+    instr:'Press Home, then turn the control knob to set the maximum amperage for this job.',
+    test:'Set the welding amperage for this job.',
+    why:J.ampsNote, hint:`Typical: ${J.amps[0]}–${J.amps[1]} A.`,
+    ui(el){ panelUI(el, ['amps']); },
+    validate(){ if (S.scr !== 'home') return {ok:false, msg:'Go back to the home screen with the Home button.', soft:true};
+      if (S.amps < J.amps[0]) return {ok:false, msg:`${S.amps} A is too low for ${J.short}. You won't get a puddle to form.`};
+      if (S.amps > J.amps[1]) return {ok:false, msg:`${S.amps} A is too high for ${J.short} and the 1/16 in. tungsten. Expect burn-through.`}; return {ok:true}; },
+    get done(){ return `Amperage: ${S.amps} A.`; } });
+  L.push({ id:J.id + '_gas', phase:ph, title:'Set the argon flow', type:'ui', view:'flow', hold:['flowKnob'],
+    instr:'Start the gas flowing, then drag the knob on top of the flowmeter until the ball reads in range.',
+    test:'Set the shielding gas flow.',
+    why:'The manual lists typical argon flow as 10–25 CFH (§12-1). Too little gives porosity and a gray, sugary weld; too much causes turbulence that pulls air into the shield.',
+    hint:'10–25 CFH. Read the scale at the center of the ball.',
+    ui(el){ el.innerHTML = `<button class="btn primary" id="gasT" aria-pressed="false">Start gas flow</button>
+      <p class="note">In the shop you'd use the torch purge in the Gas menu or tap the pedal with the torch away from the work. In the sim this button keeps gas flowing so your hand is free for the flowmeter knob.</p>
+      <label class="slide" for="flR"><span>Or use this slider <output id="flO"></output></span><input type="range" id="flR" min="0" max="60" step="1"></label>`;
+      const r = el.querySelector('#flR'), o = el.querySelector('#flO'), b = el.querySelector('#gasT');
+      flowUI = () => { r.value = S.flow; o.textContent = S.flowing ? `${S.flow} CFH` : `knob at ${S.flow} · no flow`; r.setAttribute('aria-valuetext', o.textContent); }; flowUI();
+      r.oninput = () => { S.flow = +r.value; flowUI(); };
+      b.onclick = () => { S.flowing = !S.flowing; if (S.flowing) S.purged = true; b.textContent = S.flowing ? 'Stop gas flow' : 'Start gas flow'; b.setAttribute('aria-pressed', S.flowing); flowUI(); }; },
+    validate(){ if (!S.purged) return {ok:false, msg:'Start the gas flowing so you can read the flowmeter.', soft:true};
+      if (S.flow < 10) return {ok:false, msg:`${S.flow} CFH is too low. Expect porosity.`}; if (S.flow > 25) return {ok:false, msg:`${S.flow} CFH is too high. Turbulence pulls air into the shield.`}; return {ok:true}; },
+    get done(){ return `Argon at ${S.flow} CFH.`; } });
+  L.push({ id:J.id + '_check', phase:ph, title:'Pre-weld check', type:'ui', view:'overview',
+    instr:`Review the setup for ${J.short}.`,
+    why:'A last look catches the common first-weld problems: wrong process, wrong tungsten setting, no gas.', hint:'Everything should already be checked.',
+    onEnter(){ workpiece.material.color.setHex(J.plate); workpiece.material.metalness = J.id === 'steel' ? .75 : .9; plateTag.userData.draw(J.short); },
+    ui(el){ const c = checks(J); el.innerHTML = `<ul class="check">${c.map(([ok, t]) => `<li class="${ok ? '' : 'no'}">${t}</li>`).join('')}</ul>`; },
+    validate(){ const bad = checks(J).filter(x => !x[0]); return bad.length ? {ok:false, msg:bad[0][1]} : {ok:true}; },
+    confirmLabel: ph < 3 ? 'Next job' : 'Finish', done:`${J.short}: ready to weld.` });
+  return L;
+}
+function checks(J){ return [[J.procs.includes(S.process), `Process: ${S.process} (${J.pol}).`], [S.trigger === 'Foot', 'Trigger: Foot, pedal on the Remote receptacle.'], [S.dia === '1/16 in (1.6 mm)', 'Tungsten: 1/16 in. lanthanated, menu set to match.'],
+  ...(J.ac ? [[S.ac.freq >= J.ac.freq[0] && S.ac.freq <= J.ac.freq[1] && S.ac.bal >= J.ac.bal[0] && S.ac.bal <= J.ac.bal[1], `AC: ${S.ac.freq} Hz, ${S.ac.bal}% EN.`]] : []),
+  [S.amps >= J.amps[0] && S.amps <= J.amps[1], `Amperage: ${S.amps} A maximum.`], [S.flow >= 10 && S.flow <= 25, `Argon: ${S.flow} CFH.`]]; }
+function panelUI(el, keys){
+  el.innerHTML = `<div class="dpanel" role="group" aria-label="Dynasty front panel controls">
+    <canvas id="lcd2" width="480" height="300" role="img" aria-label="Display"></canvas>
+    <div class="dside"><button class="btn" id="kHome">⌂ Home</button><div class="knobrow"><button class="btn" id="kL" aria-label="Turn knob left one click">⟲</button><button class="btn" id="kR" aria-label="Turn knob right one click">⟳</button><button class="btn" id="kLL" aria-label="Turn knob left ten clicks">⟲×10</button><button class="btn" id="kRR" aria-label="Turn knob right ten clicks">⟳×10</button></div><button class="btn primary" id="kP">Press knob</button></div>
+    <div class="softkeys">${[0,1,2,3,4].map(i => `<button class="btn" data-i="${i}"></button>`).join('')}</div></div>
+    <p class="sr-only" aria-live="polite" id="lcdLive"></p>
+    <p class="note">Same controls as the machine: the soft keys, control knob and Home button on the 3D model work too. Drag the knob up or down on the machine to turn it.</p>
+    <dl class="guide">${keys.map(k => `<dt>${GUIDE[k][0]}</dt><dd>${GUIDE[k][1]}</dd>`).join('')}</dl>`;
+  const c2 = el.querySelector('#lcd2'), live = el.querySelector('#lcdLive');
+  const act = fn => () => { fn(); renderLCD(); setTimeout(() => live.textContent = lcdText(), 30); };
+  el.querySelector('#kHome').onclick = act(homeKey); el.querySelector('#kL').onclick = act(() => turn(-1)); el.querySelector('#kR').onclick = act(() => turn(1)); el.querySelector('#kLL').onclick = act(() => turn(-10)); el.querySelector('#kRR').onclick = act(() => turn(10)); el.querySelector('#kP').onclick = act(pressKnob);
+  el.querySelectorAll('.softkeys .btn').forEach(b => b.onclick = act(() => softKey(+b.dataset.i)));
+  panelRefresh = () => { if (!el.isConnected){ panelRefresh = null; return; } drawLCD(c2); c2.setAttribute('aria-label', lcdText()); const ks = KEYS();
+    el.querySelectorAll('.softkeys .btn').forEach((b, i) => { b.textContent = S.power ? ks[i] : '—'; b.disabled = !S.power; }); };
+  renderLCD();
+}
+const STEPS = [
+ { id:'tour', phase:0, title:'Learn the controls', type:'click', targets:[...TOUR_KEYS.filter(k => k !== 'soft'), 'soft0'], anyOrder:true, view:'front', info:true,
+   instr:'Click each control and connection on the machine to learn what it does: front panel, connections, and the two items on the rear.',
+   test:'Identify every control and connection on the front and rear of the machine.',
+   why:'Knowing where everything is and what it does is the base for every setup. Rotate the view to reach the main power switch and Gas In on the back.',
+   hint:'Start with the screen and knob, then the four connections, then rotate around to the back.',
+   ui:true, done:'You know your way around the machine.' },
+ { id:'conn_torch', phase:0, title:'Connect the TIG torch', type:'click', targets:['torchSock'], view:'front',
+   instr:'With the power off, plug the torch power cable into the torch connection and twist it clockwise until it is snug. The torch gas hose is already on Gas Out.',
+   test:'Connect the TIG torch power cable.',
+   why:'§5-3: turn off power before connecting to the weld output. A loose connector heats up and can damage the socket.', hint:'Lower right of the front panel.',
+   act(){ plugTo(torchLead, PX(420, 720, .03)); S.conn.torch = true; }, done:'Torch connected.' },
+ { id:'conn_work', phase:0, title:'Connect the work lead', type:'click', targets:['workSock'], view:'front',
+   instr:'Plug the work lead into the work connection and twist it snug. The clamp is already on the table.',
+   why:'The work lead completes the welding circuit through the table and workpiece.', hint:'Lower left of the front panel.',
+   act(){ plugTo(workLead, PX(130, 720, .03)); S.conn.work = true; }, done:'Work lead connected.' },
+ { id:'conn_pedal', phase:0, title:'Connect the foot control', type:'click', targets:['remote'], view:'front',
+   instr:'Plug the foot control into the Remote receptacle and twist the collar to lock it.',
+   why:'§5-10. With the Foot trigger selected, the pedal turns the arc on and sets amperage up to the panel value.', hint:'Upper left of the connection area.',
+   act(){ plugTo(pedLead, PX(130, 560, .06)); S.conn.pedal = true; }, done:'Foot control connected.' },
+ { id:'power_on', phase:0, title:'Turn the machine on', type:'click', targets:['power'], view:'rear',
+   instr:'Turn on the main power switch on the rear panel.',
+   why:'§5-3: the rear main power switch energizes the machine. The screen boots to the home screen.', hint:'Red rocker on the back.',
+   act(){ setPower(true); }, done:'Power on. Home screen is up.' },
+ { id:'nav', phase:0, title:'Practice the menus', type:'ui', view:'panel', live:LIVE, confirm:false,
+   instr:'Press the Process soft key to open Process Selection. Turn the control knob to scroll through the processes without pressing it. Then press Home to go back.',
+   why:'Every setup uses the same pattern: a soft key opens a menu, the knob scrolls, pressing the knob selects or edits, and Home returns you to the main screen (§6-1, 6-2).',
+   hint:'Soft key 1 under the screen is Process.',
+   ui(el){ panelUI(el, ['process']); S.visited = {}; },
+   tick(){ if (S.visited.process && S.visited.scrolled && S.scr === 'home' && !this._fired){ this._fired = true; complete(); } },
+   done:'You can get around the menus.' },
+ ...jobSteps(DJOBS[0], 1), ...jobSteps(DJOBS[1], 2), ...jobSteps(DJOBS[2], 3)
+];
+STEPS.forEach(s => { if (s.id.endsWith('_tung')) { const J = DJOBS.find(j => s.id.startsWith(j.id)); s.onEnter = () => { workpiece.material.color.setHex(J.plate); plateTag.userData.draw(J.short); }; } });
+function setPower(on){ S.power = on; rocker.rotation.x = on ? .25 : -.25; S.scr = 'home'; dirty = true; }
+
+/* ================= views ================= */
+const VIEWS = { overview:[[2.3,2.3,4.0],[.5,1.2,.7]], front:[[.55,1.75,2.6],[0,1.45,.8]], panel:[[.2,1.75,1.9],[0,1.75,.8]], rear:[[1.0,1.9,-2.4],[0,1.6,-.8]],
+  table:[[1.9,1.6,3.2],[1.7,.95,1.6]], flow:[[1.25,3.1,.35],[.75,2.82,-.95]] };
+function flyTo(name){ const v = VIEWS[name]; if (!v) return; const p0 = camera.position.clone(), t0 = controls.target.clone(), p1 = V(...v[0]), t1 = V(...v[1]);
+  if (reduceMotion){ camera.position.copy(p1); controls.target.copy(t1); return; } tween(1.0, k => { const e = ease(k); camera.position.lerpVectors(p0, p1, e); controls.target.lerpVectors(t0, t1, e); }); }
+function orbit(dAz, dEl = 0, zoom = 1){ const off = camera.position.clone().sub(controls.target); const sph = new THREE.Spherical().setFromVector3(off);
+  sph.theta += dAz; sph.phi = Math.max(.1, Math.min(Math.PI*.495, sph.phi + dEl)); sph.radius = Math.max(controls.minDistance, Math.min(controls.maxDistance, sph.radius*zoom)); camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph)); }
+
+/* ================= flow ================= */
+let steps = STEPS, firstEnter = true, mode = 'guided', cur = 0, stepErr = [], hintsUsed = [], totalErr = 0, totalHints = 0, t0 = null, tEnd = null, autoCam = true, showLabels = false, busy = false, flowUI = null;
+const fmtTime = ms => { const s = Math.floor(ms/1000); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; };
+function say(msg, kind = 'info'){ const f = $('feedback'); f.dataset.kind = kind; f.textContent = msg; }
+function announce(t){ const r = $('sr'); r.textContent = ''; setTimeout(() => r.textContent = t, 60); }
+const startTimer = () => { if (!t0) t0 = performance.now(); };
+function err(msg){ stepErr[cur]++; totalErr++; say((mode === 'guided' ? '' : '✗ ') + msg, 'bad'); updateStats(); }
+function updateStats(){ $('stStep').textContent = `${Math.min(cur+1, steps.length)}/${steps.length}`; $('stErr').textContent = totalErr; $('stHint').textContent = totalHints; $('progbar').style.width = (cur/steps.length*100) + '%'; }
+function renderSteps(){ const nav = $('steps'); nav.innerHTML = '';
+  PHASES.forEach((ph, pi) => { const list = steps.map((s, i) => [s, i]).filter(([s]) => s.phase === pi);
+    const sec = document.createElement('div'); sec.innerHTML = `<h3><span>${ph}</span><span>${list.filter(([,i]) => i < cur).length}/${list.length}</span></h3><ol>${list.map(([s,i]) => `<li class="${i < cur ? 'done' : i === cur ? 'cur' : ''}"><span class="n">${i < cur ? '✓' : String(i+1).padStart(2,'0')}</span><span>${s.title}</span><span class="e">${stepErr[i] ? '×' + stepErr[i] : ''}</span></li>`).join('')}</ol>`; nav.appendChild(sec); }); }
+function renderTour(el){ const found = [...S.tour]; el.innerHTML = `<div class="found" aria-label="Found">${found.map(k => `<span>✓ ${TOUR[k][0]}</span>`).join('')}</div>
+  <p class="note">${found.length} of ${TOUR_KEYS.length} found.</p>${S.lastTour ? `<div class="infocard" aria-live="polite"><b>${TOUR[S.lastTour][0]}</b>${TOUR[S.lastTour][1]}</div>` : ''}`; }
+function enterStep(){
+  const st = steps[cur]; busy = false; if (!st){ finish(); return; }
+  const ae = document.activeElement, lost = !ae || ae === document.body || $('controls').contains(ae);
+  st._done = new Set(); st._fired = false; S.flowing = false; flowUI = null; panelRefresh = null; flowRead.visible = false; S.edit = false;
+  st.onEnter?.();
+  $('cPhase').textContent = `Phase ${st.phase+1} · ${PHASES[st.phase]}`; $('cTitle').textContent = `${cur+1}. ${st.title}`;
+  $('cInstr').textContent = mode === 'test' && st.test ? st.test : st.instr;
+  $('cWhyText').textContent = st.why; $('cWhy').style.display = mode === 'test' ? 'none' : ''; $('cWhy').open = false;
+  $('hintBtn').textContent = mode === 'test' ? 'Use a hint (counts)' : 'Show hint';
+  const c = $('controls'); c.innerHTML = '';
+  if (st.id === 'tour') renderTour(c);
+  else if (st.type === 'ui'){ const b = document.createElement('div'); b.style.cssText = 'display:flex;flex-direction:column;gap:10px'; c.appendChild(b); st.ui(b);
+    if (st.confirm !== false){ const k = document.createElement('button'); k.className = 'btn primary'; k.textContent = st.confirmLabel || 'Confirm'; k.onclick = tryConfirm; c.appendChild(k); } }
+  renderSteps(); updateStats(); refreshKb(); dirty = true;
+  announce(`Step ${cur+1} of ${steps.length}: ${st.title}. ${$('cInstr').textContent}`);
+  if (lost && document.activeElement !== canvas && !firstEnter) $('cTitle').focus(); firstEnter = false;
+  if (autoCam) flyTo(st.view);
+}
+function tryConfirm(){ startTimer(); const st = steps[cur]; const r = st.validate(); if (r.ok) complete(); else if (r.soft) say(r.msg, 'info'); else err(r.msg); }
+function complete(){ if (busy) return; busy = true; const st = steps[cur]; say('✓ ' + (st.done || 'Done.'), 'ok'); cur++; setTimeout(enterStep, 650); updateStats(); }
+function liveAction(name){ if (name === 'knob'){ pressKnob(); } else if (name === 'home'){ homeKey(); } else if (name.startsWith('soft')){ softKey(+name.slice(4)); } renderLCD(); }
+function onPartClick(name){
+  startTimer(); const st = steps[cur]; if (!st || busy || !parts[name]) return; const label = parts[name].label;
+  if (st.id === 'tour'){ const k = tourPart(name); if (TOUR[k]){ if (!S.tour.has(k)){ S.tour.add(k); } S.lastTour = k; renderTour($('controls')); announce(`${TOUR[k][0]}. ${TOUR[k][1]}`);
+      if (S.tour.size === TOUR_KEYS.length){ busy = true; setTimeout(() => { busy = false; complete(); }, 900); } else say(`Found: ${TOUR[k][0]}. ${TOUR_KEYS.length - S.tour.size} to go.`, 'ok'); }
+    else say(`${label}: not part of the machine tour.`); return; }
+  if (st.live?.includes(name)){ if (!S.power){ say('The machine is off.'); return; } liveAction(name); return; }
+  if (st.hold?.includes(name)) return;
+  const leadFor = {conn_torch:'torchLead', conn_work:'workLead', conn_pedal:'pedalLead'}[st.id];
+  if (leadFor === name){ say(`Got the ${label.toLowerCase()}. Now click where it plugs in on the machine.`, 'info'); return; }
+  if (st.type === 'click' && st.targets.includes(name)){ if (st._done.has(name)) return; st._done.add(name); st.act(name); if (st._done.size === st.targets.length){ busy = true; setTimeout(() => { busy = false; complete(); }, 750); } return; }
+  if (LIVE.includes(name)){ if (S.power) { liveAction(name); say(`${label}. You'll use the panel in the setup steps.`); } else say(`${label}. The machine is off.`); return; }
+  if (st.type === 'ui'){ say(`That's the ${label.toLowerCase()}. This step uses the controls in the panel.`); return; }
+  err(`That's the ${label.toLowerCase()}. It isn't the next step.${mode === 'guided' ? ' Look for the pulsing amber marker.' : ''}`);
+}
+function finish(){
+  tEnd = performance.now(); $('progbar').style.width = '100%';
+  const time = fmtTime(tEnd - (t0 ?? tEnd)), score = Math.max(0, 100 - totalErr*3 - totalHints*2);
+  const rows_ = steps.map((s, i) => `<tr><td>${i+1}. ${s.title} <small>(${PHASES[s.phase].split(' · ')[1] || 'General'})</small></td><td class="num">${stepErr[i] || ''}</td><td class="num">${hintsUsed[i] ? '•' : ''}</td></tr>`).join('');
+  $('modalBox').innerHTML = `<span class="eyebrow">${mode === 'test' ? 'Test' : 'Guided practice'} complete</span><h2 id="mTitle">All three setups done</h2><button class="btn" id="closeM" style="align-self:flex-start">Close (Esc)</button>
+    <div class="big"><div><small>Score</small><b>${score}</b></div><div><small>Errors</small><b>${totalErr}</b></div><div><small>Hints</small><b>${totalHints}</b></div><div><small>Time</small><b>${time}</b></div></div>
+    <p class="note">Score = 100 − 3 per error − 2 per hint. ${$('student').value ? 'Student: ' + esc($('student').value) : 'Add your name in the sidebar before copying results.'}</p>
+    <div style="overflow-x:auto"><table><caption class="sr-only">Errors and hints by step</caption><thead><tr><th scope="col">Step</th><th scope="col">Errors</th><th scope="col">Hint</th></tr></thead><tbody>${rows_}</tbody></table></div>
+    <div class="row"><button class="btn primary" id="copyR">Copy results</button><button class="btn" id="againR">Run again</button><button class="btn" id="testR">Start test mode</button></div>`;
+  $('modal').style.display = 'grid';
+  $('copyR').onclick = async e => { const txt = `Dynasty 210 TIG Trainer\nStudent: ${$('student').value || '(no name)'}\nMode: ${mode}\nScore: ${score}\nErrors: ${totalErr}\nHints: ${totalHints}\nTime: ${time}\nDate: ${new Date().toLocaleString()}\n` + steps.map((s, i) => stepErr[i] || hintsUsed[i] ? `  ${i+1}. ${s.title} (${PHASES[s.phase]}): ${stepErr[i]} error(s)${hintsUsed[i] ? ', hint' : ''}` : '').filter(Boolean).join('\n');
+    try { await navigator.clipboard.writeText(txt); e.target.textContent = 'Copied'; } catch { e.target.textContent = 'Copy blocked: select and copy the table'; } };
+  $('closeM').onclick = closeModal; $('againR').onclick = () => { closeModal(); restart(); }; $('testR').onclick = () => { closeModal(); setTrainMode('test'); }; $('againR').focus(); }
+function closeModal(){ $('modal').style.display = 'none'; $('restartBtn').focus(); }
+$('modal').addEventListener('keydown', e => { if (e.key === 'Escape'){ e.preventDefault(); closeModal(); return; } if (e.key !== 'Tab') return;
+  const f = [...$('modal').querySelectorAll('button,[href],input')]; const a = f[0], z = f[f.length-1];
+  if (e.shiftKey && document.activeElement === a){ e.preventDefault(); z.focus(); } else if (!e.shiftKey && document.activeElement === z){ e.preventDefault(); a.focus(); } });
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+function restart(){ S = freshState(); cur = 0; stepErr = steps.map(() => 0); hintsUsed = steps.map(() => false); totalErr = 0; totalHints = 0; t0 = null; tEnd = null; tweens.length = 0;
+  for (const s of steps) s._fired = false; setPower(false);
+  torchLead.place(V(.35, .06, 1.55)); workLead.place(V(-.15, .06, 1.6)); pedLead.place(V(-.2, .06, 1.3)); workpiece.material.color.setHex(DJOBS[0].plate); plateTag.userData.draw(DJOBS[0].short);
+  say(mode === 'test' ? 'Test mode: no markers or explanations. Wrong actions and hints lower your score.' : 'Guided mode: click the pulsing amber parts, or use the panel controls in this sidebar.', 'info'); enterStep(); }
+function setTrainMode(m){ mode = m; $('mGuided').setAttribute('aria-pressed', m === 'guided'); $('mTest').setAttribute('aria-pressed', m === 'test'); restart(); }
+$('mGuided').onclick = () => setTrainMode('guided'); $('mTest').onclick = () => setTrainMode('test');
+$('hintBtn').onclick = () => { const st = steps[cur]; if (!st) return; if (mode === 'test' && !hintsUsed[cur]){ hintsUsed[cur] = true; totalHints++; updateStats(); } else if (mode === 'guided') hintsUsed[cur] = true; say('Hint: ' + st.hint, 'info'); };
+$('focusBtn').onclick = () => steps[cur] && flyTo(steps[cur].view); $('overviewBtn').onclick = () => flyTo('overview'); $('restartBtn').onclick = () => restart();
+$('camBtn').onclick = e => { autoCam = !autoCam; e.currentTarget.setAttribute('aria-pressed', autoCam); };
+$('labelsBtn').onclick = e => { showLabels = !showLabels; e.currentTarget.setAttribute('aria-pressed', showLabels); };
+$('rotL').onclick = () => orbit(-.26); $('rotR').onclick = () => orbit(.26); $('zIn').onclick = () => orbit(0,0,.8); $('zOut').onclick = () => orbit(0,0,1.25);
+
+/* ================= keyboard ================= */
+const PART_ORDER = ['lcd','knob','soft0','soft1','soft2','soft3','soft4','home','memory','usb','remote','gasOut','workSock','torchSock','power','gasIn','torchLead','workLead','pedalLead','workpiece','flowKnob'];
+let kbIdx = -1, kbList = [];
+function nextTargets(){ const st = steps[cur]; if (!st) return []; if (st.id === 'tour') return st.targets.filter(t => !S.tour.has(tourPart(t))); if (st.hold) return st.hold; if (st.live) return panelTargets(st); if (st.type !== 'click') return []; return st.targets.filter(t => !st._done?.has(t)); }
+function panelTargets(st){ // point at the next sensible control for guided highlighting
+  const want = {_proc:'process', _trig:'trigger', _tmenu:'tungsten', _ac:'acwave'}; const k = Object.keys(want).find(s => st.id.endsWith(s));
+  if (st.id === 'nav') return S.visited.process ? (S.visited.scrolled ? ['home'] : ['knob']) : ['soft0'];
+  if (st.id.endsWith('_amps')) return S.scr === 'home' ? ['knob'] : ['home'];
+  if (k){ const scr = want[k]; if (S.scr !== scr){ const ks = S.scr === 'home' ? ['Process','Trigger','Pulse','AC Wave','Menu'] : ['Process','Trigger','Pulse','AC Wave','Tungsten'];
+      const lbl = {process:'Process', trigger:'Trigger', tungsten:'Tungsten', acwave:'AC Wave'}[scr]; const i = ks.indexOf(lbl); return i >= 0 ? ['soft' + i] : ['soft0']; } return ['knob']; }
+  return ['knob']; }
+function refreshKb(){ const keep = kbList[kbIdx]; kbList = PART_ORDER.filter(n => parts[n] && parts[n].objs.some(o => visibleChain(o))); kbIdx = keep ? kbList.indexOf(keep) : kbIdx; if (kbIdx >= kbList.length) kbIdx = kbList.length - 1; }
+const partLabel = n => n.startsWith('soft') ? softLabel(+n.slice(4)) : parts[n].label;
+function kbAnnounce(){ const n = kbList[kbIdx]; const tag = mode === 'guided' && n && nextTargets().includes(n) ? ', next' : '';
+  $('kbState').textContent = n ? `Selected: ${partLabel(n)}. ${kbIdx+1} of ${kbList.length}.` : ''; announce(n ? `${partLabel(n)}${tag}, ${kbIdx+1} of ${kbList.length}` : ''); }
+canvas.addEventListener('keydown', e => { const st = steps[cur], n = kbList[kbIdx], k = e.key;
+  if (k === 'ArrowRight' || k === 'ArrowLeft'){ e.preventDefault(); refreshKb(); if (!kbList.length) return; kbIdx = kbIdx < 0 ? 0 : (kbIdx + (k === 'ArrowRight' ? 1 : -1) + kbList.length) % kbList.length; kbAnnounce(); return; }
+  if ((k === 'ArrowUp' || k === 'ArrowDown') && n === 'knob' && S.power){ e.preventDefault(); turn(k === 'ArrowUp' ? (e.shiftKey ? 10 : 1) : (e.shiftKey ? -10 : -1)); if (S.scr !== 'home') S.visited.scrolled = true; renderLCD(); announce(lcdText()); return; }
+  if ((k === 'ArrowUp' || k === 'ArrowDown') && n === 'flowKnob' && st?.hold){ e.preventDefault(); S.flow = Math.max(0, Math.min(60, S.flow + (k === 'ArrowUp' ? 1 : -1)*(e.shiftKey ? 5 : 1))); flowUI?.(); announce(`${S.flow} CFH${S.flowing ? '' : ', gas not flowing'}`); return; }
+  if (k === 'Enter' || k === ' '){ e.preventDefault(); if (!n){ announce('No part selected. Use the left and right arrow keys.'); return; } if (n === 'flowKnob'){ announce('Flowmeter knob. Use the up and down arrows to turn it.'); return; }
+    onPartClick(n); if (S.power && LIVE.includes(n)) setTimeout(() => announce(lcdText()), 80); setTimeout(refreshKb, 900); return; }
+  const cam = {a:[-.2,0,1], d:[.2,0,1], w:[0,-.12,1], s:[0,.12,1], '+':[0,0,.8], '=':[0,0,.8], '-':[0,0,1.25], '_':[0,0,1.25]}[k.toLowerCase()]; if (cam){ e.preventDefault(); orbit(...cam); return; }
+  if (k.toLowerCase() === 'f'){ e.preventDefault(); steps[cur] && flyTo(steps[cur].view); } });
+canvas.addEventListener('focus', () => { refreshKb(); if (kbIdx < 0 && kbList.length){ const nt = nextTargets(); kbIdx = mode === 'guided' && nt.length && kbList.includes(nt[0]) ? kbList.indexOf(nt[0]) : 0; } kbAnnounce(); });
+
+/* ================= mouse ================= */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function visibleChain(o){ for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; }
+function pick(e){ const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1); ray.setFromCamera(ndc, camera);
+  for (const h of ray.intersectObjects(scene.children, true)){ if (!visibleChain(h.object) || h.object.isSprite) continue; return h.object.userData.part || null; } return null; }
+let down = null, grab = null;
+function endGrab(){ if (!grab) return; grab = null; controls.enabled = true; canvas.style.cursor = ''; }
+canvas.addEventListener('pointerdown', e => { down = {x:e.clientX, y:e.clientY}; const st = steps[cur]; if (!st || busy) return; const p = pick(e);
+  if (p === 'knob' && S.power){ grab = {kind:'knob', y:e.clientY, acc:0, moved:false}; } else if (p === 'flowKnob' && st.hold){ startTimer(); grab = {kind:'flow', y:e.clientY, f:S.flow}; }
+  if (grab){ controls.enabled = false; canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'ns-resize'; } });
+canvas.addEventListener('pointercancel', endGrab); window.addEventListener('pointerup', () => { if (grab) setTimeout(endGrab, 0); });
+canvas.addEventListener('pointerup', e => { const moved = down ? Math.hypot(e.clientX - down.x, e.clientY - down.y) : 99; down = null;
+  if (grab){ const g = grab; endGrab(); if (g.kind === 'knob' && !g.moved) onPartClick('knob'); return; }
+  if (moved > 6) return; const p = pick(e); if (p) onPartClick(p); });
+const tipEl = $('tip');
+canvas.addEventListener('pointermove', e => {
+  if (grab?.kind === 'flow'){ S.flow = Math.max(0, Math.min(60, Math.round(grab.f + (grab.y - e.clientY)/4))); flowUI?.(); return; }
+  if (grab?.kind === 'knob'){ const d = (grab.y - e.clientY)/10, s = Math.trunc(d - grab.acc); if (Math.abs(grab.y - e.clientY) > 5) grab.moved = true;
+    if (s){ grab.acc += s; startTimer(); if (steps[cur]?.live || steps[cur]?.id === 'tour'){ turn(s); if (S.scr !== 'home') S.visited.scrolled = true; renderLCD(); } } return; }
+  if (e.buttons){ tipEl.style.display = 'none'; return; } const p = pick(e), r = stage.getBoundingClientRect();
+  if (p && parts[p]){ tipEl.textContent = partLabel(p); tipEl.style.left = (e.clientX - r.left) + 'px'; tipEl.style.top = (e.clientY - r.top) + 'px'; tipEl.style.display = 'block'; canvas.style.cursor = 'pointer'; }
+  else { tipEl.style.display = 'none'; canvas.style.cursor = ''; } });
+canvas.addEventListener('pointerleave', () => tipEl.style.display = 'none');
+// scrolled flag also from sidebar knob buttons
+const _turn = turn; turn = function(d){ _turn(d); if (S.scr !== 'home') S.visited.scrolled = true; };
+
+/* ================= overlay ================= */
+const overlay = $('overlay'), _b = new THREE.Box3(), _v = new THREE.Vector3();
+function partCenter(n){ if (!parts[n]) return null; _b.makeEmpty(); for (const o of parts[n].objs){ if (!visibleChain(o)) continue; o.updateWorldMatrix(true, true); _b.expandByObject(o); } return _b.isEmpty() ? null : _b.getCenter(new THREE.Vector3()); }
+function toScreen(p){ _v.copy(p).project(camera); if (_v.z > 1) return null; const r = canvas.getBoundingClientRect(); return {x:(_v.x*.5 + .5)*r.width, y:(-_v.y*.5 + .5)*r.height}; }
+const LABEL_PARTS = ['lcd','knob','home','memory','usb','remote','gasOut','workSock','torchSock','power','gasIn','flowKnob'];
+function hl(){ return mode === 'guided' && !busy ? nextTargets() : []; }
+function drawOverlay(){ let html = '';
+  for (const t of hl()){ const c = partCenter(t), s = c && toScreen(c); if (s) html += `<div class="mk" style="left:${s.x}px;top:${s.y}px"></div>`; }
+  if (showLabels) for (const n of LABEL_PARTS){ const c = partCenter(n), s = c && toScreen(c); if (s) html += `<div class="lbl" style="left:${s.x}px;top:${s.y}px">${parts[n].label}</div>`; }
+  if (document.activeElement === canvas && kbList[kbIdx]){ const c = partCenter(kbList[kbIdx]), s = c && toScreen(c); if (s) html += `<div class="kf" style="left:${s.x}px;top:${s.y}px"></div><div class="kfl" style="left:${s.x}px;top:${s.y}px">${partLabel(kbList[kbIdx])}</div>`; }
+  overlay.innerHTML = html; }
+function updateHighlights(t){ const on = new Set(hl()); const k = .35 + .3*Math.sin(t*5);
+  for (const [name, p] of Object.entries(parts)){ const h = on.has(name); for (const o of p.objs) o.traverse(m => { if (m.isMesh && m.material.emissive) m.material.emissive.setRGB(h ? .9*k : 0, h ? .55*k : 0, 0); }); } }
+
+/* ================= loop ================= */
+function resize(){ const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / Math.max(1, r.height); camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage);
+const clock = new THREE.Clock(); let lastHud = 0;
+function loop(){ const dt = Math.min(clock.getDelta(), .1), t = clock.elapsedTime;
+  for (let i = tweens.length - 1; i >= 0; i--){ const w = tweens[i]; w.t = Math.min(1, w.t + dt/(reduceMotion ? w.dur*.35 : w.dur)); w.fn(w.t); if (w.t >= 1){ tweens.splice(i, 1); w.done?.(); } }
+  const st = steps[cur]; st?.tick?.call(st, dt);
+  if (st?.hold){ ball.position.y += ((.098 + (S.flowing ? S.flow/60*.196 : 0)) - ball.position.y)*.2; flowKnob.rotation.y = -S.flow/60*Math.PI*3;
+    const w = new THREE.Vector3(); regG.getWorldPosition(w); flowRead.visible = true; flowRead.position.copy(w).add(V(-.18, .22, .05)); flowRead.userData.draw(S.flowing ? String(S.flow) : 'OFF'); }
+  if (dirty){ renderLCD(); dirty = false; }
+  updateHighlights(t); controls.update(); renderer.render(scene, camera); drawOverlay();
+  if (t - lastHud > .25){ lastHud = t; $('stTime').textContent = fmtTime(t0 ? ((tEnd ?? performance.now()) - t0) : 0); }
+  requestAnimationFrame(loop); }
+document.fonts?.ready.then(() => { dirty = true; });
+resize(); restart(); $('loading').remove(); loop();
+window.__d = {get steps(){ return steps; }, get cur(){ return cur; }, onPartClick, tryConfirm, S:() => S, softKey, homeKey, turn:d => turn(d), pressKnob, lcdText, PROCS,
+  screenOf:n => { const c = partCenter(n); const q = c && toScreen(c); const r = canvas.getBoundingClientRect(); return q && {x:q.x + r.left, y:q.y + r.top}; }};
+</script>
+</body>
+</html>

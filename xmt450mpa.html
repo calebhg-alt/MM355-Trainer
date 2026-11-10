@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XMT 450 MPa Setup Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* layout: fixed instruction rail on the left, 3D shop stage fills the rest; stage stacks on top on narrow screens */
+  --bg:#e9ecef; --panel:#f8f9fa; --raise:#eceff2; --line:#d4d9df; --ink:#1b1f24; --muted:#5d6772;
+  --accent:#f2a900; --accent-text:#9a6500; --accent-ink:#1d1600; --ok:#17784a; --bad:#c7392f;
+  --glass:rgba(248,249,250,.92);
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#app{display:grid;grid-template-columns:390px 1fr;height:100%}
+aside{display:flex;flex-direction:column;gap:0;background:var(--panel);border-right:1px solid var(--line);min-height:0;overflow-y:auto}
+.sec{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.brand h1{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.02em;margin:0;line-height:1;text-transform:uppercase}
+.brand h1 span{color:var(--accent-text)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{background:transparent;border:0;padding:6px 12px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+input[type=text]{background:var(--raise);border:1px solid var(--line);border-radius:6px;padding:6px 9px;flex:1;min-width:120px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat{background:var(--raise);border-radius:6px;padding:6px 8px}
+.stat b{display:block;font-family:var(--mono);font-size:16px;font-variant-numeric:tabular-nums}
+.stat small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.bar{height:6px;background:var(--raise);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+#card{gap:8px}
+#card .phase{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text)}
+#card h2:focus{outline:none}
+#card h2{font-family:var(--display);font-weight:700;font-size:24px;line-height:1.1;margin:0;text-wrap:balance}
+#card .instr{margin:0;font-size:15px}
+#card details{background:var(--raise);border-radius:6px;padding:8px 10px;font-size:13.5px;color:#39424c}
+#card summary{cursor:pointer;font-weight:600;color:var(--ink)}
+#controls{display:flex;flex-direction:column;gap:10px}
+#controls:empty{display:none}
+.btn{background:var(--raise);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-weight:600}
+.btn{background:#fff}
+.btn:hover{border-color:#9aa4af}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.hold{user-select:none;-webkit-user-select:none;touch-action:none}
+.btn.hold.active{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.opts{display:grid;gap:6px}
+.opt{display:flex;gap:10px;align-items:center;text-align:left;background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.opt[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.opt svg{flex:none}
+.opt b{display:block}
+.opt small{color:var(--muted)}
+fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+legend{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.dial{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;background:var(--raise);border-radius:6px;padding:8px 10px}
+.dial .val{font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums;min-width:3ch;text-align:center}
+.dial .lab{font-weight:600}
+.scale{display:flex;gap:2px;height:14px;align-items:end}
+.scale i{flex:1;background:#c5ccd3;border-radius:1px}
+.scale i.on{background:var(--accent)}
+label.slide{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600}
+label.slide span{display:flex;justify-content:space-between}
+label.slide output{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--accent-text)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.meter{height:10px;background:var(--raise);border-radius:5px;position:relative;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#b8733a,#e0a06a);width:0}
+.meter-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--mono)}
+.lcdwrap{display:flex;flex-direction:column;gap:8px}
+.lcdwrap canvas{width:100%;border-radius:6px;border:6px solid #0a0b0d;background:#05070a}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.keys .btn{padding:7px 6px;font-size:13px}
+#feedback{padding:10px 18px;border-bottom:1px solid var(--line);font-size:14px;min-height:44px;display:flex;align-items:center;gap:8px}
+#feedback[data-kind=ok]{color:var(--ok)}
+#feedback[data-kind=bad]{color:var(--bad)}
+#feedback[data-kind=info]{color:var(--muted)}
+#steps{padding:10px 18px 4px;display:flex;flex-direction:column;gap:10px}
+#steps h3{margin:0;font-family:var(--display);font-size:16px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
+#steps ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+#steps li{display:grid;grid-template-columns:22px 1fr auto;gap:6px;font-size:13.5px;color:#66707b;padding:2px 0}
+#steps li .n{font-family:var(--mono);font-size:11px;padding-top:2px}
+#steps li.done{color:#3d4650}
+#steps li.done .n{color:var(--ok)}
+#steps li.cur{color:var(--ink);font-weight:600}
+#steps li.cur .n{color:var(--accent-text)}
+#steps li .e{font-family:var(--mono);font-size:11px;color:var(--bad)}
+footer{padding:12px 18px 18px;font-size:12px;color:var(--muted)}
+footer a{color:var(--muted)}
+main{position:relative;min-width:0;min-height:0;overflow:hidden;background:#d5dade}
+#gl{display:block;width:100%;height:100%;touch-action:none}
+.toolbar{position:absolute;top:12px;right:12px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.toolbar .btn{background:var(--glass);backdrop-filter:blur(4px);font-size:13px;padding:6px 10px}
+#tip{position:absolute;pointer-events:none;background:var(--glass);box-shadow:0 2px 8px rgba(0,0,0,.15);border:1px solid var(--line);border-radius:5px;padding:4px 8px;font-size:12.5px;white-space:nowrap;transform:translate(12px,12px);display:none}
+#overlay{position:absolute;inset:0;pointer-events:none}
+.mk{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:3px solid var(--accent);box-shadow:0 0 0 4px rgba(242,169,0,.35),0 0 0 6px rgba(0,0,0,.25);animation:pulse 1.2s infinite ease-in-out}
+.mk::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--accent)}
+@keyframes pulse{50%{transform:scale(1.25);box-shadow:0 0 0 8px rgba(242,169,0,.08)}}
+.lbl{position:absolute;transform:translate(-50%,-130%);background:var(--glass);border:1px solid var(--line);border-radius:4px;font-size:11.5px;padding:2px 6px;white-space:nowrap;color:var(--ink)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip{position:absolute;left:8px;top:-60px;z-index:20;background:var(--ink);color:#fff;padding:8px 12px;border-radius:6px;font-weight:600}
+.skip:focus{top:8px}
+#gl:focus-visible{outline:3px solid #1f6feb;outline-offset:-3px}
+.kf{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:3px solid #1f6feb;box-shadow:0 0 0 3px #fff}
+.kfl{position:absolute;transform:translate(-50%,28px);background:#1f6feb;color:#fff;font-size:12.5px;font-weight:600;padding:3px 8px;border-radius:4px;white-space:nowrap}
+#kbHint{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1f6feb;color:#fff;font-size:13px;padding:6px 10px;border-radius:6px;display:none;white-space:nowrap}
+#kbHint kbd{color:var(--ink)}
+#gl:focus-visible ~ #kbHint{display:block}
+.pick{display:flex;flex-direction:column;gap:6px;background:var(--raise);border-radius:6px;padding:10px}
+.pick label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.pick select{flex:1;min-width:0;background:#fff;border:1px solid var(--line);border-radius:6px;padding:7px 8px}
+kbd{font-family:var(--mono);font-size:11.5px;background:#fff;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px}
+#loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--mono);font-size:13px}
+.legend{position:absolute;left:12px;bottom:12px;font-size:12px;color:var(--muted);background:var(--glass);padding:6px 9px;border-radius:5px}
+#modal{position:fixed;inset:0;background:rgba(20,24,28,.45);display:none;place-items:center;z-index:10;padding:16px}
+#modal .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:22px;display:flex;flex-direction:column;gap:12px}
+#modal h2{font-family:var(--display);font-size:30px;margin:0;text-transform:uppercase}
+#modal table{width:100%;border-collapse:collapse;font-size:13px}
+#modal td,#modal th{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+#modal td.num{font-family:var(--mono);text-align:right}
+.big{display:flex;gap:10px;flex-wrap:wrap}
+.big div{background:var(--raise);border-radius:8px;padding:10px 14px;flex:1;min-width:100px}
+.big b{display:block;font-family:var(--display);font-size:32px;line-height:1}
+.big small{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+@media (max-width:860px){
+  html,body{height:auto}
+  #app{grid-template-columns:1fr;height:auto}
+  main{order:-1;height:56vh;position:sticky;top:0;z-index:3;border-bottom:1px solid var(--line)}
+  aside{overflow:visible;border-right:0}
+}
+@media (prefers-reduced-motion:reduce){.mk{animation:none}.bar i{transition:none}}
+</style>
+<style>
+.xpanel{background:#d9dde1;border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.disps{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg7{background:#120606;color:#ff3b2f;font-family:var(--mono);font-size:26px;letter-spacing:.08em;text-align:center;border-radius:4px;padding:6px 4px;min-height:44px;text-shadow:0 0 6px rgba(255,59,47,.55);font-variant-numeric:tabular-nums}
+.leds{display:flex;flex-wrap:wrap;gap:6px}
+.led{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#3d4650;background:#fff;border:1px solid var(--line);border-radius:12px;padding:2px 8px}
+.led i{width:9px;height:9px;border-radius:50%;background:#b9c0c7}
+.led.on i{background:#2fd06b;box-shadow:0 0 6px #2fd06b}
+.led.on{color:var(--ink);border-color:#2fd06b}
+.adj{display:grid;grid-template-columns:auto repeat(4,1fr);gap:6px}
+.adj .btn{padding:7px 4px}
+.guide{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.guide dt{font-weight:700}
+.guide dd{margin:0 0 6px;color:#39424c}
+.guide .tgt{display:inline-block;font-family:var(--mono);font-size:12px;background:#fff4d6;color:#6b4700;border:1px solid #f2c95a;border-radius:4px;padding:0 5px;margin-left:4px}
+.jobs{display:grid;gap:6px}
+.job{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+.job[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.job .tag{grid-row:span 2;align-self:center;font-family:var(--mono);font-size:11px;font-weight:600;background:var(--raise);border-radius:4px;padding:3px 6px;min-width:58px;text-align:center}
+.job b{font-size:14.5px}
+.job small{color:var(--muted);font-size:12.5px}
+.check{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:14px}
+.check li{display:flex;gap:8px;align-items:flex-start}
+.check li::before{content:"✓";color:var(--ok);font-weight:700}
+.check li.no::before{content:"✗";color:var(--bad)}
+.acc{display:flex;flex-direction:column;gap:10px}
+.accgrp h3{margin:0 0 4px;font-family:var(--display);font-size:16px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.accgrp .opts{gap:5px}
+.acc .opt{justify-content:space-between}
+.acc .opt small{font-family:var(--mono)}
+.accinfo{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px;display:flex;flex-direction:column;gap:6px}
+.accinfo h4{margin:0;font-size:15px}
+.warn{color:#8a4b00;background:#fff4d6;border-radius:5px;padding:5px 8px}
+.okn{color:#0f5a36;background:#e3f5ec;border-radius:5px;padding:5px 8px}
+.backlink{font-size:12.5px;color:var(--muted);text-decoration:none;font-weight:600}
+.backlink:hover{color:var(--ink)}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#cTitle">Skip to current step</a>
+<div id="sr" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+<div id="app">
+  <aside>
+    <div class="sec">
+      <a class="backlink" href="index.html">← All machines</a>
+      <div class="brand"><h1>XMT<span>450</span> MPa Trainer</h1><span class="eyebrow">Multiprocess · AVC Welding</span></div>
+      <div class="row">
+        <div class="seg" role="group" aria-label="Mode">
+          <button id="mGuided" aria-pressed="true">Guided</button>
+          <button id="mTest" aria-pressed="false">Test</button>
+        </div>
+        <input type="text" id="student" placeholder="Student name" aria-label="Student name">
+      </div>
+      <div class="bar" aria-hidden="true"><i id="progbar"></i></div>
+      <div class="stats">
+        <div class="stat"><small>Step</small><b id="stStep">1</b></div>
+        <div class="stat"><small>Errors</small><b id="stErr">0</b></div>
+        <div class="stat"><small>Hints</small><b id="stHint">0</b></div>
+        <div class="stat"><small>Time</small><b id="stTime">0:00</b></div>
+      </div>
+    </div>
+    <section class="sec" id="card" aria-labelledby="cTitle">
+      <div class="phase" id="cPhase"></div>
+      <h2 id="cTitle" tabindex="-1"></h2>
+      <p class="instr" id="cInstr"></p>
+      <div id="controls"></div>
+      <details id="cWhy"><summary>Why this matters</summary><div id="cWhyText"></div></details>
+      <div class="row" id="cBtns">
+        <button class="btn" id="hintBtn">Show hint</button>
+        <button class="btn" id="focusBtn">Focus view</button>
+      </div>
+      <details><summary>Keyboard shortcuts</summary><div class="note" style="display:flex;flex-direction:column;gap:4px;margin-top:6px">
+        <span>Press <kbd>Tab</kbd> to move into the 3D view, then <kbd>←</kbd> <kbd>→</kbd> select a part and <kbd>Enter</kbd> use it.</span>
+        <span>Adjust knob or flowmeter knob selected: <kbd>↑</kbd> <kbd>↓</kbd> turn it (<kbd>Shift</kbd> for bigger steps).</span>
+        <span>Camera: <kbd>A</kbd> <kbd>D</kbd> rotate, <kbd>W</kbd> <kbd>S</kbd> tilt, <kbd>+</kbd> <kbd>−</kbd> zoom, <kbd>F</kbd> focus on the step.</span>
+      </div></details>
+    </section>
+    <div id="feedback" data-kind="info" role="status" aria-live="polite">Pick a job to start.</div>
+    <nav id="steps" aria-label="Setup sequence"></nav>
+    <footer>Procedure follows the Miller XMT 450 MPa Owner's Manual, OM-250068 (sections 5-4 to 5-8, 6-1 to 6-3, 7 to 9) and spec sheet DC/18.94. Panel readouts are simulated for training. Amperage, voltage and gas-flow targets marked "typical" are common shop starting points, not manual values; always follow your WPS and the electrode or wire maker's data.</footer>
+  </aside>
+  <main id="stage" aria-label="3D machine view">
+    <canvas id="gl" tabindex="0" role="application" aria-roledescription="3D machine view" aria-label="3D model of the Miller XMT 450 MPa. Use left and right arrows to select a part, Enter to use it." aria-describedby="kbState"></canvas>
+    <div id="kbState" class="sr-only"></div>
+    <div id="kbHint" aria-hidden="true">Keyboard: <kbd>←</kbd> <kbd>→</kbd> pick a part · <kbd>Enter</kbd> use it · <kbd>↑</kbd> <kbd>↓</kbd> turn a knob · <kbd>A</kbd><kbd>D</kbd><kbd>W</kbd><kbd>S</kbd> camera</div>
+    <div id="overlay" aria-hidden="true"></div>
+    <div id="tip" aria-hidden="true"></div>
+    <div class="toolbar">
+      <button class="btn" id="rotL" aria-label="Rotate view left">⟲</button>
+      <button class="btn" id="rotR" aria-label="Rotate view right">⟳</button>
+      <button class="btn" id="zIn" aria-label="Zoom in">+</button>
+      <button class="btn" id="zOut" aria-label="Zoom out">−</button>
+      <button class="btn" id="labelsBtn" aria-pressed="false">Part labels</button>
+      <button class="btn" id="camBtn" aria-pressed="true">Auto camera</button>
+      <button class="btn" id="overviewBtn">Overview</button>
+      <button class="btn" id="accBtn" disabled title="Finish a setup to unlock">Accessories</button>
+      <button class="btn" id="restartBtn">New job</button>
+    </div>
+    <div class="legend" aria-hidden="true">Orbit: drag or A/D · Zoom: scroll or +/− · Pan: right-drag</div>
+    <div id="loading">Loading 3D shop…</div>
+  </main>
+</div>
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"><div class="box" id="modalBox"></div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+const $ = id => document.getElementById(id);
+const V = (x,y,z) => new THREE.Vector3(x,y,z);
+
+/* ================= renderer / scene ================= */
+const stage = $('stage'), canvas = $('gl');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.3;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xd5dade); scene.fog = new THREE.Fog(0xd5dade, 14, 34);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.02, 80);
+camera.position.set(3.2, 2.8, 5.6);
+const controls = new OrbitControls(camera, canvas);
+controls.target.set(.4, 1.1, 1.0); controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI*.495; controls.minDistance = .2; controls.maxDistance = 14;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8d8576, 2.1));
+const sun = new THREE.DirectionalLight(0xffffff, 2.8); sun.position.set(4, 7.5, 5); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, {left:-5, right:5, top:5, bottom:-5, near:1, far:24}); sun.shadow.bias = -.0005; scene.add(sun);
+const fill = new THREE.DirectionalLight(0xe6eeff, 1.4); fill.position.set(-5, 3, -4); scene.add(fill);
+const frontL = new THREE.DirectionalLight(0xffffff, 1.2); frontL.position.set(1, 3, 8); scene.add(frontL);
+
+function mat(color, rough = .5, metal = .2, extra = {}){ return new THREE.MeshStandardMaterial({color, roughness:rough, metalness:metal, ...extra}); }
+const M = {
+  blue: mat(0x1d5fb4,.42,.35), frame: mat(0x1b1e22,.6,.15), dark: mat(0x3b4148,.65,.25), steel: mat(0x80878f,.45,.7), alum: mat(0xbcc1c8,.3,.85),
+  black: mat(0x141619,.75,.05), rubber: mat(0x0f1012,.92,0), brass: mat(0xc9a14a,.35,.9), copper: mat(0xbf703c,.33,.85), red: mat(0xc0392b,.5,.1),
+  table: mat(0x7d858e,.5,.6), plate: mat(0x6f767d,.4,.75), green: mat(0x2f9e5b,.5,.1), gasCyl: mat(0x7c8893,.45,.4), feeder: mat(0x2b5fa8,.45,.35),
+  feeder2: mat(0x5a6168,.5,.3), yellow: mat(0xe0a400,.5,.2), glass: new THREE.MeshStandardMaterial({color:0xd6ebff, transparent:true, opacity:.28, roughness:.1, metalness:0, depthWrite:false}),
+  orange: mat(0xd9631e,.5,.1)
+};
+const shade = m => { m.castShadow = true; m.receiveShadow = true; return m; };
+let ROOT = scene;
+function add(geo, m, x, y, z, parent){ const o = shade(new THREE.Mesh(geo, m)); o.position.set(x, y, z); (parent || ROOT).add(o); return o; }
+const box = (w,h,d,m,x,y,z,p) => add(new THREE.BoxGeometry(w,h,d), m, x,y,z,p);
+const rbox = (w,h,d,r,m,x,y,z,p) => add(new RoundedBoxGeometry(w,h,d,3,r), m, x,y,z,p);
+function cyl(r, len, m, axis, x, y, z, p, seg = 24, r2){ const g = new THREE.CylinderGeometry(r, r2 ?? r, len, seg);
+  if (axis === 'x') g.rotateZ(Math.PI/2); else if (axis === 'z') g.rotateX(Math.PI/2); return add(g, m, x, y, z, p); }
+function tube(pts, r, m, seg = 48, parent){ const o = shade(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'centripetal'), seg, r, 8), m)); (parent || ROOT).add(o); return o; }
+function setTube(o, pts, r, seg = 48){ o.geometry.dispose(); o.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'centripetal'), seg, r, 8); }
+function sprite(text, {fg = '#fff', bg = null, scale = .07, font = 'bold 64px IBM Plex Sans, sans-serif'} = {}, parent){
+  const c = document.createElement('canvas'); c.width = c.height = 128; const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({map:tex})); s.scale.set(scale, scale, scale);
+  s.userData.draw = t => { const g = c.getContext('2d'); g.clearRect(0,0,128,128); if (bg){ g.fillStyle = bg; g.beginPath(); g.roundRect(6,6,116,116,22); g.fill(); }
+    g.fillStyle = fg; g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, 64, 68); tex.needsUpdate = true; };
+  s.userData.draw(text); (parent || ROOT).add(s); return s; }
+const ghostMat = (hot = false) => { const m = new THREE.MeshBasicMaterial({color:0x8a939d, transparent:true, opacity:hot ? 0 : .22, depthWrite:false}); m.userData.ghost = true; m.userData.hot = hot; return m; };
+
+/* ================= shop ================= */
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), mat(0xa4abb2, .95, 0)); floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+const grid = new THREE.GridHelper(40, 80, 0x8b929a, 0x959ca4); grid.position.y = .002; scene.add(grid);
+// steel stand under the machine
+box(1.3, .05, 2.2, M.table, 0, .675, 0);
+for (const [x,z] of [[-.6,-1.0],[.6,-1.0],[-.6,1.0],[.6,1.0]]) box(.05, .65, .05, M.steel, x, .33, z);
+box(1.2, .04, 2.0, M.table, 0, .18, 0);
+// welding table + workpiece
+box(1.4, .05, 1.0, M.table, 2.0, .88, 1.7);
+for (const [x,z] of [[1.35,1.25],[2.65,1.25],[1.35,2.15],[2.65,2.15]]) box(.05, .86, .05, M.steel, x, .43, z);
+const workpiece = box(.5, .03, .3, M.plate, 2.0, .92, 1.7);
+
+/* ================= XMT 450 MPa ================= */
+// body: H 17.25 in, W 14.5 in, D 27.1 in (1 unit ≈ 12.5 in)
+rbox(1.12, 1.2, 1.9, .03, M.blue, 0, 1.38, 0);
+rbox(1.22, 1.38, .14, .04, M.frame, 0, 1.41, 1.0);
+rbox(1.22, 1.38, .14, .04, M.frame, 0, 1.41, -1.0);
+for (const z of [-1.0, 1.0]) { box(.9, .06, .1, M.frame, 0, 2.14, z); for (const x of [-.45,.45]) box(.06, .1, .1, M.frame, x, 2.08, z); }
+for (let i = 0; i < 6; i++) box(.7, .02, .02, M.black, 0, .95 + i*.11, -1.075);
+// panel graphic (896 x 1024 px  ↔  1.12 x 1.28 units, 800 px/unit)
+const PX = (px, py, dz = 0) => V(-.56 + px/800, 2.05 - py/800, 1.075 + dz);
+const MODES = [
+  {k:'SST',  label:['SCRATCH','START TIG'], name:'Scratch Start TIG', proc:'GTAW', out:'Electrode hot', adj:'Amps'},
+  {k:'LIFT', label:['LIFT-ARC','TIG'],      name:'Lift-Arc TIG',      proc:'GTAW', out:'Electrode hot (low sensing voltage until lift)', adj:'Amps'},
+  {k:'TIG',  label:['TIG'],                 name:'TIG',               proc:'GTAW', out:'Through Remote 14', adj:'Amps'},
+  {k:'MIG',  label:['MIG'],                 name:'MIG',               proc:'GMAW / FCAW', out:'Through Remote 14 (feeder)', adj:'Volts'},
+  {k:'PULS', label:['PULSED','MIG'],        name:'Pulsed MIG',        proc:'GMAW-P', out:'Through Remote 14 (feeder)', adj:'Arc length 0–100'},
+  {k:'CC',   label:['CC'],                  name:'CC',                proc:'SMAW / CAC-A', out:'Through Remote 14', adj:'Amps'},
+  {k:'STICK',label:['STICK'],               name:'Stick',             proc:'SMAW / CAC-A', out:'Electrode hot', adj:'Amps'},
+  {k:'VSEN', label:['V-SENSE','FEEDER'],    name:'V-Sense Feeder',    proc:'GMAW / FCAW', out:'Electrode hot', adj:'Volts'}
+];
+const MODE_C = {x:360, y:380}, MODE_R = 135;
+MODES.forEach((m, i) => { m.ang = (-150 + i*300/7)*Math.PI/180; m.px = MODE_C.x + MODE_R*Math.sin(m.ang); m.py = MODE_C.y - MODE_R*Math.cos(m.ang); });
+{
+  const c = document.createElement('canvas'); c.width = 896; c.height = 1024; const g = c.getContext('2d');
+  g.fillStyle = '#121416'; g.fillRect(0, 0, 896, 1024); g.fillStyle = '#1c1f23'; g.beginPath(); g.roundRect(14, 14, 868, 560, 30); g.fill();
+  g.fillStyle = '#191b1f'; g.beginPath(); g.roundRect(14, 590, 868, 420, 30); g.fill();
+  g.strokeStyle = '#e8eaed'; g.lineWidth = 3; g.fillStyle = '#e8eaed'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = 'bold 22px IBM Plex Sans, Arial, sans-serif';
+  g.fillText('OUTPUT ON', 100, 140); g.fillText('REMOTE', 110, 450); g.fillText('ADJUST', 770, 190); g.fillText('SETUP', 600, 515); g.fillText('POWER', 760, 520);
+  g.fillText('ON', 760, 318); g.fillText('OFF', 760, 470); g.fillText('GAS OUT', 770, 770);
+  g.font = 'bold 26px IBM Plex Sans, Arial, sans-serif';
+  [['V',285],['ARC L',385],['A',510],['SET',605]].forEach(([t,x]) => { g.strokeRect(x-38, 192, 76, 34); g.fillText(t, x, 210); });
+  g.textAlign = 'left'; g.font = '600 21px IBM Plex Sans, Arial, sans-serif';
+  [['Arc Control',300],['Wire Type',340],['Gas Type',380]].forEach(([t,y]) => g.fillText(t, 612, y));
+  g.textAlign = 'center';
+  g.beginPath(); g.arc(MODE_C.x, MODE_C.y, 92, 0, Math.PI*2); g.stroke();
+  g.fillStyle = '#e8eaed'; g.fillRect(MODE_C.x - 80, MODE_C.y + 160, 160, 28); g.fillStyle = '#121416'; g.font = 'bold 17px IBM Plex Sans, sans-serif'; g.fillText('ELECTRODE HOT', MODE_C.x, MODE_C.y + 174);
+  g.fillStyle = '#e8eaed'; g.font = 'bold 19px IBM Plex Sans, Arial, sans-serif';
+  MODES.forEach(m => { m.label.forEach((l, j) => g.fillText(l, m.px, m.py - (m.label.length-1)*11 + j*22)); });
+  // big polarity marks and louvers
+  g.font = 'bold 110px IBM Plex Sans, sans-serif'; g.fillStyle = '#ff5a4d'; g.fillText('+', 110, 760); g.fillStyle = '#e8eaed'; g.fillText('−', 790, 690);
+  g.fillStyle = '#060708'; for (let i = 0; i < 9; i++) g.fillRect(270, 640 + i*38, 360, 18);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(1.12, 1.28), new THREE.MeshStandardMaterial({map:t, roughness:.8}));
+  p.position.set(0, 1.41, 1.0725); scene.add(p);
+}
+// displays
+function dispMesh(px, py){ const c = document.createElement('canvas'); c.width = 256; c.height = 96; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(.24, .09), new THREE.MeshBasicMaterial({map:t, toneMapped:false})); m.position.copy(PX(px, py, .004)); scene.add(m);
+  box(.26, .11, .01, M.black, m.position.x, m.position.y, 1.077 - .004, scene); return {c, t, m}; }
+const dispL = dispMesh(330, 100), dispR = dispMesh(555, 100);
+function led(px, py, color = 0x2fd06b){ const m = new THREE.Mesh(new THREE.SphereGeometry(.012, 12, 8), new THREE.MeshStandardMaterial({color:0x3a3f45, emissive:0x000000})); m.position.copy(PX(px, py, .006)); m.userData.on = color; scene.add(m); return m; }
+const LEDS = { out:led(100, 100, 0xffb000), V:led(285, 170), AL:led(385, 170), A:led(510, 170), SET:led(605, 170), AC:led(590, 300), WT:led(590, 340), GT:led(590, 380) };
+// adjust knob
+const adjKnob = new THREE.Group(); adjKnob.position.copy(PX(770, 105, .03)); scene.add(adjKnob);
+cyl(.065, .06, M.black, 'z', 0, 0, 0, adjKnob, 28);
+for (let i = 0; i < 16; i++){ const r = box(.008, .014, .055, M.black, Math.cos(i/16*Math.PI*2)*.066, Math.sin(i/16*Math.PI*2)*.066, 0, adjKnob); r.rotation.z = i/16*Math.PI*2; }
+box(.008, .04, .01, M.alum, 0, .04, .031, adjKnob);
+// mode switch knob
+const modeKnob = new THREE.Group(); modeKnob.position.copy(PX(MODE_C.x, MODE_C.y, .03)); scene.add(modeKnob);
+cyl(.06, .05, M.black, 'z', 0, 0, 0, modeKnob, 28);
+box(.022, .11, .03, M.black, 0, .02, .03, modeKnob); box(.008, .05, .01, M.alum, 0, .05, .046, modeKnob);
+const modeSpots = {};
+MODES.forEach(m => { const s = new THREE.Mesh(new THREE.CircleGeometry(.05, 20), ghostMat(true)); s.position.copy(PX(m.px, m.py, .012)); scene.add(s); modeSpots[m.k] = s; });
+// setup button, power rocker, remote 14, gas out, terminals
+const setupBtn = box(.075, .075, .03, M.dark, ...PX(600, 450, .015).toArray(), scene);
+// hinged drop-down cover over the mode switch and setup controls (hinge on the bottom edge)
+const coverPivot = new THREE.Group(); coverPivot.position.copy(PX(447, 578, .085)); scene.add(coverPivot);
+const COVER_W = 556/800, COVER_H = 343/800;
+const coverPane = new THREE.Mesh(new RoundedBoxGeometry(COVER_W, COVER_H, .012, 2, .012), new THREE.MeshStandardMaterial({color:0x2a3138, transparent:true, opacity:.5, roughness:.15, metalness:.1, depthWrite:false}));
+coverPane.position.set(0, COVER_H/2, 0); coverPivot.add(coverPane);
+const coverTab = box(.12, .025, .03, M.black, 0, COVER_H - .01, .012, coverPivot);
+for (const x of [-COVER_W/2 + .03, COVER_W/2 - .03]) cyl(.01, .05, M.black, 'x', x, 0, 0, coverPivot, 10);
+// standoff frame so the closed cover clears the knobs
+for (const [x, y, w, h] of [[0, 0, COVER_W, .02], [-COVER_W/2, COVER_H/2, .02, COVER_H], [COVER_W/2, COVER_H/2, .02, COVER_H]]) box(w, h, .085, M.frame, x, y, -.045, coverPivot).position.z = -.045;
+function setCover(open, anim = true){ S.cover = open; const a0 = coverPivot.rotation.x, a1 = open ? 1.75 : 0;
+  if (anim) tween(.7, t => coverPivot.rotation.x = a0 + (a1 - a0)*ease(t)); else coverPivot.rotation.x = a1; }
+const pwr = new THREE.Group(); pwr.position.copy(PX(760, 395, .02)); scene.add(pwr);
+box(.08, .14, .02, M.black, 0, 0, -.01, pwr); const rocker = box(.06, .12, .03, M.red, 0, 0, .012, pwr);
+const remote14 = cyl(.055, .04, M.black, 'z', ...PX(110, 380, .02).toArray(), scene, 28);
+for (let i = 0; i < 14; i++){ const a = i/14*Math.PI*2; cyl(.004, .01, M.brass, 'z', remote14.position.x + Math.cos(a)*.03, remote14.position.y + Math.sin(a)*.03, 1.118, scene, 6); }
+const gasOutPlug = cyl(.06, .02, mat(0xcfd3d6,.6,.1), 'z', ...PX(770, 690, .01).toArray(), scene, 28);
+const gasOut = cyl(.02, .07, M.brass, 'z', ...PX(770, 690, .035).toArray(), scene, 14); gasOut.visible = false;
+const gasIn = cyl(.02, .07, M.brass, 'z', .3, 1.0, -1.1, scene, 14); gasIn.visible = false;
+const TP = {'+': PX(110, 900, .06), '−': PX(790, 900, .06)};
+const termPos = new THREE.Group(), termNeg = new THREE.Group(); scene.add(termPos, termNeg);
+for (const [g, k] of [[termPos,'+'],[termNeg,'−']]){ g.position.copy(TP[k]).add(V(0,0,-.06));
+  box(.14, .12, .02, M.copper, 0, 0, .005, g); cyl(.018, .09, M.steel, 'z', 0, 0, .05, g, 12); cyl(.03, .02, M.brass, 'z', 0, 0, .085, g, 6);
+  const s = sprite(k, {fg: k === '+' ? '#ff5a4d' : '#e8eaed', scale:.1, font:'bold 96px IBM Plex Sans, sans-serif'}, scene); s.position.copy(TP[k]).add(V(0, .13, 0)); }
+// rear power cord
+tube([V(-.3,1.0,-1.08), V(-.3,.9,-1.3), V(-.3,.05,-1.5), V(-.3,.03,-3)], .025, M.black, 30, scene);
+
+/* ================= state ================= */
+const WIRES_MIG = ['.035 STL','.045 STL','.052 STL','1/16 STL','.035 FCAW','.045 FCAW','.052 FCAW','1/16 FCAW','.045 MCOR','.052 MCOR','1/16 MCOR','.035 SSTL','.045 SSTL','.035 AL4X','.040 AL4X','3/64 AL4X','1/16 AL4X','.035 AL5X','.040 AL5X','3/64 AL5X','1/16 AL5X'];
+const WIRES_PULS = ['.035 STL','.045 STL','.052 STL','1/16 STL','.035 100S','.045 100S','1/16 100S','.045 MCOR','.052 MCOR','1/16 MCOR','.035 SSTL','.045 SSTL','1/16 SSTL','.035 AL4X','3/64 AL4X','1/16 AL4X','.035 AL49','3/64 AL49','.035 AL5X','3/64 AL5X','1/16 AL5X','.035 NI','.045 NI','.035 SIBR','.045 SIBR','.035 CUNI','.045 CUNI'];
+const GAS = {ARCO2:['ARGN','CO2','Argon / CO₂'], AROX:['ARGN','OXY','Argon / oxygen'], CO2:['CO2','','100% CO₂'], TRI:['TRI','MIX','Tri-gas mix'], AR:['ARGN','','100% argon'], C5:['C5','','95 Ar / 5 CO₂'], HEAR:['HE','AR25','Helium / argon'], ARHE:['ARGN','HE','Argon / helium']};
+function gasesFor(w, puls){ const [d, f] = w.split(' ');
+  if (!puls){ if (f === 'STL') return d === '1/16' ? ['ARCO2'] : d === '.052' ? ['ARCO2','AROX'] : ['ARCO2','AROX','CO2'];
+    if (f === 'FCAW') return ['ARCO2','CO2']; if (f === 'MCOR') return ['ARCO2']; if (f === 'SSTL') return ['TRI','AROX']; return ['AR']; }
+  if (f === 'STL') return ['ARCO2','AROX']; if (f === '100S') return ['C5']; if (f === 'MCOR') return ['ARCO2'];
+  if (f === 'SSTL') return d === '1/16' ? ['ARCO2'] : ['TRI','AROX','ARCO2']; if (f === 'AL5X') return ['AR','HEAR']; if (f === 'NI') return d === '.035' ? ['ARHE','AR'] : ['AR'];
+  if (f === 'CUNI') return ['HEAR']; return ['AR']; }
+function induDefault(w, g){ const f = w.split(' ')[1]; if (f === 'SSTL') return 75; if (f === 'FCAW') return 10; if (f === 'STL' && g === 'CO2') return 10; return 25; }
+const fam = k => ({SST:'tig', LIFT:'tig', TIG:'tig', MIG:'mig', VSEN:'mig', PULS:'puls', CC:'stick', STICK:'stick'})[k];
+const MENUS = {stick:['main','DIG','HOT.S','HOT.T'], tig:['main'], mig:['main','INDU','WIRE','GAS'], puls:['main','SHRP','WIRE','GAS']};
+let S;
+function freshState(){ return {
+  power:true, mode:'LIFT', menu:0, flash:null, flashT:0,
+  amps:85, ampsTig:85, dig:50, hotS:0, hotT:0,
+  mig:{wire:1, gas:'CO2', volts:25.0, indu:10}, puls:{wire:0, gas:'ARCO2', arc:50, sharp:25}, pend:null,
+  leads:{elec:null, work:null}, ext:{}, cover:false, polAns:null, flow:6, flowing:false, purged:false
+}; }
+
+/* ================= panel logic ================= */
+const curMenu = () => MENUS[fam(S.mode)][S.menu] || 'main';
+function migSet(){ return fam(S.mode) === 'puls' ? S.puls : S.mig; }
+function wireList(){ return fam(S.mode) === 'puls' ? WIRES_PULS : WIRES_MIG; }
+function refWfs(){ const d = WIRES_PULS[S.puls.wire].split(' ')[0]; return Math.round(({'.035':320,'.045':250,'.052':210,'1/16':170})[d] * (.6 + S.puls.arc/125) / 5)*5; }
+function display(){
+  const o = {L:'', R:'', on:new Set()}; if (!S.power) return o;
+  if (S.flash){ o.L = S.flash[0]; o.R = S.flash[1]; return o; }
+  const m = curMenu(), f = fam(S.mode);
+  if (m === 'main'){
+    if (f === 'stick'){ if (S.mode === 'STICK'){ o.L = '84.5'; o.on.add('V'); } o.R = String(S.amps); o.on.add('A'); }
+    else if (f === 'tig'){ if (S.mode === 'SST'){ o.L = '84.5'; o.on.add('V'); } if (S.mode === 'LIFT'){ o.L = '13.'; o.on.add('V'); } o.R = String(S.ampsTig); o.on.add('A'); }
+    else if (f === 'mig'){ o.L = S.mig.volts.toFixed(1); o.on.add('V'); }
+    else { o.L = String(S.puls.arc); o.R = 'R' + refWfs(); o.on.add('AL'); }
+  } else {
+    o.on.add('SET');
+    if (m === 'DIG'){ o.L = 'DIG'; o.R = String(S.dig); o.on.add('AC'); }
+    if (m === 'HOT.S'){ o.L = 'HOT.S'; o.R = S.hotS ? String(S.hotS) : 'AUTO'; o.on.add('AC'); }
+    if (m === 'HOT.T'){ o.L = 'HOT.T'; o.R = S.hotT ? String(S.hotT) : 'AUTO'; o.on.add('AC'); }
+    if (m === 'INDU'){ o.L = 'INDU'; o.R = String(S.mig.indu); o.on.add('AC'); }
+    if (m === 'SHRP'){ o.L = 'SHRP'; o.R = String(S.puls.sharp); o.on.add('AC'); }
+    if (m === 'WIRE'){ const [d, ff] = wireList()[S.pend.wire].split(' '); o.L = d; o.R = ff; o.on.add('WT'); }
+    if (m === 'GAS'){ const g = GAS[S.pend.gas]; o.L = g[0]; o.R = g[1]; o.on.add('GT'); }
+  }
+  if (['SST','LIFT','STICK','VSEN'].includes(S.mode)) o.on.add('out');
+  return o;
+}
+const flashOn = () => { if (S.flash && performance.now() > S.flashT){ S.flash = null; panelDirty = true; } return !!S.flash; };
+function pressSetup(){
+  if (!S.power || flashOn()) return;
+  const list = MENUS[fam(S.mode)]; if (list.length < 2){ panelMsg('This mode has no setup items. Setup only applies to MIG, Pulsed MIG, V-Sense, CC and Stick.'); return; }
+  const was = list[S.menu]; S.menu = (S.menu + 1) % list.length; const now = list[S.menu];
+  if (now === 'WIRE'){ const ms = migSet(); S.pend = {wire:ms.wire, gas:ms.gas}; }
+  if (was === 'GAS'){ const ms = migSet(), changed = ms.wire !== S.pend.wire || ms.gas !== S.pend.gas; ms.wire = S.pend.wire; ms.gas = S.pend.gas;
+    if (changed && fam(S.mode) === 'mig') ms.indu = induDefault(WIRES_MIG[ms.wire], ms.gas);
+    S.flash = ['PROG','LOAD']; S.flashT = performance.now() + 1100; panelMsg('PROG LOAD: wire and gas selection loaded.'); }
+  panelDirty = true;
+}
+function adjust(d){
+  if (!S.power || flashOn()) return; const m = curMenu(), f = fam(S.mode), cl = (v, a, b) => Math.max(a, Math.min(b, v));
+  if (m === 'main'){
+    if (f === 'stick') S.amps = cl(S.amps + d, 15, 600);
+    else if (f === 'tig') S.ampsTig = cl(S.ampsTig + d, 15, 600);
+    else if (f === 'mig') S.mig.volts = +cl(S.mig.volts + d*.1, 10, 38).toFixed(1);
+    else S.puls.arc = cl(S.puls.arc + d, 0, 100);
+  }
+  if (m === 'DIG') S.dig = cl(S.dig + d, 0, 100);
+  if (m === 'HOT.S') S.hotS = cl(S.hotS + d, 0, 50);
+  if (m === 'HOT.T') S.hotT = cl(S.hotT + d, 0, 50);
+  if (m === 'INDU') S.mig.indu = cl(S.mig.indu + d, 0, 100);
+  if (m === 'SHRP') S.puls.sharp = cl(S.puls.sharp + d, 0, 50);
+  if (m === 'WIRE'){ const n = wireList().length; S.pend.wire = (S.pend.wire + Math.sign(d) + n) % n; const gl = gasesFor(wireList()[S.pend.wire], f === 'puls'); if (!gl.includes(S.pend.gas)) S.pend.gas = gl[0]; }
+  if (m === 'GAS'){ const gl = gasesFor(wireList()[S.pend.wire], f === 'puls'); S.pend.gas = gl[(gl.indexOf(S.pend.gas) + Math.sign(d) + gl.length) % gl.length]; }
+  adjKnob.rotation.z -= d*.08; panelDirty = true;
+}
+function setMode(k){ S.mode = k; S.menu = 0; S.pend = null; panelDirty = true; const m = MODES.find(x => x.k === k);
+  const a0 = modeKnob.rotation.z, a1 = -m.ang; tween(.35, t => modeKnob.rotation.z = a0 + (a1 - a0)*ease(t)); }
+function setPower(on){ S.power = on; rocker.rotation.x = on ? -.25 : .25; S.menu = 0; panelDirty = true; }
+let panelDirty = true, panelMsgFn = null;
+function panelMsg(t){ say(t, 'info'); }
+function drawSeg(d, text){ const g = d.c.getContext('2d'); g.fillStyle = '#100404'; g.fillRect(0,0,256,96);
+  g.fillStyle = '#ff3b2f'; g.shadowColor = '#ff3b2f'; g.shadowBlur = 8; g.font = 'bold 62px IBM Plex Mono, monospace'; g.textAlign = 'right'; g.textBaseline = 'middle'; g.fillText(text, 244, 52); g.shadowBlur = 0; d.t.needsUpdate = true; }
+function renderPanel(){
+  const o = display(); drawSeg(dispL, o.L); drawSeg(dispR, o.R);
+  for (const [k, m] of Object.entries(LEDS)){ const on = o.on.has(k); m.material.emissive.setHex(on ? m.userData.on : 0); m.material.color.setHex(on ? m.userData.on : 0x3a3f45); }
+  panelUIRefresh?.(o);
+}
+let panelUIRefresh = null;
+
+/* ================= parts registry ================= */
+const parts = {};
+function reg(name, label, objs){ objs = [].concat(objs); parts[name] = {label, objs};
+  for (const o of objs) o.traverse(m => { if (!m.isMesh) return; m.userData.part = name; m.material = m.material.userData?.ghost ? ghostMat(m.material.userData.hot) : m.material.clone(); }); }
+reg('power', 'Power switch', [pwr]);
+reg('setupBtn', 'Setup button', [setupBtn]);
+reg('cover', 'Control cover (pull the tab to drop it down)', [coverPane, coverTab]);
+reg('adjust', 'Adjust control knob', [adjKnob]);
+reg('remote14', 'Remote 14 receptacle', [remote14]);
+reg('termPos', 'Positive (+) weld output terminal', [termPos]);
+reg('termNeg', 'Negative (−) weld output terminal', [termNeg]);
+reg('gasOut', 'GAS OUT fitting (front)', [gasOut, gasOutPlug]);
+reg('gasIn', 'GAS IN fitting (rear)', [gasIn]);
+reg('displays', 'Left and right displays', [dispL.m, dispR.m]);
+MODES.forEach(m => reg('mode_' + m.k, 'Mode switch: ' + m.name, [modeSpots[m.k]]));
+reg('modeKnob', 'Mode switch', [modeKnob]);
+reg('workpiece', 'Workpiece', [workpiece]);
+
+/* ================= tweens ================= */
+const tweens = []; const ease = t => t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+function tween(dur, fn, done){ tweens.push({t:0, dur, fn, done}); }
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================= jobs ================= */
+const LEADS = {
+  holder:{name:'electrode holder lead', tool:'Electrode holder'}, gouger:{name:'carbon arc torch lead', tool:'Air carbon arc torch'},
+  torch:{name:'TIG torch power cable', tool:'TIG torch'}, feeder:{name:'wire feeder weld cable', tool:'74 MPa Plus wire feeder'},
+  vsfeeder:{name:'V-Sense feeder weld cable', tool:'Voltage-sensing feeder'}
+};
+const JOBS = [
+ {id:'e7018', tag:'SMAW', title:'Stick · E7018', job:'1/8 in. E7018 on 3/8 in. mild steel plate, flat.', lead:'holder', pol:'DCEP', mode:'STICK', extras:[], gas:null,
+  set:{amps:[110,140], dig:[0,30]},
+  why:'E7018 low-hydrogen rod runs DCEP (reverse polarity). Stick mode keeps the electrode hot with amps set at the panel. Keep DIG low for a smooth-running rod.'},
+ {id:'e6010', tag:'SMAW', title:'Stick · E6010 root', job:'1/8 in. E6010 open root on pipe or plate.', lead:'holder', pol:'DCEP', mode:'STICK', extras:[], gas:null,
+  set:{amps:[75,125], dig:[60,100]},
+  why:'E6010 is a DCEP-only cellulose rod. Higher DIG keeps the arc driving when the arc length gets short in the root.'},
+ {id:'gtaw', tag:'GTAW', title:'TIG · steel with foot control', job:'1/8 in. mild steel, ER70S-2 filler, 1/16 in. lanthanated tungsten, argon, foot pedal.', lead:'torch', pol:'DCEN', mode:'TIG', extras:['pedal','gasIn','gasOut'], gas:{name:'100% argon', range:[15,25], src:'typical'},
+  set:{ampsTig:[110,160]},
+  why:'DC TIG runs DCEN (straight polarity) so the tungsten stays cool and most of the heat goes into the work. TIG mode turns output on through the foot control on Remote 14, and the gas valve feeds argon from GAS IN to GAS OUT.'},
+ {id:'gmaw', tag:'GMAW', title:'MIG · .035 solid wire', job:'.035 ER70S-6 with 75/25 gas on 1/8 in. steel. Feeder on Remote 14.', lead:'feeder', pol:'DCEP', mode:'MIG', extras:['cord','feederGas'], gas:{name:'75/25 Ar/CO₂', range:[25,45], src:'Miller guidance for mixed gas'},
+  set:{wire:'.035 STL', gas:'ARCO2', volts:[18,20], indu:[15,35]},
+  why:'Solid wire with gas runs DCEP (§8-1). In MIG mode the feeder control cord on Remote 14 switches the output, the power source sets voltage, and the feeder sets wire speed.'},
+ {id:'gmawp', tag:'GMAW-P', title:'Pulsed MIG · .045 steel', job:'.045 ER70S-6 with 90/10 gas on 1/4 in. steel. Synergic feeder on Remote 14.', lead:'feeder', pol:'DCEP', mode:'PULS', extras:['cord','feederGas'], gas:{name:'90/10 Ar/CO₂', range:[25,45], src:'Miller guidance for mixed gas'},
+  set:{pwire:'.045 STL', pgas:'ARCO2', arc:[45,55], sharp:[15,35]},
+  why:'Pulsed MIG is DCEP. The pulse program comes from the wire and gas you load. Arc length trims the program; it was developed at 50 in Auto (§8-4).'},
+ {id:'fcaws', tag:'FCAW-S', title:'Self-shielded flux core', job:'.045 E71T-11 self-shielded wire, no gas, voltage-sensing feeder.', lead:'vsfeeder', pol:'DCEN', mode:'VSEN', extras:['vsclamp'], gas:null,
+  set:{wire:'.045 FCAW', gas:'ARCO2', volts:[15,18], indu:[0,9]},
+  why:'Most self-shielded FCAW wires need DCEN (straight polarity) (§8-1, §8-7). A V-Sense feeder runs off arc voltage, so the electrode is hot as soon as the machine is on. For self-shielded wire the manual says to pick the ARGN CO2 gas setting and inductance below 10 (§8-3).'},
+ {id:'caca', tag:'CAC-A', title:'Air carbon arc gouging', job:'5/16 in. carbons, removing a bad weld.', lead:'gouger', pol:'DCEP', mode:'STICK', extras:['air'], gas:null,
+  set:{amps:[350,450], dig:[100,100]},
+  why:'Connect the carbon arc torch to the positive terminal (§9-1). Use Stick (or CC with a remote) and set DIG to maximum for best results (§9-2, 9-3). The XMT 450 is rated for 5/16 in. carbons.'}
+];
+let J = null;
+
+/* ================= job scene ================= */
+let jobGroup = null, jobParts = [], leads = {};
+function lug(color){ const g = new THREE.Group(); jobGroup.add(g); box(.05, .06, .012, M.copper, 0, 0, 0, g); cyl(.028, .1, color, 'z', 0, -.0, .06, g, 14); return g; }
+function makeLead(key, color, loose, tail, r = .022){
+  const L = {key, g:lug(color), loose, tail, r, at:null, cable:null};
+  L.place = p => { L.g.position.copy(p); const mid = p.y > .5 ? p.clone().add(V(0, -.28, .3)) : p.clone().add(V(0, .02, .2)); const pts = [p.clone().add(V(0,0,.1)), mid, ...tail];
+    if (L.cable) setTube(L.cable, pts, r, 60); else { L.cable = tube(pts, r, M.rubber, 60, jobGroup); } };
+  L.place(loose); return L; }
+function plugLead(key, loose, tail, target, color = M.black){ // small plug (control cord, hoses)
+  const g = new THREE.Group(); jobGroup.add(g); cyl(.03, .07, color, 'z', 0, 0, .03, g, 14);
+  const L = {key, g, loose, tail, target, cable:null};
+  L.place = (p, toRear) => { g.position.copy(p); g.rotation.y = toRear ? Math.PI : 0; const mid = p.clone().add(V(0, -.2, toRear ? -.25 : .25)); const pts = [p.clone().add(V(0, 0, toRear ? -.08 : .08)), mid, ...tail];
+    if (L.cable) setTube(L.cable, pts, .012, 50); else L.cable = tube(pts, .012, color === M.green ? M.green : M.black, 50, jobGroup); };
+  L.place(loose); return L; }
+function regJob(name, label, objs){ reg(name, label, objs); jobParts.push(name); }
+function cylinder(x, z, label){ const g = new THREE.Group(); g.position.set(x, 0, z); jobGroup.add(g);
+  cyl(.2, 2.4, M.gasCyl, 'y', 0, 1.2, 0, g, 28); const d = add(new THREE.SphereGeometry(.2, 24, 12, 0, Math.PI*2, 0, Math.PI/2), M.gasCyl, 0, 2.4, 0, g); d.scale.y = .5;
+  cyl(.035, .12, M.brass, 'y', 0, 2.56, 0, g, 14);
+  const reg_ = new THREE.Group(); reg_.position.set(0, 2.6, .08); g.add(reg_);
+  cyl(.04, .1, M.brass, 'z', 0, 0, 0, reg_, 14); cyl(.03, .26, M.glass, 'y', 0, .2, .02, reg_, 14);
+  const ball = add(new THREE.SphereGeometry(.014, 10, 8), M.green, 0, .098, .02, reg_);
+  const kn = new THREE.Group(); kn.position.set(0, .37, .02); reg_.add(kn); cyl(.034, .045, M.black, 'y', 0, 0, 0, kn, 16); box(.05, .008, .008, M.alum, 0, .024, 0, kn);
+  const c = document.createElement('canvas'); c.width = 128; c.height = 320; const x2 = c.getContext('2d');
+  x2.fillStyle = '#f4f5f2'; x2.fillRect(0,0,128,320); x2.fillStyle = '#1b1e22'; x2.font = 'bold 22px IBM Plex Sans, sans-serif'; x2.textBaseline = 'middle';
+  for (let v = 0; v <= 60; v += 5){ const y = 290 - v/60*250; x2.fillRect(0, y-1, v % 10 ? 18 : 30, 2); if (v % 10 === 0) x2.fillText(v, 40, y); } x2.fillText('CFH', 70, 22);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const pl = new THREE.Mesh(new THREE.PlaneGeometry(.1, .25), new THREE.MeshStandardMaterial({map:t, roughness:.8})); pl.position.set(.035, .2, -.018); reg_.add(pl);
+  const tag = sprite(label, {fg:'#1b1e22', bg:'#ffffff', scale:.22, font:'bold 22px IBM Plex Sans, sans-serif'}, g); tag.position.set(0, 1.6, .22);
+  const chain = add(new THREE.TorusGeometry(.21, .008, 6, 40), M.steel, 0, 1.9, 0, g); chain.rotation.x = Math.PI/2;
+  return {g, reg:reg_, ball, knob:kn, outlet:V(x, 2.6, z + .14)}; }
+let gasCyl = null;
+function setupJob(){
+  if (jobGroup){ scene.remove(jobGroup); jobGroup.traverse(o => { o.geometry?.dispose?.(); }); }
+  for (const n of jobParts) delete parts[n]; jobParts = []; leads = {}; gasCyl = null; flowRead = null;
+  jobGroup = new THREE.Group(); scene.add(jobGroup); ROOT = jobGroup;
+  // work clamp + cable
+  const clamp = new THREE.Group(); clamp.position.set(1.34, .92, 1.5); jobGroup.add(clamp); box(.1, .05, .06, M.copper, 0, 0, 0, clamp); box(.12, .03, .05, M.steel, -.02, .035, 0, clamp);
+  leads.work = makeLead('work', M.black, V(.45, .05, 1.75), [V(.9, .04, 2.05), V(1.2, .3, 1.7), V(1.3, .9, 1.52)]);
+  regJob('workLead', 'Work cable (ground clamp)', [leads.work.g, clamp]);
+  const toTable = [V(-.2, .04, 2.2), V(1.0, .04, 2.45), V(1.4, .6, 2.2), V(1.55, .93, 2.0)];
+  if (J.lead === 'holder' || J.lead === 'gouger'){
+    const h = new THREE.Group(); h.position.set(1.65, .95, 2.0); jobGroup.add(h);
+    cyl(.035, .22, J.lead === 'holder' ? M.yellow : M.black, 'x', 0, 0, 0, h, 16); box(.08, .04, .05, M.copper, .14, 0, 0, h);
+    if (J.lead === 'holder') cyl(.006, .3, mat(0x8a7a5a,.8,.1), 'z', .2, 0, .15, h, 8); else cyl(.012, .3, M.black, 'x', .3, 0, 0, h, 10);
+    leads.elec = makeLead('elec', M.red, V(-.25, .05, 1.7), toTable); regJob('elecLead', LEADS[J.lead].tool, [leads.elec.g, h]);
+    if (J.lead === 'gouger'){
+      const drop = new THREE.Group(); drop.position.set(3.0, 0, .5); jobGroup.add(drop); cyl(.03, 2.6, M.steel, 'y', 0, 1.3, 0, drop, 12); const qc = cyl(.03, .08, M.brass, 'z', 0, 1.0, .05, drop, 12);
+      const tag = sprite('AIR 90 PSI', {fg:'#1b1e22', bg:'#ffffff', scale:.2, font:'bold 24px IBM Plex Sans, sans-serif'}, drop); tag.position.set(0, 1.25, .1);
+      leads.air = plugLead('air', V(2.4, .05, 1.4), [V(2.0, .04, 2.3), V(1.6, .6, 2.2), V(1.55, .95, 2.05)], 'airDrop', M.black);
+      regJob('airDrop', 'Compressed air drop', [drop]); regJob('airHose', 'Air hose', [leads.air.g]);
+    }
+  }
+  if (J.lead === 'torch'){
+    const h = new THREE.Group(); h.position.set(1.65, .95, 2.0); jobGroup.add(h); cyl(.03, .22, M.black, 'x', 0, 0, 0, h, 16); cyl(.03, .08, M.black, 'y', .13, -.02, 0, h, 16); cyl(.022, .05, mat(0xd47b4a,.6,.1), 'y', .13, -.08, 0, h, 16);
+    leads.elec = makeLead('elec', M.black, V(-.25, .05, 1.7), toTable); regJob('elecLead', 'TIG torch power cable', [leads.elec.g, h]);
+    leads.gasOut = plugLead('gasOut', V(.2, .05, 1.9), [V(.6, .04, 2.3), V(1.3, .3, 2.2), V(1.55, .95, 2.02)], 'gasOut', M.green);
+    regJob('torchGas', 'Torch gas hose', [leads.gasOut.g]);
+    const ped = new THREE.Group(); ped.position.set(-.9, .05, 2.0); jobGroup.add(ped); box(.3, .05, .45, M.black, 0, 0, 0, ped); const top = box(.26, .03, .36, M.dark, 0, .06, 0, ped); top.rotation.x = -.15;
+    leads.pedal = plugLead('pedal', V(-.6, .05, 1.55), [V(-.75, .04, 1.8), V(-.85, .05, 1.95)], 'remote14');
+    regJob('pedal', 'Foot control', [ped, leads.pedal.g]);
+    gasCyl = cylinder(.4, -1.75, 'ARGON');
+    leads.gasIn = plugLead('gasIn', V(.55, 1.6, -1.55), [V(.45, 2.2, -1.62), V(.4, 2.6, -1.67)], 'gasIn', M.green);
+    regJob('regHose', 'Regulator hose', [leads.gasIn.g]); gasIn.visible = true; gasOut.visible = true; gasOutPlug.visible = false;
+  } else { gasIn.visible = false; gasOut.visible = false; gasOutPlug.visible = true; }
+  if (J.lead === 'feeder' || J.lead === 'vsfeeder'){
+    const f = new THREE.Group(); f.position.set(1.35, 0, .35); jobGroup.add(f);
+    rbox(.5, .5, .8, .03, J.lead === 'feeder' ? M.feeder : M.feeder2, 0, .3, 0, f); box(.42, .12, .03, M.black, 0, .42, .41, f);
+    if (J.lead === 'vsfeeder') box(.3, .04, .06, M.black, 0, .58, 0, f);
+    const lab = sprite(J.lead === 'feeder' ? '74 MPa Plus' : 'V-SENSE', {fg:'#fff', bg:'#1b1e22', scale:.2, font:'bold 22px IBM Plex Sans, sans-serif'}, f); lab.position.set(0, .62, .3);
+    tube([V(1.35, .4, .76), V(1.4, .5, 1.3), V(1.5, .9, 1.8), V(1.6, .95, 2.0)], .025, M.black, 40, jobGroup);
+    const gun = new THREE.Group(); gun.position.set(1.65, .95, 2.0); jobGroup.add(gun); cyl(.035, .2, M.black, 'x', 0, 0, 0, gun, 14); cyl(.025, .12, M.copper, 'x', .16, -.02, 0, gun, 14);
+    leads.elec = makeLead('elec', M.red, V(-.25, .05, 1.7), [V(.5, .04, 1.55), V(1.0, .1, .9), V(1.1, .25, .35)]);
+    regJob('elecLead', LEADS[J.lead].name, [leads.elec.g]); regJob('feeder', LEADS[J.lead].tool, [f, gun]);
+    if (J.lead === 'feeder'){
+      leads.cord = plugLead('cord', V(.75, .05, 1.35), [V(.95, .04, 1.0), V(1.1, .45, .3)], 'remote14');
+      regJob('cord', 'Feeder 14-pin control cord', [leads.cord.g]);
+      const fg = cyl(.02, .06, M.brass, 'z', 1.35, .35, -.07, jobGroup, 12); regJob('feederGas', 'Feeder gas inlet', [fg]);
+      gasCyl = cylinder(1.4, -.9, J.id === 'gmaw' ? '75/25' : '90/10');
+      leads.feederGas = plugLead('feederGas', V(1.65, .05, -.6), [V(1.6, .9, -.8), V(1.45, 2.6, -.78)], 'feederGas', M.green);
+      regJob('feederHose', 'Gas hose from regulator', [leads.feederGas.g]);
+    } else {
+      const sc = new THREE.Group(); sc.position.set(1.35, .05, 1.05); jobGroup.add(sc); box(.07, .04, .04, M.yellow, 0, 0, 0, sc);
+      const sl = tube([V(1.35, .3, .76), V(1.35, .05, .95), V(1.35, .05, 1.03)], .008, M.black, 20, jobGroup);
+      leads.vs = {g:sc, cable:sl, place:p => { sc.position.copy(p); setTube(sl, [V(1.35, .3, .76), V(1.5, .3, 1.2), p.clone()], .008, 24); }};
+      regJob('vsClamp', 'Voltage sensing clamp', [sc]);
+    }
+  }
+  ROOT = scene;
+}
+
+/* ================= steps ================= */
+const PHASES = ['Job','Safety','Connections & polarity','Power & process','Settings','Final check'];
+const termName = k => k === '+' ? 'positive (+)' : 'negative (−)';
+const elecTerm = () => J.pol === 'DCEP' ? '+' : '−';
+function connectTo(L, key){ const p = TP[key].clone().add(V(0, 0, .03)); const from = L.g.position.clone();
+  tween(.6, t => L.place(from.clone().lerp(p, ease(t)))); }
+function plugTo(L, p, toRear){ const from = L.g.position.clone(); tween(.6, t => L.place(from.clone().lerp(p, ease(t)), toRear && t > .5)); }
+const chooseJob = { id:'job', phase:0, title:'Choose the job', type:'ui', view:'overview',
+  instr:'Pick the welding process you are setting up. Each job uses a different lead, polarity, mode and settings.',
+  why:'The XMT 450 MPa is a multiprocess power source: stick, TIG, MIG, pulsed MIG, flux core and air carbon arc gouging all come from the same two output terminals. The process decides the polarity, the mode switch position and which panel settings matter.',
+  hint:'Any job works. Try each one; they all set up differently.',
+  ui(el){ el.innerHTML = `<div class="jobs" role="group" aria-label="Jobs">${JOBS.map(j => `<button class="job" data-id="${j.id}" aria-pressed="${J?.id === j.id}"><span class="tag">${j.tag}</span><b>${j.title}</b><small>${j.job}</small></button>`).join('')}</div>`;
+    el.querySelectorAll('.job').forEach(b => b.onclick = () => { pickJob = b.dataset.id; el.querySelectorAll('.job').forEach(x => x.setAttribute('aria-pressed', x === b)); }); },
+  validate(){ if (!pickJob) return {ok:false, msg:'Pick a job first.', soft:true}; J = JOBS.find(j => j.id === pickJob); buildJobSteps(); setupJob(); return {ok:true}; },
+  confirmLabel:'Start this job', get done(){ return `Job: ${J.title}.`; } };
+let pickJob = null;
+function buildJobSteps(){
+  const ld = LEADS[J.lead];
+  const st = [chooseJob,
+  { id:'power_off', phase:1, title:'Turn the power off', type:'click', targets:['power'], view:'panel',
+    instr:'Turn the power switch OFF before you connect anything to the weld output terminals.',
+    test:'Make the machine safe before connecting cables.',
+    why:'§5-4: turn off power before connecting to weld output terminals. In Stick, Lift-Arc, Scratch Start and V-Sense modes the terminals are energized whenever the machine is on.',
+    hint:'The red rocker switch on the right side of the front panel.',
+    act(){ setPower(false); }, done:'Power is off.' },
+  { id:'elec', phase:2, title:`Connect the ${ld.name}`, type:'click', targets:['termPos','termNeg'], anyOne:true, view:'terms',
+    get instr(){ return `${J.pol} job: connect the ${ld.name} to the ${termName(elecTerm())} terminal. Slide the lug onto the stud so it sits tight against the copper bar.`; },
+    test:`Connect the ${ld.name} to an output terminal for this job.`,
+    why:'§5-5: remove the nut, slide the cable lug onto the stud tight against the copper bar, and reinstall the nut. Nothing goes between the lug and the bar; a poor connection overheats and can start a fire.',
+    get hint(){ return `${J.pol} means electrode ${J.pol === 'DCEP' ? 'positive' : 'negative'}. The ${ld.name} is the electrode side.`; },
+    act(n){ const k = n === 'termPos' ? '+' : '−'; S.leads.elec = k; connectTo(leads.elec, k); },
+    check(n){ if (mode === 'guided' && (n === 'termPos' ? '+' : '−') !== elecTerm()) return `That's ${J.pol === 'DCEP' ? 'DCEN' : 'DCEP'}. ${J.pol} puts the electrode on the ${termName(elecTerm())} terminal.`; },
+    get done(){ return `Electrode lead on ${termName(S.leads.elec)}.`; } },
+  { id:'work', phase:2, title:'Connect the work cable', type:'click', targets:['termPos','termNeg'], anyOne:true, view:'terms',
+    instr:'Connect the work (ground) cable to the open terminal.',
+    why:'The work cable completes the circuit through the workpiece. It always goes on the terminal the electrode lead is not using.',
+    hint:'Only one terminal is open.',
+    act(n){ const k = n === 'termPos' ? '+' : '−'; S.leads.work = k; connectTo(leads.work, k); },
+    check(n){ const k = n === 'termPos' ? '+' : '−'; if (k === S.leads.elec) return 'The electrode lead is already on that terminal. The work cable goes on the other one.'; },
+    get done(){ return `Work cable on ${termName(S.leads.work)}.`; } }];
+  for (const x of J.extras){
+    if (x === 'pedal') st.push({ id:'pedal', phase:2, title:'Plug in the foot control', type:'click', targets:['remote14'], view:'panel',
+      instr:'Plug the foot control into the Remote 14 receptacle and twist the collar to lock it.',
+      test:'Connect the device that turns the TIG output on.',
+      why:'§5-6 and §7-1. In TIG mode the remote closes the contactor (sockets A–B) and sends the amperage command (0–10 V on E), so the pedal sets amps as a percentage of the panel preset.',
+      hint:'The round 14-pin receptacle at the upper left of the front panel.',
+      act(){ plugTo(leads.pedal, PX(110, 380, .07)); S.ext.pedal = true; }, done:'Foot control connected.' });
+    if (x === 'gasIn') st.push({ id:'gasIn', phase:2, title:'Connect gas to GAS IN', type:'click', targets:['gasIn'], view:'rear',
+      instr:'The argon cylinder is chained and the regulator is installed with its face vertical. Connect the regulator hose to the GAS IN fitting on the rear panel.',
+      test:'Connect the shielding gas supply to the machine.',
+      why:'§5-8. The optional gas valve (kit 300928) controls TIG gas. GAS IN and GAS OUT have 5/8-18 right-hand threads. In TIG mode, gas flow starts when the remote contactor turns on.',
+      hint:'Brass fitting on the back panel.',
+      act(){ plugTo(leads.gasIn, V(.3, 1.0, -1.16), true); S.ext.gasIn = true; }, done:'Supply hose on GAS IN.' });
+    if (x === 'gasOut') st.push({ id:'gasOut', phase:2, title:'Connect the torch gas hose', type:'click', targets:['gasOut'], view:'panel',
+      instr:'Connect the TIG torch gas hose to GAS OUT on the front panel.',
+      test:'Get shielding gas to the torch.',
+      why:'§5-8: hose coupler to the torch, gas hose from the coupler to the GAS OUT fitting.',
+      hint:'Brass fitting at the right side of the lower front panel.',
+      act(){ plugTo(leads.gasOut, PX(770, 690, .08)); S.ext.gasOut = true; }, done:'Torch gas hose on GAS OUT.' });
+    if (x === 'cord') st.push({ id:'cord', phase:2, title:'Plug in the feeder control cord', type:'click', targets:['remote14'], view:'panel',
+      instr:'Plug the wire feeder 14-pin control cord into the Remote 14 receptacle.',
+      test:'Connect the feeder so it can control the power source.',
+      why:'§5-6, §8-1. MIG and Pulsed MIG modes turn the output on through Remote 14 (contactor, sockets A–B). The feeder also sends its wire speed command (socket L), and with an 11-conductor cord it supports synergic pulse and remote process select.',
+      hint:'Upper left of the front panel.',
+      act(){ plugTo(leads.cord, PX(110, 380, .07)); S.ext.cord = true; }, done:'Feeder control cord connected.' });
+    if (x === 'feederGas') st.push({ id:'feederGas', phase:2, title:'Connect gas to the feeder', type:'click', targets:['feederGas'], view:'feeder',
+      instr:'Connect the regulator hose from the chained cylinder to the gas inlet on the back of the wire feeder.',
+      test:'Get shielding gas to the gun.',
+      why:'For MIG the gas solenoid is in the feeder, so gas goes cylinder → regulator/flowmeter → feeder → gun (§8-1).',
+      hint:'Brass fitting on the rear of the feeder.',
+      act(){ plugTo(leads.feederGas, V(1.35, .35, -.14), true); S.ext.feederGas = true; }, done:'Gas hose on the feeder.' });
+    if (x === 'vsclamp') st.push({ id:'vsclamp', phase:2, title:'Clamp the voltage sensing lead', type:'click', targets:['workpiece'], view:'table',
+      instr:'Clamp the feeder voltage sensing lead to the workpiece.',
+      test:'Finish connecting the voltage-sensing feeder.',
+      why:'§8-7. A voltage-sensing feeder has no control cord. It reads arc voltage through this clamp to run its motor, so the clamp must be on the work.',
+      hint:'Click the steel plate on the welding table.',
+      act(){ const from = leads.vs.g.position.clone(); tween(.6, t => leads.vs.place(from.clone().lerp(V(1.8, .945, 1.6), ease(t)))); S.ext.vs = true; }, done:'Sensing clamp on the work.' });
+    if (x === 'air') st.push({ id:'air', phase:2, title:'Connect compressed air', type:'click', targets:['airDrop'], view:'table',
+      instr:'Connect the air hose from the gouging torch to the shop air drop.',
+      test:'Hook up the gouging torch.',
+      why:'§9-1 shows the compressed air line to the carbon arc torch. Air blows the molten metal out of the groove; without it you just melt a puddle.',
+      hint:'The quick-connect on the air drop beside the table.',
+      act(){ plugTo(leads.air, V(3.0, 1.0, .62)); S.ext.air = true; }, done:'Air connected.' });
+  }
+  st.push({ id:'polarity', phase:2, title:'Check polarity', type:'ui', view:'terms',
+    instr:'Before you power up, verify the polarity. Answer the question, then look at where your cables are.',
+    why:'DCEP (reverse polarity, electrode positive) gives deeper penetration and is used for most stick electrodes, solid and gas-shielded wires, and gouging. DCEN (straight polarity, electrode negative) is used for DC TIG and most self-shielded flux-cored wires. Getting it backwards gives poor fusion, spatter or a melted tungsten.',
+    hint:'Electrode lead on + is DCEP. On − it is DCEN.',
+    ui(el){ el.innerHTML = `<fieldset><legend>This job (${J.title}) needs</legend><div class="row" id="pq">${['DCEP','DCEN'].map(p => `<button class="btn" data-p="${p}" aria-pressed="${S.polAns===p}">${p} · ${p === 'DCEP' ? 'electrode +' : 'electrode −'}</button>`).join('')}</div></fieldset>
+      <p class="note" id="polNow">${mode === 'guided' ? `Right now: electrode lead on ${termName(S.leads.elec)}, work on ${termName(S.leads.work)}.` : 'Check the terminals on the machine.'}</p>
+      <button class="btn" id="swap">Swap the two leads</button>`;
+      el.querySelectorAll('#pq .btn').forEach(b => b.onclick = () => { S.polAns = b.dataset.p; el.querySelectorAll('#pq .btn').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+      el.querySelector('#swap').onclick = () => { if (S.power){ err('Turn the power off before moving cables on the output terminals.'); return; }
+        const e = S.leads.elec; S.leads.elec = S.leads.work; S.leads.work = e; connectTo(leads.elec, S.leads.elec); connectTo(leads.work, S.leads.work);
+        say(`Leads swapped. Electrode lead now on ${termName(S.leads.elec)}.`, 'info'); const n = el.querySelector('#polNow'); if (mode === 'guided') n.textContent = `Right now: electrode lead on ${termName(S.leads.elec)}, work on ${termName(S.leads.work)}.`; }; },
+    validate(){ if (!S.polAns) return {ok:false, msg:'Pick DCEP or DCEN.', soft:true};
+      if (S.polAns !== J.pol) return {ok:false, msg:`Not for this job. ${J.title} needs ${J.pol}. ${J.why.split('. ')[0]}.`};
+      const actual = S.leads.elec === '+' ? 'DCEP' : 'DCEN';
+      if (actual !== J.pol) return {ok:false, msg:`Polarity check failed: your electrode lead is on ${termName(S.leads.elec)}, which is ${actual}. Swap the leads.`};
+      return {ok:true}; },
+    get done(){ return `Polarity verified: ${J.pol}, electrode lead on ${termName(elecTerm())}.`; } });
+  st.push({ id:'power_on', phase:3, title:'Turn the power on', type:'click', targets:['power'], view:'panel',
+    instr:'Turn the power switch ON. The displays run a test and then show the current mode.',
+    why:'§6-1. If VRD is enabled you will see VRD ON briefly after the LED test (§6-3).', hint:'Same red rocker.',
+    act(){ setPower(true); }, done:'Power on.' });
+  const MM = MODES.find(m => m.k === J.mode);
+  st.push({ id:'cover_open', phase:3, title:'Open the control cover', type:'click', targets:['cover'], view:'panel',
+    instr:'Pull the tab at the top of the control cover so it drops down and exposes the mode switch and Setup controls.',
+    test:'Get to the process and setup controls.',
+    why:'The hinged cover protects the mode switch and setup controls from spatter, grinding dust and bumps, and keeps settings from being changed by accident. Open it only to set up the machine.',
+    hint:'The smoked cover over the center of the front panel. Grab the black tab on top.',
+    act(){ setCover(true); }, delay:800, done:'Cover open.' });
+  st.push({ id:'mode', phase:3, title:'Select the process', type:'click', targets:['mode_' + J.mode], anyMode:true, view:'panel',
+    get instr(){ return `Turn the mode switch to ${MM.name.toUpperCase()}.`; },
+    test:'Turn the mode switch to the right position for this job.',
+    why:`§6-2. ${MODES.map(m => `${m.name}: ${m.proc}, output ${m.out.toLowerCase()}, panel sets ${m.adj.toLowerCase()}`).join('. ')}.`,
+    hint:`Look at how the output is turned on for this job: ${J.extras.includes('pedal') || J.extras.includes('cord') ? 'through a remote on Remote 14' : 'electrode hot, no remote'}.`,
+    act(n){ setMode(n.slice(5)); }, done:`Mode switch on ${MM.name}.` });
+  st.push(settingsStep());
+  if (J.gas) st.push(gasStep());
+  st.push({ id:'cover_close', phase:5, title:'Close the control cover', type:'click', targets:['cover'], view:'panel',
+    instr:'Settings are done. Swing the control cover back up and latch it.',
+    test:'Protect the controls before you weld.',
+    why:'A closed cover keeps spatter and dust out of the switch and buttons and stops someone from bumping the mode switch to another process mid-job. The Adjust knob and displays stay usable with it closed.',
+    hint:'Click the open cover hanging below the controls.',
+    act(){ setCover(false); }, delay:800, done:'Cover closed.' });
+  st.push({ id:'final', phase:5, title:'Pre-weld check', type:'ui', view:'overview',
+    instr:'Review the setup. Every item must check out before you strike an arc.',
+    why:'A last walk-around catches the mistakes that cause most bad first welds: wrong polarity, wrong mode, loose cables, and no gas.',
+    hint:'Everything here is already verified. Read it through and finish.',
+    ui(el){ const items = finalChecks(); el.innerHTML = `<ul class="check">${items.map(([ok, t]) => `<li class="${ok ? '' : 'no'}">${t}</li>`).join('')}</ul>`; },
+    validate(){ const bad = finalChecks().filter(x => !x[0]); return bad.length ? {ok:false, msg:bad[0][1]} : {ok:true}; },
+    confirmLabel:'Finish setup', done:'Setup complete. Ready to weld.' });
+  steps = st; stepErr = steps.map((_, i) => stepErr[i] || 0); hintsUsed = steps.map((_, i) => hintsUsed[i] || false);
+}
+function finalChecks(){ const MM = MODES.find(m => m.k === J.mode); const out = ['SST','LIFT','STICK','VSEN'].includes(J.mode);
+  const L = [[S.leads.elec === elecTerm(), `Polarity ${J.pol}: ${LEADS[J.lead].name} on ${termName(elecTerm())}, work cable on ${termName(S.leads.work)}.`],
+    [S.mode === J.mode, `Mode switch: ${MM.name} (${MM.proc}).`],
+    [!S.cover, 'Control cover closed.'],
+    [true, out ? 'OUTPUT ON light is lit: the electrode is energized right now. Treat it as live.' : 'OUTPUT ON light is off until the remote or feeder trigger closes the contactor.']];
+  if (J.extras.includes('pedal')) L.push([!!S.ext.pedal, 'Foot control on Remote 14.']);
+  if (J.extras.includes('cord')) L.push([!!S.ext.cord, 'Feeder control cord on Remote 14.']);
+  if (J.gas) L.push([S.flow >= J.gas.range[0] && S.flow <= J.gas.range[1], `Gas: ${J.gas.name} at ${S.flow} CFH.`]);
+  if (J.extras.includes('vsclamp')) L.push([!!S.ext.vs, 'Voltage sensing clamp on the work. No shielding gas needed for self-shielded wire.']);
+  if (J.extras.includes('air')) L.push([!!S.ext.air, 'Compressed air connected to the gouging torch.']);
+  return L; }
+
+/* ---- settings step ---- */
+const RNG = (a, b) => a === b ? `${a}` : `${a}–${b}`;
+function settingsStep(){
+  const s = J.set, f = fam(J.mode);
+  return { id:'settings', phase:4, title:'Set up the panel', type:'ui', view:'panel', live:['setupBtn','adjust'],
+    instr: f === 'tig' ? 'Set the preset amperage with the Adjust control. The foot control will give you a percentage of this number.'
+      : f === 'stick' ? 'Set the amperage on the main display. Then press Setup to step through DIG, HOT.S and HOT.T and set each one. Press Setup until the Arc Control light goes out to return to amps.'
+      : f === 'puls' ? 'Press Setup to reach SHRP, then WIRE and GAS. Load the wire and gas (pressing Setup after GAS shows PROG LOAD), then set arc length on the main display.'
+      : 'Press Setup to reach INDU, then WIRE and GAS. Load the wire and gas (pressing Setup after GAS shows PROG LOAD), check inductance, then set the preset voltage on the main display.',
+    test:'Set up the panel for this job, then confirm.',
+    why:'§4-2 and §6-1. The Setup button steps through the arc controls for the mode; the Adjust control changes whatever the displays show. Each wire and gas combination keeps its own voltage and inductance (§8-2).',
+    hint: guideTargets(),
+    ui(el){ settingsUI(el); },
+    validate(){ return validateSettings(); },
+    done:'Panel settings are in range.' };
+}
+function guideTargets(){ const s = J.set; const t = [];
+  if (s.amps) t.push(`amps ${RNG(...s.amps)}`); if (s.ampsTig) t.push(`preset amps ${RNG(...s.ampsTig)}`); if (s.dig) t.push(`DIG ${RNG(...s.dig)}`);
+  if (s.wire) t.push(`wire ${s.wire}`); if (s.gas) t.push(`gas ${GAS[s.gas][0]} ${GAS[s.gas][1]}`.trim()); if (s.pwire) t.push(`wire ${s.pwire}`); if (s.pgas) t.push(`gas ${GAS[s.pgas][0]} ${GAS[s.pgas][1]}`.trim());
+  if (s.indu) t.push(`INDU ${RNG(...s.indu)}`); if (s.volts) t.push(`volts ${RNG(...s.volts)}`); if (s.arc) t.push(`arc length ${RNG(...s.arc)}`); if (s.sharp) t.push(`SHRP ${RNG(...s.sharp)}`);
+  return 'Targets: ' + t.join(', ') + '.'; }
+function validateSettings(){ const s = J.set, e = [], inR = (v, r) => v >= r[0] && v <= r[1];
+  if (S.mode !== J.mode) e.push('the mode switch moved off ' + MODES.find(m => m.k === J.mode).name);
+  if (curMenu() !== 'main') e.push('press Setup until you are back on the main display');
+  if (s.amps && !inR(S.amps, s.amps)) e.push(`${S.amps} A is outside ${RNG(...s.amps)} A`);
+  if (s.ampsTig && !inR(S.ampsTig, s.ampsTig)) e.push(`${S.ampsTig} A is outside ${RNG(...s.ampsTig)} A`);
+  if (s.dig && !inR(S.dig, s.dig)) e.push(J.id === 'caca' ? 'DIG should be at maximum (100) for gouging' : J.id === 'e7018' ? `DIG ${S.dig} is high for a smooth E7018; keep it at ${s.dig[1]} or less` : `DIG ${S.dig} is low for E6010; use ${s.dig[0]} or more`);
+  if (s.wire && WIRES_MIG[S.mig.wire] !== s.wire) e.push(`loaded wire is ${WIRES_MIG[S.mig.wire]}, not ${s.wire}`);
+  if (s.gas && S.mig.gas !== s.gas) e.push(`loaded gas is ${GAS[S.mig.gas][2]}${J.id === 'fcaws' ? '; for self-shielded wire use the ARGN CO2 selection (§8-3)' : ''}`);
+  if (s.pwire && WIRES_PULS[S.puls.wire] !== s.pwire) e.push(`loaded pulse wire is ${WIRES_PULS[S.puls.wire]}, not ${s.pwire}`);
+  if (s.pgas && S.puls.gas !== s.pgas) e.push(`loaded gas is ${GAS[S.puls.gas][2]}`);
+  if (s.indu && !inR(S.mig.indu, s.indu)) e.push(J.id === 'fcaws' ? `INDU ${S.mig.indu}: self-shielded wire needs inductance below 10 (§8-3)` : `INDU ${S.mig.indu} is outside ${RNG(...s.indu)}`);
+  if (s.volts && !inR(S.mig.volts, s.volts)) e.push(`${S.mig.volts.toFixed(1)} V is outside ${RNG(...s.volts)} V`);
+  if (s.arc && !inR(S.puls.arc, s.arc)) e.push(`arc length ${S.puls.arc} is outside ${RNG(...s.arc)}`);
+  if (s.sharp && !inR(S.puls.sharp, s.sharp)) e.push(`SHRP ${S.puls.sharp} is outside ${RNG(...s.sharp)}`);
+  return e.length ? {ok:false, msg:'Check: ' + e.join('; ') + '.'} : {ok:true}; }
+const GUIDE = {
+  amps:['Amperage (right display)', 'Welding current. Rule of thumb for stick: about 1 A per .001 in. of rod diameter (1/8 in. ≈ 125 A), then stay inside the rod maker\'s range. Range on this machine: 15–600 A.'],
+  ampsTig:['Preset amperage', 'In TIG mode the remote sets amps as a percentage of this preset (§7-4), so set it at the most you will need. Rule of thumb: about 1 A per .001 in. of steel thickness.'],
+  dig:['DIG (Arc Control)', '0–100. Changes the arc from soft to stiff. Lower for smooth-running rods like E7018; higher for stiffer, more penetrating rods like E6010. For CAC-A set it to maximum (§9-2, 9-3).'],
+  hot:['HOT.S / HOT.T (Hot Start)', 'AUTO or 1–50. Hot Start amperage (HOT.S) and time (HOT.T) help the rod start without sticking. AUTO (adaptive) picks them for you; 1 is no hot start (§9-2).'],
+  volts:['Preset voltage (left display)', 'Sets arc voltage, which controls arc length and bead width. Wire speed is set at the feeder. A feeder with a voltage control overrides this knob (§8-2). Short-circuit steel usually starts around 17–20 V (typical).'],
+  indu:['INDU (Arc Control)', '0–100. Lower stiffens the arc and reduces puddle fluidity; higher softens the arc and wets the puddle out. Defaults: steel with Ar/CO₂ 25, steel with CO₂ 10, flux core 10, stainless 75. For self-shielded flux core keep it under 10 (§8-2, 8-3).'],
+  wiregas:['WIRE and GAS', 'Pick the wire type and diameter, then the gas. Pressing Setup after GAS confirms the choice and shows PROG LOAD. Each wire/gas combination keeps its own settings, which are saved when the unit is turned off (§8-2, 8-4).'],
+  arc:['Arc length (left display)', '0–100. The energy used to burn off the wire. More wire speed needs more arc length. In PULS AUTO with a synergic feeder the programs were developed at 50 and you don\'t need to change it when wire speed changes (§8-4, 6-3). Before the arc, the right display shows R and a reference wire speed for the feeder.'],
+  sharp:['SHRP · SharpArc (Arc Control)', '0–50, default 25. Lower widens the arc cone, increases puddle fluidity and flattens the bead. Higher narrows the cone and crowns the bead (§8-4).']
+};
+function settingsUI(el){
+  const f = fam(J.mode), s = J.set, keys = f === 'stick' ? ['amps','dig','hot'] : f === 'tig' ? ['ampsTig'] : f === 'puls' ? ['wiregas','sharp','arc'] : ['wiregas','indu','volts'];
+  const tg = {amps:s.amps, ampsTig:s.ampsTig, dig:s.dig, volts:s.volts, indu:s.indu, arc:s.arc, sharp:s.sharp, wiregas: s.wire ? [s.wire, GAS[s.gas][2]] : s.pwire ? [s.pwire, GAS[s.pgas][2]] : null};
+  el.innerHTML = `<div class="xpanel" role="group" aria-label="XMT front panel controls">
+    <div class="disps"><div class="seg7" id="pL" role="status" aria-label="Left display"></div><div class="seg7" id="pR" role="status" aria-label="Right display"></div></div>
+    <div class="leds" aria-hidden="true">${[['V','V'],['AL','Arc length'],['A','A'],['SET','Setup'],['AC','Arc Control'],['WT','Wire Type'],['GT','Gas Type'],['out','Output ON']].map(([k,t]) => `<span class="led" data-k="${k}"><i></i>${t}</span>`).join('')}</div>
+    <div class="adj"><button class="btn primary" id="pSet">Setup</button><button class="btn" data-d="-10" aria-label="Adjust down 10">−10</button><button class="btn" data-d="-1" aria-label="Adjust down 1">−1</button><button class="btn" data-d="1" aria-label="Adjust up 1">+1</button><button class="btn" data-d="10" aria-label="Adjust up 10">+10</button></div>
+    <p class="note">You can also click Setup and drag the Adjust knob on the machine itself.</p>
+    <p class="sr-only" id="pLive" aria-live="polite"></p></div>
+    <dl class="guide">${keys.map(k => `<dt>${GUIDE[k][0]}${mode === 'guided' && tg[k] ? `<span class="tgt">${Array.isArray(tg[k]) && typeof tg[k][0] === 'number' ? RNG(...tg[k]) : tg[k].join(' + ')}</span>` : ''}</dt><dd>${GUIDE[k][1]}</dd>`).join('')}</dl>`;
+  el.querySelector('#pSet').onclick = () => { pressSetup(); renderPanel(); };
+  el.querySelectorAll('.adj [data-d]').forEach(b => b.onclick = () => { adjust(+b.dataset.d); renderPanel(); });
+  panelUIRefresh = o => { const L = el.querySelector('#pL'); if (!L) { panelUIRefresh = null; return; } L.textContent = o.L || ' '; el.querySelector('#pR').textContent = o.R || ' ';
+    el.querySelectorAll('.led').forEach(x => x.classList.toggle('on', o.on.has(x.dataset.k)));
+    el.querySelector('#pLive').textContent = `Display: ${o.L || 'blank'} ${o.R || ''}`; };
+  renderPanel();
+}
+/* ---- gas step ---- */
+let flowRead = null;
+function gasStep(){ return { id:'gas', phase:4, title:'Set the gas flow', type:'ui', view:'flow', holdTargets:['flowKnob'],
+  get instr(){ return `Open the cylinder valve, start gas flowing, then drag the knob on top of the flowmeter until the ball reads ${RNG(...J.gas.range)} CFH of ${J.gas.name}.`; },
+  test:'Set the shielding gas flow for this job.',
+  get why(){ return J.id === 'gtaw' ? 'In TIG mode the machine\'s gas valve opens when the remote contactor turns on (§5-8). 15–25 CFH of argon is a typical starting point for a #7–#8 cup indoors; too much flow causes turbulence that pulls in air.' : 'Miller\'s guidance for mixed gas is 25–45 CFH. Too low gives porosity; too high causes turbulence that pulls air into the shield and wastes gas.'; },
+  get hint(){ return `${RNG(...J.gas.range)} CFH. Read the scale at the center of the ball.`; },
+  ui(el){ el.innerHTML = `<button class="btn primary" id="gasT" aria-pressed="false">Start gas flow</button>
+    <p class="note">${J.id === 'gtaw' ? 'Gas flows while the foot control is pressed. Keep the torch away from the work.' : 'Use the feeder\'s gas purge.'} In the sim this button keeps gas flowing so your hand is free for the flowmeter knob.</p>
+    <label class="slide" for="flR"><span>Or use this slider <output id="flO"></output></span><input type="range" id="flR" min="0" max="60" step="1"></label>`;
+    const r = el.querySelector('#flR'), o = el.querySelector('#flO'), b = el.querySelector('#gasT');
+    flowUI = () => { r.value = S.flow; o.textContent = S.flowing ? `${S.flow} CFH` : `knob at ${S.flow} · no flow`; r.setAttribute('aria-valuetext', o.textContent); }; flowUI();
+    r.oninput = () => { S.flow = +r.value; flowUI(); };
+    b.onclick = () => { S.flowing = !S.flowing; if (S.flowing) S.purged = true; b.textContent = S.flowing ? 'Stop gas flow' : 'Start gas flow'; b.setAttribute('aria-pressed', S.flowing); flowUI(); }; },
+  onEnter(){ if (!parts.flowKnob) regJob('flowKnob', 'Flowmeter adjust knob (drag up/down)', [gasCyl.knob]); if (!flowRead){ ROOT = jobGroup; flowRead = sprite('0', {fg:'#1d1600', bg:'#f2a900', scale:.085, font:'bold 46px IBM Plex Mono, monospace'}); ROOT = scene; } },
+  tick(){ const b = gasCyl.ball; b.position.y += ((.098 + (S.flowing ? S.flow/60*.196 : 0)) - b.position.y)*.2; gasCyl.knob.rotation.y = -S.flow/60*Math.PI*3;
+    if (!flowRead) return; const w = new THREE.Vector3(); gasCyl.reg.getWorldPosition(w); flowRead.visible = true; flowRead.position.copy(w).add(V(-.18, .22, .05)); flowRead.userData.draw(S.flowing ? String(S.flow) : 'OFF'); },
+  validate(){ if (!S.purged) return {ok:false, msg:'Start the gas flowing so you can read the flowmeter.', soft:true};
+    if (S.flow < J.gas.range[0]) return {ok:false, msg:`${S.flow} CFH is low for ${J.gas.name}. Expect porosity.`};
+    if (S.flow > J.gas.range[1]) return {ok:false, msg:`${S.flow} CFH is too high. Turbulence pulls air into the shield.`}; return {ok:true}; },
+  done:'Gas flow set.' }; }
+
+/* ================= accessories ================= */
+const ACC = [
+ {id:'rack', grp:'Carts & racks', name:'Running Gear Cylinder Rack', no:'300408', desc:'Holds two large gas cylinders, has gun cable hangers and a consumable drawer. The power source and single or dual feeders mount to it.', r14:false},
+ {id:'migrunner', grp:'Carts & racks', name:'MIGRunner Cart', no:'195445', desc:'Small-footprint cart with a dual-cylinder rack low enough that you don\'t lift bottles. For single feeders.', r14:false},
+ {id:'gasvalve', grp:'Carts & racks', name:'Gas Valve Kit', no:'300928', desc:'Adds the internal gas solenoid with GAS IN (rear) and GAS OUT (front) fittings, 5/8-18 RH threads, so the XMT switches TIG gas (§5-8).', r14:false},
+ {id:'wfoot', grp:'Remote controls', name:'Wireless Remote Foot Control', no:'301580', desc:'Remote current and contactor control. The receiver plugs into the 14-pin Remote receptacle. 90 ft range.', r14:true, remote:true},
+ {id:'whand', grp:'Remote controls', name:'Wireless Remote Hand Control', no:'301582', desc:'Remote current and contactor control with a 300 ft range. Receiver plugs into the 14-pin receptacle.', r14:true, remote:true},
+ {id:'rfcs', grp:'Remote controls', name:'RFCS-14 HD Foot Control', no:'301589', desc:'Heavy-duty foot pedal for current and contactor control. Larger base, heavier cord, 20 ft cord with 14-pin plug.', r14:true, remote:true},
+ {id:'rhc', grp:'Remote controls', name:'RHC-14 Hand Control', no:'242211020 / 242211100', desc:'Miniature hand control (4 × 4 × 3.25 in.) for remote current and contactor. 20 ft or 100 ft cord.', r14:true, remote:true},
+ {id:'rcc', grp:'Remote controls', name:'RCC-14 / RCCS-14 Fingertip Control', no:'151086 / 043688', desc:'Rotary fingertip control that straps to the TIG torch: east/west (RCC-14) or north/south (RCCS-14). 26.5 ft cord, 14-pin plug.', r14:true, remote:true},
+ {id:'s74', grp:'Wire feeders & guns', name:'S-74 MPa Plus Feeder', no:'951291001', desc:'Heavy-duty industrial feeder for wires up to 5/64 in. Works synergically with MPa power sources and supports push-pull aluminum. Includes a Bernard BTB 400 A gun.', r14:true},
+ {id:'d74', grp:'Wire feeders & guns', name:'D-74 MPa Plus Dual Feeder', no:'951292001', desc:'Dual version of the 74 MPa Plus: two wires ready to go, with separate left and right programs through Remote Process Select (§8-6).', r14:true},
+ {id:'arcreach', grp:'Wire feeders & guns', name:'ArcReach SuitCase 8 / 12', no:'951726001 / 951729001', desc:'Portable feeder that runs off arc voltage. With an ArcReach power source it sets voltage at the feeder with no control cord.', r14:false, soon:true},
+ {id:'sc12rc', grp:'Wire feeders & guns', name:'SuitCase 12RC', no:'951580001', desc:'Lightweight portable feeder for wires up to .062 in. on 12 in. spools, with remote voltage control.', r14:true},
+ {id:'alumafeed', grp:'Wire feeders & guns', name:'XR-AlumaFeed SuitCase', no:'301567', desc:'Advanced push-pull feeder for high-volume aluminum MIG.', r14:true, soon:true},
+ {id:'spoolmatic', grp:'Wire feeders & guns', name:'Spoolmatic 30A Spool Gun', no:'130831', desc:'Air-cooled spool gun, 200 A at 100% duty cycle, 30 ft cable.', r14:false},
+ {id:'wc24', grp:'Wire feeders & guns', name:'WC-24 Weld Control', no:'137549', desc:'Interface that runs the Spoolmatic 30A on Miller CV power sources with 14-pin receptacles supplying 24 VAC.', r14:true},
+ {id:'insight', grp:'Cables & modules', name:'Insight Core 14-pin Module', no:'301072', desc:'Collects weld data and sends it to any web-connected device.', r14:true},
+ {id:'ext14', grp:'Cables & modules', name:'14-pin Extension Cable', no:'242208025 / 050 / 080', desc:'25, 50 or 80 ft extension, 14-pin plug to 14-pin socket, for remote controls and 24 VAC wire feeders.', r14:false},
+ {id:'ext11', grp:'Cables & modules', name:'11-conductor Extension Cable', no:'247831025 / 050 / 080', desc:'25, 50 or 80 ft. Supports contactor and remote voltage on Miller 14-pin CV sources; with an MPa also synergic pulsed MIG, remote process select and side select.', r14:false}
+];
+const accOn = new Set(); let accSel = null, accMode = false; const accModels = {};
+function accNotes(a){
+  const n = [], m = J ? J.mode : null, has = id => accOn.has(id), jobR14 = J && (J.extras.includes('pedal') || J.extras.includes('cord'));
+  if (a.remote){ if (m === 'TIG' || m === 'CC') n.push(['ok', `Works in ${MODES.find(x => x.k === m).name} mode: the remote turns output on and sets amps as a percentage of the panel preset (§6-2).`]);
+    else if (m === 'STICK') n.push(['warn', 'Stick mode defaults to panel-only (PANL ONLY). Set PANL RMT in the Configuration Option Menu to use a remote (§6-3).']);
+    else if (m === 'SST' || m === 'LIFT') n.push(['ok', 'Adjusts amps as a percentage of the preset (PANL RMT is the default). The output stays on in this mode.']);
+    else if (m) n.push(['warn', `In ${MODES.find(x => x.k === m).name} mode the feeder uses Remote 14 and sets the process; a current remote isn't used.`]); }
+  if (a.id === 's74' || a.id === 'd74'){ n.push(['ok', 'Synergic with the MPa: PULS AUTO (single-knob pulse) only works with synergic feeders (§6-3).']);
+    if (a.id === 'd74') n.push(['ok', 'For Remote Process Select on an XMT, set the mode switch to Pulsed MIG (§8-6).']);
+    if (has('migrunner') && a.id === 'd74') n.push(['warn', 'The MIGRunner cart is not compatible with dual feeders. Use the Running Gear Cylinder Rack.']); }
+  if (a.id === 'arcreach') n.push(['warn', 'The XMT 450 MPa is not an ArcReach model. ArcReach feeders still work with non-ArcReach power sources, but cordless voltage control needs an XMT 450 CC/CV ArcReach (spec sheet). A dedicated ArcReach sim is coming.']);
+  if (a.id === 'alumafeed') n.push(['warn', 'Use 247831 11-conductor extensions; the 242208 14-pin extensions are not for XR-AlumaFeed. A dedicated AlumaFeed sim is coming.']);
+  if (a.id === 'spoolmatic') n.push(has('wc24') ? ['ok', 'WC-24 is on the list, so the spool gun can run from the 14-pin receptacle.'] : ['warn', 'Requires the WC-24 Weld Control (137549) to work with a 14-pin receptacle. Add it.']);
+  if (a.id === 'ext14' && (has('s74') || has('d74') || has('alumafeed'))) n.push(['warn', 'Not for 70 Series MPa feeders or XR-AlumaFeed. Use a 247831 11-conductor cable.']);
+  if (a.id === 'ext11' && (has('s74') || has('d74'))) n.push(['ok', 'Right cable for the 74 MPa Plus: keeps synergic pulse and remote process select.']);
+  if (a.id === 'gasvalve') n.push(J?.id === 'gtaw' ? ['ok', 'Already installed for this TIG job: that is where GAS IN and GAS OUT come from.'] : ['ok', 'Only needed when the XMT itself switches TIG gas.']);
+  if (a.id === 'migrunner' && has('rack')) n.push(['warn', 'Pick one cart: the Running Gear Cylinder Rack is already selected.']);
+  if (a.id === 'rack' && has('migrunner')) n.push(['warn', 'Pick one cart: the MIGRunner is already selected.']);
+  const r14 = [...accOn].filter(id => ACC.find(x => x.id === id).r14).length + (jobR14 ? 1 : 0);
+  if (a.r14 && r14 > 1) n.push(['warn', `Only one device can use the Remote 14 receptacle at a time. ${jobR14 ? 'This job already has one plugged in. ' : ''}You have ${r14} that need it.`]);
+  return n; }
+function accModel(id){
+  const g = new THREE.Group(); ROOT = g; const P = {
+    rack:() => { box(1.4, .06, 2.4, M.black, 0, .1, -.2); for (const s of [-1,1]) cyl(.22, .1, M.rubber, 'x', s*.75, .22, -1.2, g, 24); for (const x of [-.3,.3]){ cyl(.19, 2.2, M.gasCyl, 'y', x, 1.25, -1.75, g, 20); } box(1.3, .04, .04, M.black, 0, 2.1, -1.95); },
+    migrunner:() => { box(1.2, .05, 1.6, M.black, 0, .08, .0); for (const s of [-1,1]) cyl(.16, .08, M.rubber, 'x', s*.65, .16, -.7, g, 20); for (const x of [-.25,.25]) cyl(.17, 1.4, M.gasCyl, 'y', x, .8, -1.2, g, 20); },
+    gasvalve:() => { cyl(.03, .05, M.brass, 'z', .3, 1.0, -1.1); cyl(.03, .05, M.brass, 'z', ...PX(770, 690, .04).toArray()); },
+    wfoot:() => { box(.3, .06, .45, M.black, -1.4, .05, 1.9); box(.07, .07, .05, M.black, ...PX(110, 380, .09).toArray()); },
+    whand:() => { box(.12, .05, .2, M.black, 2.4, .93, 2.0); box(.07, .07, .05, M.black, ...PX(110, 380, .09).toArray()); },
+    rfcs:() => { box(.38, .07, .55, M.dark, -1.9, .05, 1.8); tube([V(-1.9, .06, 1.5), V(-1.2, .04, 1.4), V(-.6, .3, 1.3), PX(110, 380, .08)], .01, M.black, 40, g); },
+    rhc:() => { box(.1, .08, .1, M.black, 2.5, .95, 1.4); tube([V(2.5, .95, 1.35), V(2.0, .04, 1.1), V(.2, .04, 1.4), PX(110, 380, .08)], .008, M.black, 50, g); },
+    rcc:() => { cyl(.025, .03, M.black, 'y', 1.75, 1.0, 2.0, g, 14); },
+    s74:() => { rbox(.5, .45, .85, .03, M.feeder, 0, 2.42, 0); cyl(.2, .1, M.copper, 'x', .28, 2.45, -.1, g, 24); },
+    d74:() => { rbox(.95, .45, .85, .03, M.feeder, 0, 2.42, 0); for (const x of [-.53,.53]) cyl(.2, .1, M.copper, 'x', x, 2.45, -.1, g, 24); },
+    arcreach:() => { rbox(.45, .6, .75, .04, M.yellow, -1.4, .32, .3); box(.3, .04, .05, M.black, -1.4, .66, .3); },
+    sc12rc:() => { rbox(.42, .55, .7, .04, M.feeder2, -2.0, .3, .3); box(.3, .04, .05, M.black, -2.0, .6, .3); },
+    alumafeed:() => { rbox(.45, .55, .8, .04, M.orange, -2.6, .3, .3); box(.3, .04, .05, M.black, -2.6, .6, .3); },
+    spoolmatic:() => { box(.22, .1, .08, M.black, 2.35, .97, 2.05); cyl(.05, .04, M.copper, 'z', 2.3, 1.02, 2.05, g, 18); },
+    wc24:() => { box(.3, .3, .25, M.feeder2, -1.4, .17, -.6); },
+    insight:() => { box(.1, .1, .06, M.green, ...PX(110, 380, .1).toArray()); },
+    ext14:() => { const t = add(new THREE.TorusGeometry(.18, .012, 6, 30), M.black, -2.0, .03, 1.3); t.rotation.x = Math.PI/2; },
+    ext11:() => { const t = add(new THREE.TorusGeometry(.18, .014, 6, 30), M.dark, -2.5, .03, 1.3); t.rotation.x = Math.PI/2; }
+  }; P[id](); ROOT = scene; return g; }
+const ACC_VIEW = {rack:'overview', migrunner:'overview', gasvalve:'rear', wfoot:'left', whand:'table', rfcs:'left', rhc:'table', rcc:'table', s74:'top', d74:'top', arcreach:'left', sc12rc:'left', alumafeed:'left', spoolmatic:'table', wc24:'left', insight:'panel', ext14:'left', ext11:'left'};
+function toggleAcc(id){ if (accOn.has(id)){ accOn.delete(id); scene.remove(accModels[id]); delete accModels[id]; }
+  else { accOn.add(id); accModels[id] = accModel(id); scene.add(accModels[id]); accModels[id].scale.setScalar(.01); tween(.4, t => accModels[id] && accModels[id].scale.setScalar(.01 + .99*ease(t))); flyTo(ACC_VIEW[id] || 'overview'); }
+  accSel = id; renderAcc(); }
+function renderAcc(){
+  const c = $('controls'); const grps = [...new Set(ACC.map(a => a.grp))];
+  const a = ACC.find(x => x.id === accSel);
+  c.innerHTML = `<div class="acc">${grps.map(g => `<div class="accgrp"><h3>${g}</h3><div class="opts">${ACC.filter(x => x.grp === g).map(x => `<button class="opt" data-id="${x.id}" aria-pressed="${accOn.has(x.id)}"><span><b>${x.name}</b><small>${x.no}</small></span><span aria-hidden="true">${accOn.has(x.id) ? '✓ added' : '+ add'}</span></button>`).join('')}</div></div>`).join('')}
+    ${a ? `<div class="accinfo" aria-live="polite"><h4>${a.name} · ${a.no}</h4><p style="margin:0">${a.desc}</p>${accNotes(a).map(([k, t]) => `<div class="${k === 'ok' ? 'okn' : 'warn'}">${t}</div>`).join('')}</div>` : ''}</div>`;
+  c.querySelectorAll('.opt').forEach(b => b.onclick = () => toggleAcc(b.dataset.id));
+  const f = accSel && c.querySelector(`[data-id="${accSel}"]`); if (f && accFocus) f.focus();
+}
+let accFocus = false; document.addEventListener('focusin', e => { accFocus = $('controls').contains(e.target) || e.target === document.body; });
+function openAccessories(){ accMode = true; $('cPhase').textContent = 'After setup'; $('cTitle').textContent = 'Add accessories'; $('cInstr').textContent = `Add Miller accessories from the XMT 450 spec sheet. Each one shows what it does and whether it fits your ${J ? J.title : ''} setup.`;
+  $('cWhy').style.display = 'none'; $('cBtns').style.display = 'none'; renderAcc(); $('cTitle').focus(); flyTo('overview'); }
+
+/* ================= views ================= */
+const VIEWS = { overview:[[3.3,2.6,5.4],[.6,1.1,.9]], panel:[[.25,1.75,3.0],[0,1.5,1.07]], terms:[[.3,1.25,2.6],[0,.95,1.07]], rear:[[1.7,2.4,-3.7],[.3,1.6,-1.3]],
+  table:[[1.6,2.0,3.9],[1.8,.9,1.7]], feeder:[[2.8,1.6,-1.0],[1.35,.6,-.2]], flow:[[1.0,3.1,1.6],[.4,2.7,-.6]], left:[[-3.6,2.2,3.6],[-1.6,.5,1.0]], top:[[2.2,3.6,2.8],[0,2.2,0]] };
+function flyTo(name){ const v = VIEWS[name]; if (!v) return; let [p, t] = v; if (name === 'flow' && gasCyl){ const o = gasCyl.g.position; p = [o.x + .45, 3.15, o.z + 1.25]; t = [o.x, 2.82, o.z]; }
+  const p0 = camera.position.clone(), t0 = controls.target.clone(), p1 = V(...p), t1 = V(...t);
+  if (reduceMotion){ camera.position.copy(p1); controls.target.copy(t1); return; }
+  tween(1.0, k => { const e = ease(k); camera.position.lerpVectors(p0, p1, e); controls.target.lerpVectors(t0, t1, e); }); }
+function orbit(dAz, dEl = 0, zoom = 1){ const off = camera.position.clone().sub(controls.target); const sph = new THREE.Spherical().setFromVector3(off);
+  sph.theta += dAz; sph.phi = Math.max(.1, Math.min(Math.PI*.495, sph.phi + dEl)); sph.radius = Math.max(controls.minDistance, Math.min(controls.maxDistance, sph.radius*zoom));
+  camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph)); }
+
+/* ================= flow ================= */
+let steps = [chooseJob], firstEnter = true, mode = 'guided', cur = 0, stepErr = [0], hintsUsed = [false], totalErr = 0, totalHints = 0, t0 = null, tEnd = null, autoCam = true, showLabels = false, busy = false, flowUI = null;
+const fmtTime = ms => { const s = Math.floor(ms/1000); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; };
+function say(msg, kind = 'info'){ const f = $('feedback'); f.dataset.kind = kind; f.textContent = msg; }
+function announce(t){ const r = $('sr'); r.textContent = ''; setTimeout(() => r.textContent = t, 60); }
+const startTimer = () => { if (!t0) t0 = performance.now(); };
+function err(msg){ stepErr[cur]++; totalErr++; say((mode === 'guided' ? '' : '✗ ') + msg, 'bad'); updateStats(); }
+function updateStats(){ $('stStep').textContent = `${Math.min(cur+1, steps.length)}/${J ? steps.length : '–'}`; $('stErr').textContent = totalErr; $('stHint').textContent = totalHints; $('progbar').style.width = (J ? cur/steps.length*100 : 0) + '%'; }
+function renderSteps(){ const nav = $('steps'); nav.innerHTML = '';
+  PHASES.forEach((ph, pi) => { const list = steps.map((s, i) => [s, i]).filter(([s]) => s.phase === pi); if (!list.length) return;
+    const sec = document.createElement('div'); sec.innerHTML = `<h3><span>${ph}</span><span>${list.filter(([,i]) => i < cur).length}/${list.length}</span></h3><ol>${list.map(([s,i]) => `<li class="${i < cur ? 'done' : i === cur ? 'cur' : ''}"><span class="n">${i < cur ? '✓' : String(i+1).padStart(2,'0')}</span><span>${s.title}</span><span class="e">${stepErr[i] ? '×' + stepErr[i] : ''}</span></li>`).join('')}</ol>`; nav.appendChild(sec); });
+  if (!J){ const p = document.createElement('p'); p.className = 'note'; p.textContent = 'The rest of the sequence appears once you pick a job.'; nav.appendChild(p); } }
+function enterStep(){
+  const st = steps[cur]; busy = false; if (!st){ finish(); return; }
+  const ae = document.activeElement, lost = !ae || ae === document.body || $('controls').contains(ae);
+  st._done = new Set(); st._fired = false; S.flowing = false; flowUI = null; panelUIRefresh = null; if (flowRead) flowRead.visible = false;
+  st.onEnter?.();
+  $('cPhase').textContent = `Phase ${st.phase+1} · ${PHASES[st.phase]}`; $('cTitle').textContent = `${cur+1}. ${st.title}`;
+  $('cInstr').textContent = mode === 'test' && st.test ? st.test : st.instr;
+  $('cWhyText').textContent = st.why; $('cWhy').style.display = mode === 'test' ? 'none' : ''; $('cWhy').open = false; $('cBtns').style.display = '';
+  $('hintBtn').textContent = mode === 'test' ? 'Use a hint (counts)' : 'Show hint';
+  const c = $('controls'); c.innerHTML = '';
+  if (st.type === 'ui'){ const b = document.createElement('div'); b.style.cssText = 'display:flex;flex-direction:column;gap:10px'; c.appendChild(b); st.ui(b);
+    if (st.confirm !== false){ const k = document.createElement('button'); k.className = 'btn primary'; k.textContent = st.confirmLabel || 'Confirm'; k.onclick = tryConfirm; c.appendChild(k); } }
+  renderSteps(); updateStats(); refreshKb(); renderPanel();
+  announce(`Step ${cur+1}${J ? ' of ' + steps.length : ''}: ${st.title}. ${$('cInstr').textContent}`);
+  if (lost && document.activeElement !== canvas && !firstEnter) $('cTitle').focus(); firstEnter = false;
+  if (autoCam) flyTo(st.view);
+}
+function tryConfirm(){ startTimer(); const st = steps[cur]; const r = st.validate(); if (r.ok) complete(); else if (r.soft) say(r.msg, 'info'); else err(r.msg); }
+function complete(){ if (busy) return; busy = true; const st = steps[cur]; say('✓ ' + (st.done || 'Done.'), 'ok'); cur++; panelDirty = true; setTimeout(enterStep, 650); updateStats(); }
+function onPartClick(name){
+  if (accMode) return; startTimer(); const st = steps[cur]; if (!st || busy || !parts[name]) return; const label = parts[name].label;
+  if (st.live?.includes(name)){ if (name === 'setupBtn'){ if (!S.cover){ say('Open the control cover first.'); return; } pressSetup(); renderPanel(); } return; }
+  if (st.holdTargets?.includes(name)) return;
+  if (st.anyMode && name.startsWith('mode_')){ if (!S.power){ err('Turn the power on first.'); return; } if (!S.cover){ say('Open the control cover first.'); return; }
+    const k = name.slice(5); setMode(k); const m = MODES.find(x => x.k === k);
+    if (name === st.targets[0]){ busy = true; setTimeout(() => { busy = false; complete(); }, 600); return; }
+    const reason = J.extras.includes('pedal') || J.extras.includes('cord') ? 'This job turns the output on through a remote on Remote 14.' : 'This job has no remote, so it needs an electrode-hot mode.';
+    err(`${m.name} is for ${m.proc}, output ${m.out.toLowerCase()}. ${reason} Not the right mode for ${J.title}.`); return; }
+  if (st.type === 'click' && st.targets.includes(name)){
+    if (st._done.has(name)){ say(`${label}: already done.`); return; }
+    const why = st.check?.(name); if (why){ err(why); return; }
+    st._done.add(name); st.act(name);
+    if (st.anyOne || st._done.size === st.targets.length){ busy = true; setTimeout(() => { busy = false; complete(); }, st.delay ?? 750); }
+    return; }
+  if (name === 'modeKnob' && st.anyMode){ say('Click the label of the mode you want around the switch.'); return; }
+  if (name === 'setupBtn' || name === 'adjust' || name.startsWith('mode_')){ say(`${label}: you'll use this when you get to the panel steps.`); return; }
+  if (st.type === 'ui'){ say(`That's the ${label.toLowerCase()}. This step uses the controls in the panel.`); return; }
+  err(`That's the ${label.toLowerCase()}. It isn't the next step.${mode === 'guided' ? ' Look for the pulsing amber marker.' : ''}`);
+}
+function finish(){
+  tEnd = performance.now(); $('progbar').style.width = '100%'; $('accBtn').disabled = false; $('accBtn').title = '';
+  const time = fmtTime(tEnd - (t0 ?? tEnd)), score = Math.max(0, 100 - totalErr*3 - totalHints*2);
+  const rows = steps.map((s, i) => `<tr><td>${i+1}. ${s.title}</td><td class="num">${stepErr[i] || ''}</td><td class="num">${hintsUsed[i] ? '•' : ''}</td></tr>`).join('');
+  $('modalBox').innerHTML = `<span class="eyebrow">${mode === 'test' ? 'Test' : 'Guided practice'} complete · ${J.title}</span><h2 id="mTitle">Ready to weld</h2><button class="btn" id="closeM" style="align-self:flex-start">Close (Esc)</button>
+    <div class="big"><div><small>Score</small><b>${score}</b></div><div><small>Errors</small><b>${totalErr}</b></div><div><small>Hints</small><b>${totalHints}</b></div><div><small>Time</small><b>${time}</b></div></div>
+    <p class="note">Score = 100 − 3 per error − 2 per hint. ${$('student').value ? 'Student: ' + escapeHTML($('student').value) : 'Add your name in the sidebar before copying results.'}</p>
+    <div style="overflow-x:auto"><table><caption class="sr-only">Errors and hints by step</caption><thead><tr><th scope="col">Step</th><th scope="col">Errors</th><th scope="col">Hint</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="row"><button class="btn primary" id="accR">Add accessories</button><button class="btn" id="copyR">Copy results</button><button class="btn" id="againR">New job</button></div>`;
+  $('modal').style.display = 'grid';
+  $('copyR').onclick = async e => { const txt = `XMT 450 MPa Trainer\nStudent: ${$('student').value || '(no name)'}\nJob: ${J.title}\nMode: ${mode}\nScore: ${score}\nErrors: ${totalErr}\nHints: ${totalHints}\nTime: ${time}\nDate: ${new Date().toLocaleString()}\n` + steps.map((s, i) => stepErr[i] || hintsUsed[i] ? `  ${i+1}. ${s.title}: ${stepErr[i]} error(s)${hintsUsed[i] ? ', hint' : ''}` : '').filter(Boolean).join('\n');
+    try { await navigator.clipboard.writeText(txt); e.target.textContent = 'Copied'; } catch { e.target.textContent = 'Copy blocked: select and copy the table'; } };
+  $('closeM').onclick = closeModal; $('againR').onclick = () => { closeModal(); restart(); };
+  $('accR').onclick = () => { $('modal').style.display = 'none'; openAccessories(); };
+  $('accR').focus();
+}
+function closeModal(){ $('modal').style.display = 'none'; $('restartBtn').focus(); }
+$('modal').addEventListener('keydown', e => { if (e.key === 'Escape'){ e.preventDefault(); closeModal(); return; } if (e.key !== 'Tab') return;
+  const f = [...$('modal').querySelectorAll('button,[href],input')]; const a = f[0], z = f[f.length-1];
+  if (e.shiftKey && document.activeElement === a){ e.preventDefault(); z.focus(); } else if (!e.shiftKey && document.activeElement === z){ e.preventDefault(); a.focus(); } });
+const escapeHTML = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+function restart(){
+  S = freshState(); J = null; pickJob = null; steps = [chooseJob]; cur = 0; stepErr = [0]; hintsUsed = [false]; totalErr = 0; totalHints = 0; t0 = null; tEnd = null; tweens.length = 0; accMode = false;
+  if (jobGroup){ scene.remove(jobGroup); jobGroup = null; } for (const n of jobParts) delete parts[n]; jobParts = []; flowRead = null;
+  for (const id of [...accOn]) { scene.remove(accModels[id]); delete accModels[id]; } accOn.clear(); accSel = null;
+  gasIn.visible = gasOut.visible = false; gasOutPlug.visible = true; setPower(true); setCover(false, false); modeKnob.rotation.z = -MODES.find(m => m.k === S.mode).ang;
+  say(mode === 'test' ? 'Test mode: no markers or explanations. Wrong actions and hints lower your score.' : 'Guided mode: pick a job, then click the pulsing amber parts.', 'info');
+  enterStep(); }
+function setTrainMode(m){ mode = m; $('mGuided').setAttribute('aria-pressed', m === 'guided'); $('mTest').setAttribute('aria-pressed', m === 'test'); restart(); }
+$('mGuided').onclick = () => setTrainMode('guided'); $('mTest').onclick = () => setTrainMode('test');
+$('hintBtn').onclick = () => { const st = steps[cur]; if (!st) return; if (mode === 'test' && !hintsUsed[cur]){ hintsUsed[cur] = true; totalHints++; updateStats(); } else if (mode === 'guided') hintsUsed[cur] = true; say('Hint: ' + st.hint, 'info'); };
+$('focusBtn').onclick = () => steps[cur] && flyTo(steps[cur].view);
+$('overviewBtn').onclick = () => flyTo('overview'); $('restartBtn').onclick = () => restart(); $('accBtn').onclick = () => openAccessories();
+$('camBtn').onclick = e => { autoCam = !autoCam; e.currentTarget.setAttribute('aria-pressed', autoCam); };
+$('labelsBtn').onclick = e => { showLabels = !showLabels; e.currentTarget.setAttribute('aria-pressed', showLabels); };
+$('rotL').onclick = () => orbit(-.26); $('rotR').onclick = () => orbit(.26); $('zIn').onclick = () => orbit(0,0,.8); $('zOut').onclick = () => orbit(0,0,1.25);
+
+/* ================= keyboard ================= */
+const PART_ORDER = ['power','displays','adjust','cover','setupBtn','modeKnob',...MODES.map(m => 'mode_' + m.k),'remote14','gasOut','termPos','termNeg','gasIn','elecLead','workLead','torchGas','pedal','regHose','cord','feeder','feederGas','feederHose','vsClamp','workpiece','airDrop','airHose','flowKnob'];
+let kbIdx = -1, kbList = [], kbHold = false;
+function nextTargets(){ const st = steps[cur]; if (!st) return []; if (st.holdTargets) return st.holdTargets; if (st.live) return st.live; if (st.type !== 'click') return [];
+  if (st.anyOne){ if (st.id === 'elec') return mode === 'guided' ? [elecTerm() === '+' ? 'termPos' : 'termNeg'] : st.targets; if (st.id === 'work') return [S.leads.elec === '+' ? 'termNeg' : 'termPos']; }
+  return st.targets.filter(t => !st._done?.has(t)); }
+function refreshKb(){ const keep = kbList[kbIdx]; kbList = PART_ORDER.filter(n => parts[n] && parts[n].objs.some(o => visibleChain(o))); kbIdx = keep ? kbList.indexOf(keep) : kbIdx; if (kbIdx >= kbList.length) kbIdx = kbList.length - 1; }
+function kbAnnounce(){ const n = kbList[kbIdx]; const tag = mode === 'guided' && n && nextTargets().includes(n) ? ', next step' : '';
+  $('kbState').textContent = n ? `Selected: ${parts[n].label}. ${kbIdx+1} of ${kbList.length}.` : ''; announce(n ? `${parts[n].label}${tag}, ${kbIdx+1} of ${kbList.length}` : ''); }
+canvas.addEventListener('keydown', e => {
+  const st = steps[cur], n = kbList[kbIdx], k = e.key;
+  if (k === 'ArrowRight' || k === 'ArrowLeft'){ e.preventDefault(); refreshKb(); if (!kbList.length) return; kbIdx = kbIdx < 0 ? 0 : (kbIdx + (k === 'ArrowRight' ? 1 : -1) + kbList.length) % kbList.length; kbAnnounce(); return; }
+  if ((k === 'ArrowUp' || k === 'ArrowDown') && n === 'adjust' && st?.live?.includes('adjust')){ e.preventDefault(); adjust((k === 'ArrowUp' ? 1 : -1)*(e.shiftKey ? 10 : 1)); renderPanel(); const o = display(); announce(`${o.L} ${o.R}`); return; }
+  if ((k === 'ArrowUp' || k === 'ArrowDown') && n === 'flowKnob' && st?.holdTargets?.includes('flowKnob')){ e.preventDefault(); S.flow = Math.max(0, Math.min(60, S.flow + (k === 'ArrowUp' ? 1 : -1)*(e.shiftKey ? 5 : 1))); flowUI?.(); announce(`${S.flow} CFH${S.flowing ? '' : ', gas not flowing'}`); return; }
+  if (k === 'Enter' || k === ' '){ e.preventDefault(); if (!n){ announce('No part selected. Use the left and right arrow keys.'); return; }
+    if (n === 'adjust') { announce('Adjust knob. Use the up and down arrow keys to turn it.'); return; }
+    if (n === 'flowKnob') { announce('Flowmeter knob. Use the up and down arrow keys to turn it.'); return; }
+    onPartClick(n); setTimeout(() => { refreshKb(); }, 900); return; }
+  const cam = {a:[-.2,0,1], d:[.2,0,1], w:[0,-.12,1], s:[0,.12,1], '+':[0,0,.8], '=':[0,0,.8], '-':[0,0,1.25], '_':[0,0,1.25]}[k.toLowerCase()];
+  if (cam){ e.preventDefault(); orbit(...cam); return; }
+  if (k.toLowerCase() === 'f'){ e.preventDefault(); steps[cur] && flyTo(steps[cur].view); }
+});
+canvas.addEventListener('focus', () => { refreshKb(); if (kbIdx < 0 && kbList.length){ const nt = nextTargets(); kbIdx = mode === 'guided' && nt.length && kbList.includes(nt[0]) ? kbList.indexOf(nt[0]) : 0; } kbAnnounce(); });
+
+/* ================= picking / mouse ================= */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function visibleChain(o){ for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; }
+function pick(e){ const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1);
+  ray.setFromCamera(ndc, camera); for (const h of ray.intersectObjects(scene.children, true)){ if (!visibleChain(h.object) || h.object.isSprite) continue; if (h.object.material?.userData?.hot && !h.object.userData.part) continue; return h.object.userData.part || null; } return null; }
+let down = null, grab = null;
+function endGrab(){ if (!grab) return; grab = null; controls.enabled = true; canvas.style.cursor = ''; }
+canvas.addEventListener('pointerdown', e => { down = {x:e.clientX, y:e.clientY}; const st = steps[cur]; if (!st || busy || accMode) return; const p = pick(e);
+  if (p === 'adjust' && st.live?.includes('adjust')){ startTimer(); grab = {kind:'adj', y:e.clientY, acc:0}; }
+  else if (p === 'flowKnob' && st.holdTargets?.includes('flowKnob')){ startTimer(); grab = {kind:'flow', y:e.clientY, f:S.flow}; }
+  if (grab){ controls.enabled = false; canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'ns-resize'; } });
+canvas.addEventListener('pointercancel', endGrab); window.addEventListener('pointerup', () => { if (grab) setTimeout(endGrab, 0); });
+canvas.addEventListener('pointerup', e => { if (grab){ down = null; endGrab(); return; } if (!down) return; const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y); down = null; if (moved > 6) return; const p = pick(e); if (p) onPartClick(p); });
+const tipEl = $('tip');
+canvas.addEventListener('pointermove', e => {
+  if (grab?.kind === 'flow'){ S.flow = Math.max(0, Math.min(60, Math.round(grab.f + (grab.y - e.clientY)/4))); flowUI?.(); return; }
+  if (grab?.kind === 'adj'){ const d = (grab.y - e.clientY)/6; const steps_ = Math.trunc(d - grab.acc); if (steps_){ grab.acc += steps_; adjust(steps_); renderPanel(); } return; }
+  if (e.buttons){ tipEl.style.display = 'none'; return; } const p = pick(e), r = stage.getBoundingClientRect();
+  if (p && parts[p]){ tipEl.textContent = parts[p].label; tipEl.style.left = (e.clientX - r.left) + 'px'; tipEl.style.top = (e.clientY - r.top) + 'px'; tipEl.style.display = 'block'; canvas.style.cursor = 'pointer'; }
+  else { tipEl.style.display = 'none'; canvas.style.cursor = ''; } });
+canvas.addEventListener('pointerleave', () => tipEl.style.display = 'none');
+
+/* ================= overlay / highlight ================= */
+const overlay = $('overlay'), _b = new THREE.Box3(), _v = new THREE.Vector3();
+function partCenter(n){ if (!parts[n]) return null; _b.makeEmpty(); for (const o of parts[n].objs){ if (!visibleChain(o)) continue; o.updateWorldMatrix(true, true); _b.expandByObject(o); } return _b.isEmpty() ? null : _b.getCenter(new THREE.Vector3()); }
+function toScreen(p){ _v.copy(p).project(camera); if (_v.z > 1) return null; const r = canvas.getBoundingClientRect(); return {x:(_v.x*.5 + .5)*r.width, y:(-_v.y*.5 + .5)*r.height}; }
+const LABEL_PARTS = ['power','displays','adjust','cover','setupBtn','modeKnob','remote14','termPos','termNeg','gasOut','gasIn','elecLead','workLead','feeder','pedal','workpiece','airDrop'];
+function hlTargets(){ const st = steps[cur]; if (mode !== 'guided' || !st || busy || accMode) return []; return nextTargets(); }
+function drawOverlay(){ let html = '';
+  for (const t of hlTargets()){ const c = partCenter(t), s = c && toScreen(c); if (s) html += `<div class="mk" style="left:${s.x}px;top:${s.y}px"></div>`; }
+  if (showLabels) for (const n of LABEL_PARTS){ const c = partCenter(n), s = c && toScreen(c); if (s) html += `<div class="lbl" style="left:${s.x}px;top:${s.y}px">${parts[n].label}</div>`; }
+  if (document.activeElement === canvas && kbList[kbIdx]){ const c = partCenter(kbList[kbIdx]), s = c && toScreen(c); if (s) html += `<div class="kf" style="left:${s.x}px;top:${s.y}px"></div><div class="kfl" style="left:${s.x}px;top:${s.y}px">${parts[kbList[kbIdx]].label}</div>`; }
+  overlay.innerHTML = html; }
+function updateHighlights(t){ const on = new Set(hlTargets()); const k = .35 + .3*Math.sin(t*5);
+  for (const [name, p] of Object.entries(parts)){ const h = on.has(name);
+    for (const o of p.objs) o.traverse(m => { if (!m.isMesh) return; const mt = m.material;
+      if (mt.userData.ghost){ mt.color.setHex(h ? 0xf2a900 : 0x8a939d); mt.opacity = h ? .35 + .25*Math.sin(t*5) : (mt.userData.hot ? 0 : .22); }
+      else if (mt.emissive) mt.emissive.setRGB(h ? .9*k : 0, h ? .55*k : 0, 0); }); } }
+
+/* ================= loop ================= */
+function resize(){ const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / Math.max(1, r.height); camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage);
+const clock = new THREE.Clock(); let lastHud = 0;
+function loop(){ const dt = Math.min(clock.getDelta(), .1), t = clock.elapsedTime;
+  for (let i = tweens.length - 1; i >= 0; i--){ const w = tweens[i]; w.t = Math.min(1, w.t + dt/(reduceMotion ? w.dur*.35 : w.dur)); w.fn(w.t); if (w.t >= 1){ tweens.splice(i, 1); w.done?.(); } }
+  if (S.flash && performance.now() > S.flashT){ S.flash = null; panelDirty = true; }
+  const st = steps[cur]; if (!accMode) st?.tick?.call(st, dt);
+  if (panelDirty){ renderPanel(); panelDirty = false; }
+  updateHighlights(t); controls.update(); renderer.render(scene, camera); drawOverlay();
+  if (t - lastHud > .25){ lastHud = t; $('stTime').textContent = fmtTime(t0 ? ((tEnd ?? performance.now()) - t0) : 0); }
+  requestAnimationFrame(loop); }
+document.fonts?.ready.then(() => { panelDirty = true; });
+resize(); restart(); $('loading').remove(); loop();
+window.__x = {pickAt:(x,y) => pick({clientX:x, clientY:y}), get steps(){ return steps; }, get cur(){ return cur; }, onPartClick, tryConfirm, S:() => S, label:n => parts[n]?.label, pressSetup, adjust, display, screenOf:n => { const c = partCenter(n); const q = c && toScreen(c); const r = canvas.getBoundingClientRect(); return q && {x:q.x + r.left, y:q.y + r.top}; }, toggleAcc, accNotes:id => accNotes(ACC.find(a => a.id === id))};
+</script>
+</body>
+</html>
