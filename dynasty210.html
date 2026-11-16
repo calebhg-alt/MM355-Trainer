@@ -753,13 +753,15 @@ canvas.addEventListener('keydown', e => { const st = steps[cur], n = kbList[kbId
     onPartClick(n); if (S.power && LIVE.includes(n)) setTimeout(() => announce(lcdText()), 80); setTimeout(refreshKb, 900); return; }
   const cam = {a:[-.2,0,1], d:[.2,0,1], w:[0,-.12,1], s:[0,.12,1], '+':[0,0,.8], '=':[0,0,.8], '-':[0,0,1.25], '_':[0,0,1.25]}[k.toLowerCase()]; if (cam){ e.preventDefault(); orbit(...cam); return; }
   if (k.toLowerCase() === 'f'){ e.preventDefault(); steps[cur] && flyTo(steps[cur].view); } });
+let kbUsed = false; /* keyboard marker only after real keyboard use, never after a mouse click */
+window.addEventListener('keydown', () => { kbUsed = true; }, true); window.addEventListener('pointerdown', () => { kbUsed = false; }, true);
 canvas.addEventListener('focus', () => { refreshKb(); if (kbIdx < 0 && kbList.length){ const nt = nextTargets(); kbIdx = mode === 'guided' && nt.length && kbList.includes(nt[0]) ? kbList.indexOf(nt[0]) : 0; } kbAnnounce(); });
 
 /* ================= mouse ================= */
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function visibleChain(o){ for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; }
 function pick(e){ const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1); ray.setFromCamera(ndc, camera);
-  for (const h of ray.intersectObjects(scene.children, true)){ if (!visibleChain(h.object) || h.object.isSprite) continue; return h.object.userData.part || null; } return null; }
+  for (const h of ray.intersectObjects(scene.children, true)){ if (!h.object.isMesh || !visibleChain(h.object)) continue; return h.object.userData.part || null; } return null; }
 let down = null, grab = null;
 function endGrab(){ if (!grab) return; grab = null; controls.enabled = true; canvas.style.cursor = ''; }
 canvas.addEventListener('pointerdown', e => { down = {x:e.clientX, y:e.clientY}; const st = steps[cur]; if (!st || busy) return; const p = pick(e);
@@ -790,7 +792,7 @@ function hl(){ return mode === 'guided' && !busy ? nextTargets() : []; }
 function drawOverlay(){ let html = '';
   for (const t of hl()){ const c = partCenter(t), s = c && toScreen(c); if (s) html += `<div class="mk" style="left:${s.x}px;top:${s.y}px"></div>`; }
   if (showLabels) for (const n of LABEL_PARTS){ const c = partCenter(n), s = c && toScreen(c); if (s) html += `<div class="lbl" style="left:${s.x}px;top:${s.y}px">${parts[n].label}</div>`; }
-  if (document.activeElement === canvas && kbList[kbIdx]){ const c = partCenter(kbList[kbIdx]), s = c && toScreen(c); if (s) html += `<div class="kf" style="left:${s.x}px;top:${s.y}px"></div><div class="kfl" style="left:${s.x}px;top:${s.y}px">${partLabel(kbList[kbIdx])}</div>`; }
+  if (kbUsed && document.activeElement === canvas && kbList[kbIdx]){ const c = partCenter(kbList[kbIdx]), s = c && toScreen(c); if (s) html += `<div class="kf" style="left:${s.x}px;top:${s.y}px"></div><div class="kfl" style="left:${s.x}px;top:${s.y}px">${partLabel(kbList[kbIdx])}</div>`; }
   overlay.innerHTML = html; }
 function updateHighlights(t){ const on = new Set(hl()); const k = .35 + .3*Math.sin(t*5);
   for (const [name, p] of Object.entries(parts)){ const h = on.has(name); for (const o of p.objs) o.traverse(m => { if (m.isMesh && m.material.emissive) m.material.emissive.setRGB(h ? .9*k : 0, h ? .55*k : 0, 0); }); } }
