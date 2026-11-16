@@ -1164,6 +1164,8 @@ canvas.addEventListener('keydown', e => {
 });
 canvas.addEventListener('keyup', e => { if (e.key === ' ' && kbHold){ kbHold = false; S.feeding = false; lcdDirty = true; } });
 canvas.addEventListener('blur', () => { if (kbHold){ kbHold = false; S.feeding = false; } });
+let kbUsed = false; /* keyboard marker only after real keyboard use, never after a mouse click */
+window.addEventListener('keydown', () => { kbUsed = true; }, true); window.addEventListener('pointerdown', () => { kbUsed = false; }, true);
 canvas.addEventListener('focus', () => { refreshPicker(); if (kbIdx < 0 && kbList.length){ const nt = nextTargets(); kbIdx = mode === 'guided' && nt.length ? Math.max(0, kbList.indexOf(nt[0])) : 0; } kbAnnounce(); });
 
 /* ---------------- picking ---------------- */
@@ -1171,7 +1173,7 @@ const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function visibleChain(o){ for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; }
 function pick(e){ const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1);
   ray.setFromCamera(ndc, camera); const hits = ray.intersectObjects(scene.children, true);
-  for (const h of hits){ if (!visibleChain(h.object)) continue; if (h.object.isSprite) continue; return h.object.userData.part || null; } return null; }
+  for (const h of hits){ if (!h.object.isMesh || !visibleChain(h.object)) continue; return h.object.userData.part || null; } return null; }
 let down = null;
 let flowUI = null, grab = null;
 function endGrab(){ if (!grab) return; if (grab.kind === 'trigger'){ S.feeding = false; lcdDirty = true; } grab = null; controls.enabled = true; canvas.style.cursor = ''; }
@@ -1202,7 +1204,7 @@ function drawOverlay(){
     for (const t of st.targets){ if (st._done?.has(t)) continue; if (st.ordered && st.targets.find(x => !st._done.has(x)) !== t) continue; const c = partCenter(t); const s = c && toScreen(c); if (s) html += `<div class="mk" style="left:${s.x}px;top:${s.y}px"></div>`; }
   }
   if (showLabels) for (const n of LABEL_PARTS){ const c = partCenter(n); const s = c && toScreen(c); if (s) html += `<div class="lbl" style="left:${s.x}px;top:${s.y}px">${parts[n].label}</div>`; }
-  if (document.activeElement === canvas && kbList[kbIdx]){ const c = partCenter(kbList[kbIdx]); const sp = c && toScreen(c); if (sp) html += `<div class="kf" style="left:${sp.x}px;top:${sp.y}px"></div><div class="kfl" style="left:${sp.x}px;top:${sp.y}px">${parts[kbList[kbIdx]].label}</div>`; }
+  if (kbUsed && document.activeElement === canvas && kbList[kbIdx]){ const c = partCenter(kbList[kbIdx]); const sp = c && toScreen(c); if (sp) html += `<div class="kf" style="left:${sp.x}px;top:${sp.y}px"></div><div class="kfl" style="left:${sp.x}px;top:${sp.y}px">${parts[kbList[kbIdx]].label}</div>`; }
   overlay.innerHTML = html;
 }
 function updateHighlights(t){
