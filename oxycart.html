@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oxy-Acetylene Cutting Cart Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* layout: fixed instruction rail on the left, 3D shop stage fills the rest; stage stacks on top on narrow screens */
+  --bg:#e9ecef; --panel:#f8f9fa; --raise:#eceff2; --line:#d4d9df; --ink:#1b1f24; --muted:#5d6772;
+  --accent:#f2a900; --accent-text:#9a6500; --accent-ink:#1d1600; --ok:#17784a; --bad:#c7392f;
+  --glass:rgba(248,249,250,.92);
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#app{display:grid;grid-template-columns:390px 1fr;height:100%}
+aside{display:flex;flex-direction:column;gap:0;background:var(--panel);border-right:1px solid var(--line);min-height:0;overflow-y:auto}
+.sec{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.brand h1{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.02em;margin:0;line-height:1;text-transform:uppercase}
+.brand h1 span{color:var(--accent-text)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{background:transparent;border:0;padding:6px 12px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+input[type=text]{background:var(--raise);border:1px solid var(--line);border-radius:6px;padding:6px 9px;flex:1;min-width:120px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat{background:var(--raise);border-radius:6px;padding:6px 8px}
+.stat b{display:block;font-family:var(--mono);font-size:16px;font-variant-numeric:tabular-nums}
+.stat small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.bar{height:6px;background:var(--raise);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+#card{gap:8px}
+#card .phase{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text)}
+#card h2:focus{outline:none}
+#card h2{font-family:var(--display);font-weight:700;font-size:24px;line-height:1.1;margin:0;text-wrap:balance}
+#card .instr{margin:0;font-size:15px}
+#card details{background:var(--raise);border-radius:6px;padding:8px 10px;font-size:13.5px;color:#39424c}
+#card summary{cursor:pointer;font-weight:600;color:var(--ink)}
+#controls{display:flex;flex-direction:column;gap:10px}
+#controls:empty{display:none}
+.btn{background:var(--raise);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-weight:600}
+.btn{background:#fff}
+.btn:hover{border-color:#9aa4af}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.hold{user-select:none;-webkit-user-select:none;touch-action:none}
+.btn.hold.active{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.opts{display:grid;gap:6px}
+.opt{display:flex;gap:10px;align-items:center;text-align:left;background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.opt[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.opt svg{flex:none}
+.opt b{display:block}
+.opt small{color:var(--muted)}
+fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+legend{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.dial{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;background:var(--raise);border-radius:6px;padding:8px 10px}
+.dial .val{font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums;min-width:3ch;text-align:center}
+.dial .lab{font-weight:600}
+.scale{display:flex;gap:2px;height:14px;align-items:end}
+.scale i{flex:1;background:#c5ccd3;border-radius:1px}
+.scale i.on{background:var(--accent)}
+label.slide{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600}
+label.slide span{display:flex;justify-content:space-between}
+label.slide output{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--accent-text)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.meter{height:10px;background:var(--raise);border-radius:5px;position:relative;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#b8733a,#e0a06a);width:0}
+.meter-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--mono)}
+.lcdwrap{display:flex;flex-direction:column;gap:8px}
+.lcdwrap canvas{width:100%;border-radius:6px;border:6px solid #0a0b0d;background:#05070a}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.keys .btn{padding:7px 6px;font-size:13px}
+#feedback{padding:10px 18px;border-bottom:1px solid var(--line);font-size:14px;min-height:44px;display:flex;align-items:center;gap:8px}
+#feedback[data-kind=ok]{color:var(--ok)}
+#feedback[data-kind=bad]{color:var(--bad)}
+#feedback[data-kind=info]{color:var(--muted)}
+#steps{padding:10px 18px 4px;display:flex;flex-direction:column;gap:10px}
+#steps h3{margin:0;font-family:var(--display);font-size:16px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
+#steps ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+#steps li{display:grid;grid-template-columns:22px 1fr auto;gap:6px;font-size:13.5px;color:#66707b;padding:2px 0}
+#steps li .n{font-family:var(--mono);font-size:11px;padding-top:2px}
+#steps li.done{color:#3d4650}
+#steps li.done .n{color:var(--ok)}
+#steps li.cur{color:var(--ink);font-weight:600}
+#steps li.cur .n{color:var(--accent-text)}
+#steps li .e{font-family:var(--mono);font-size:11px;color:var(--bad)}
+footer{padding:12px 18px 18px;font-size:12px;color:var(--muted)}
+footer a{color:var(--muted)}
+main{position:relative;min-width:0;min-height:0;overflow:hidden;background:#d5dade}
+#gl{display:block;width:100%;height:100%;touch-action:none}
+.toolbar{position:absolute;top:12px;right:12px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.toolbar .btn{background:var(--glass);backdrop-filter:blur(4px);font-size:13px;padding:6px 10px}
+#tip{position:absolute;pointer-events:none;background:var(--glass);box-shadow:0 2px 8px rgba(0,0,0,.15);border:1px solid var(--line);border-radius:5px;padding:4px 8px;font-size:12.5px;white-space:nowrap;transform:translate(12px,12px);display:none}
+#overlay{position:absolute;inset:0;pointer-events:none}
+.mk{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:3px solid var(--accent);box-shadow:0 0 0 4px rgba(242,169,0,.35),0 0 0 6px rgba(0,0,0,.25);animation:pulse 1.2s infinite ease-in-out}
+.mk::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--accent)}
+@keyframes pulse{50%{transform:scale(1.25);box-shadow:0 0 0 8px rgba(242,169,0,.08)}}
+.lbl{position:absolute;transform:translate(-50%,-130%);background:var(--glass);border:1px solid var(--line);border-radius:4px;font-size:11.5px;padding:2px 6px;white-space:nowrap;color:var(--ink)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip{position:absolute;left:8px;top:-60px;z-index:20;background:var(--ink);color:#fff;padding:8px 12px;border-radius:6px;font-weight:600}
+.skip:focus{top:8px}
+#gl:focus-visible{outline:3px solid #1f6feb;outline-offset:-3px}
+.kf{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:3px solid #1f6feb;box-shadow:0 0 0 3px #fff}
+.kfl{position:absolute;transform:translate(-50%,28px);background:#1f6feb;color:#fff;font-size:12.5px;font-weight:600;padding:3px 8px;border-radius:4px;white-space:nowrap}
+#kbHint{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1f6feb;color:#fff;font-size:13px;padding:6px 10px;border-radius:6px;display:none;white-space:nowrap}
+#kbHint kbd{color:var(--ink)}
+#gl:focus-visible ~ #kbHint{display:block}
+.pick{display:flex;flex-direction:column;gap:6px;background:var(--raise);border-radius:6px;padding:10px}
+.pick label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.pick select{flex:1;min-width:0;background:#fff;border:1px solid var(--line);border-radius:6px;padding:7px 8px}
+kbd{font-family:var(--mono);font-size:11.5px;background:#fff;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px}
+#loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--mono);font-size:13px}
+.legend{position:absolute;left:12px;bottom:12px;font-size:12px;color:var(--muted);background:var(--glass);padding:6px 9px;border-radius:5px}
+#modal{position:fixed;inset:0;background:rgba(20,24,28,.45);display:none;place-items:center;z-index:10;padding:16px}
+#modal .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:22px;display:flex;flex-direction:column;gap:12px}
+#modal h2{font-family:var(--display);font-size:30px;margin:0;text-transform:uppercase}
+#modal table{width:100%;border-collapse:collapse;font-size:13px}
+#modal td,#modal th{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+#modal td.num{font-family:var(--mono);text-align:right}
+.big{display:flex;gap:10px;flex-wrap:wrap}
+.big div{background:var(--raise);border-radius:8px;padding:10px 14px;flex:1;min-width:100px}
+.big b{display:block;font-family:var(--display);font-size:32px;line-height:1}
+.big small{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+@media (max-width:860px){
+  html,body{height:auto}
+  #app{grid-template-columns:1fr;height:auto}
+  main{order:-1;height:56vh;position:sticky;top:0;z-index:3;border-bottom:1px solid var(--line)}
+  aside{overflow:visible;border-right:0}
+}
+@media (prefers-reduced-motion:reduce){.mk{animation:none}.bar i{transition:none}}
+</style>
+<style>
+.gpanel{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.gcard{background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 9px;display:flex;flex-direction:column;gap:2px}
+.gcard small{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.gcard b{font-family:var(--mono);font-size:17px;font-variant-numeric:tabular-nums}
+.gcard.o2{border-left:4px solid #2e7d32}.gcard.ac{border-left:4px solid #b3261e}
+.gcard.warn b{color:var(--bad)}
+.toggle{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;text-align:left;width:100%}
+.toggle[aria-pressed="true"]{border-color:var(--ok);box-shadow:inset 0 0 0 2px var(--ok)}
+.toggle i{width:16px;height:16px;border-radius:4px;border:2px solid #9aa4af;flex:none}
+.toggle[aria-pressed="true"] i{background:var(--ok);border-color:var(--ok)}
+.infocard{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px}
+.infocard b{display:block;margin-bottom:3px}
+.infocard.bad{border-color:var(--bad);background:#fff1f0}
+.found{display:flex;flex-wrap:wrap;gap:5px}
+.found span{font-size:12px;background:#e3f5ec;color:#0f5a36;border-radius:10px;padding:2px 8px}
+.found span.bad{background:#fde7e5;color:#8f1d15}
+.flamebox{display:flex;align-items:center;gap:10px;background:#16181b;color:#fff;border-radius:8px;padding:8px 10px;font-weight:600}
+.flamebox i{width:14px;height:14px;border-radius:50%;flex:none}
+.backlink{font-size:12.5px;color:var(--muted);text-decoration:none;font-weight:600}
+.backlink:hover{color:var(--ink)}
+#controls.task{outline:3px solid #f2a900;outline-offset:5px;border-radius:6px;animation:taskpulse 1.1s ease-in-out infinite}
+#controls.task::before{content:"Action needed: complete this in the panel";display:block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#7a4f00;margin-bottom:6px}
+@keyframes taskpulse{0%,100%{outline-color:#f2a900;box-shadow:0 0 0 0 rgba(242,169,0,0)}50%{outline-color:#ffcf4d;box-shadow:0 0 0 7px rgba(242,169,0,.35)}}
+@media (prefers-reduced-motion: reduce){#controls.task{animation:none;outline-width:4px}}
+.nutcard{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;font-size:13px}
+.nutcard svg{width:44px;height:30px}
+.stopbar{font-weight:700;color:#8f1d15;background:#fde7e5;border-radius:6px;padding:6px 9px;font-size:13px}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#cTitle">Skip to current step</a>
+<div id="sr" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+<div id="app">
+  <aside>
+    <div class="sec">
+      <a class="backlink" href="index.html">← All machines</a>
+      <div class="brand"><h1>Oxy-Fuel <span>Cart</span> Trainer</h1><span class="eyebrow">Cutting · AVC Welding</span></div>
+      <div class="row">
+        <div class="seg" role="group" aria-label="Mode">
+          <button id="mGuided" aria-pressed="true">Guided</button>
+          <button id="mTest" aria-pressed="false">Test</button>
+        </div>
+        <input type="text" id="student" placeholder="Student name" aria-label="Student name">
+      </div>
+      <div class="bar" aria-hidden="true"><i id="progbar"></i></div>
+      <div class="stats">
+        <div class="stat"><small>Step</small><b id="stStep">1</b></div>
+        <div class="stat"><small>Errors</small><b id="stErr">0</b></div>
+        <div class="stat"><small>Hints</small><b id="stHint">0</b></div>
+        <div class="stat"><small>Time</small><b id="stTime">0:00</b></div>
+      </div>
+    </div>
+    <section class="sec" id="card" aria-labelledby="cTitle">
+      <div class="phase" id="cPhase"></div>
+      <h2 id="cTitle" tabindex="-1"></h2>
+      <p class="instr" id="cInstr"></p>
+      <div id="controls"></div>
+      <div class="gpanel" id="gauges" aria-label="Regulator gauges"></div>
+      <details id="cWhy"><summary>Why this matters</summary><div id="cWhyText"></div></details>
+      <div class="row">
+        <button class="btn" id="hintBtn">Show hint</button>
+        <button class="btn" id="focusBtn">Focus view</button>
+      </div>
+      <details><summary>Keyboard shortcuts</summary><div class="note" style="display:flex;flex-direction:column;gap:4px;margin-top:6px">
+        <span>Press <kbd>Tab</kbd> to move into the 3D view, then <kbd>←</kbd> <kbd>→</kbd> select a part and <kbd>Enter</kbd> use it. <kbd>N</kbd> jumps to the next part you need.</span>
+        <span>Regulator screw, torch valve or acetylene valve key selected: <kbd>↑</kbd> <kbd>↓</kbd> turn it (<kbd>Shift</kbd> for bigger steps).</span>
+        <span>Camera: <kbd>A</kbd> <kbd>D</kbd> rotate, <kbd>W</kbd> <kbd>S</kbd> tilt, <kbd>+</kbd> <kbd>−</kbd> zoom, <kbd>F</kbd> focus on the step.</span>
+      </div></details>
+    </section>
+    <div id="feedback" data-kind="info" role="status" aria-live="polite">Click parts on the cart. Drag to look around.</div>
+    <nav id="steps" aria-label="Setup sequence"></nav>
+    <footer>Sequence and pressures follow the AVC student guide "Oxy-Acetylene Cutting Cart: setup, lighting, shutdown &amp; storage" (classroom working pressures 5 psi acetylene, 35 psi oxygen, instructor-verified). Safety basis cited in the guide: Miller "10 Steps for Safe Oxy-Fuel Torch Setup", Victor Oxy-Fuel Equipment Guide, Harris lighting and shutdown procedure. Always follow the manual for the actual classroom equipment.</footer>
+  </aside>
+  <main id="stage" aria-label="3D cart view">
+    <canvas id="gl" tabindex="0" role="application" aria-roledescription="3D cart view" aria-label="3D model of an oxy-acetylene cutting cart. Use left and right arrows to select a part, Enter to use it." aria-describedby="kbState"></canvas>
+    <div id="kbState" class="sr-only"></div>
+    <div id="kbHint" aria-hidden="true">Keyboard: <kbd>N</kbd> next part · <kbd>←</kbd> <kbd>→</kbd> pick a part · <kbd>Enter</kbd> use it · <kbd>↑</kbd> <kbd>↓</kbd> turn a screw or valve · <kbd>A</kbd><kbd>D</kbd><kbd>W</kbd><kbd>S</kbd> camera</div>
+    <div id="overlay" aria-hidden="true"></div>
+    <div id="tip" aria-hidden="true"></div>
+    <div class="toolbar">
+      <button class="btn" id="rotL" aria-label="Rotate view left">⟲</button>
+      <button class="btn" id="rotR" aria-label="Rotate view right">⟳</button>
+      <button class="btn" id="zIn" aria-label="Zoom in">+</button>
+      <button class="btn" id="zOut" aria-label="Zoom out">−</button>
+      <button class="btn" id="labelsBtn" aria-pressed="false">Part labels</button>
+      <button class="btn" id="camBtn" aria-pressed="true">Auto camera</button>
+      <button class="btn" id="overviewBtn">Overview</button>
+      <button class="btn" id="restartBtn">Restart</button>
+    </div>
+    <div class="legend" aria-hidden="true">Orbit: drag or A/D · Zoom: scroll or +/− · Pan: right-drag</div>
+    <div id="loading">Loading 3D shop…</div>
+  </main>
+</div>
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"><div class="box" id="modalBox"></div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+const $ = id => document.getElementById(id);
+const V = (x,y,z) => new THREE.Vector3(x,y,z);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ================= renderer / scene (units: meters) ================= */
+const stage = $('stage'), canvas = $('gl');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.25;
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xd5dade); scene.fog = new THREE.Fog(0xd5dade, 8, 20);
+const camera = new THREE.PerspectiveCamera(40, 1, .01, 60); camera.position.set(1.8, 1.6, 2.4);
+const controls = new OrbitControls(camera, canvas); controls.target.set(.1, .9, 0); controls.enableDamping = true; controls.maxPolarAngle = Math.PI*.495; controls.minDistance = .15; controls.maxDistance = 8;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8d8576, 2.1));
+const sun = new THREE.DirectionalLight(0xffffff, 2.6); sun.position.set(2.5, 5, 3); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, {left:-3, right:3, top:3, bottom:-3, near:.5, far:14}); sun.shadow.bias = -.0004; scene.add(sun);
+const fill = new THREE.DirectionalLight(0xe6eeff, 1.2); fill.position.set(-3, 2, -2); scene.add(fill);
+const frontL = new THREE.DirectionalLight(0xffffff, 1.0); frontL.position.set(.5, 2, 5); scene.add(frontL);
+function mat(color, rough = .5, metal = .2, extra = {}){ return new THREE.MeshStandardMaterial({color, roughness:rough, metalness:metal, ...extra}); }
+const M = { green:mat(0x2e7d32,.45,.35), maroon:mat(0x6d1f1f,.45,.3), steel:mat(0x80878f,.45,.7), dark:mat(0x30353b,.6,.4), black:mat(0x141619,.7,.1),
+  rubber:mat(0x0f1012,.92,0), brass:mat(0xc9a14a,.32,.9), copper:mat(0xbf703c,.33,.85), red:mat(0xc0392b,.5,.1), cart:mat(0x33393f,.55,.5),
+  table:mat(0x7d858e,.5,.6), plate:mat(0x6f767d,.4,.75), hoseG:mat(0x2f8a3c,.6,.05), hoseR:mat(0xb3261e,.6,.05), wall:mat(0xc9cdd2,.9,0), wood:mat(0x9a7a52,.8,0),
+  yellow:mat(0xe0a400,.5,.2), white:mat(0xf2f2ee,.6,0), lens:mat(0x1e5c2a,.15,.2,{transparent:true, opacity:.8}) };
+const shade = m => { m.castShadow = true; m.receiveShadow = true; return m; };
+function add(geo, m, x, y, z, parent = scene){ const o = shade(new THREE.Mesh(geo, m)); o.position.set(x, y, z); parent.add(o); return o; }
+const box = (w,h,d,m,x,y,z,p) => add(new THREE.BoxGeometry(w,h,d), m, x,y,z,p);
+const rbox = (w,h,d,r,m,x,y,z,p) => add(new RoundedBoxGeometry(w,h,d,3,r), m, x,y,z,p);
+function cyl(r, len, m, axis, x, y, z, p, seg = 24, r2){ const g = new THREE.CylinderGeometry(r, r2 ?? r, len, seg); if (axis === 'x') g.rotateZ(Math.PI/2); else if (axis === 'z') g.rotateX(Math.PI/2); return add(g, m, x, y, z, p); }
+function tube(pts, r, m, seg = 64, parent = scene){ return add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'centripetal'), seg, r, 8), m, 0, 0, 0, parent); }
+function setTube(o, pts, r, seg = 64){ o.geometry.dispose(); o.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'centripetal'), seg, r, 8); }
+function sprite(text, {fg = '#fff', bg = null, scale = .07, font = 'bold 64px IBM Plex Sans, sans-serif'} = {}, parent = scene){
+  const c = document.createElement('canvas'); c.width = c.height = 128; const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({map:tex})); s.scale.set(scale, scale, scale);
+  s.userData.draw = t => { const g = c.getContext('2d'); g.clearRect(0,0,128,128); if (bg){ g.fillStyle = bg; g.beginPath(); g.roundRect(6,6,116,116,22); g.fill(); }
+    g.fillStyle = fg; g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, 64, 68); tex.needsUpdate = true; };
+  s.userData.draw(text); parent.add(s); return s; }
+function glowTex(){ const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); const gr = g.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.4,'rgba(255,255,255,.5)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0,0,64,64); return new THREE.CanvasTexture(c); }
+const GLOW = glowTex();
+
+/* ================= shop ================= */
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), mat(0xa4abb2, .95, 0)); floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+const grid = new THREE.GridHelper(30, 60, 0x8b929a, 0x959ca4); grid.position.y = .002; scene.add(grid);
+box(8, 3, .1, M.wall, 0, 1.5, -1.6);
+// storage shelf for regulators (designated location)
+const shelf = new THREE.Group(); shelf.position.set(-1.45, 1.05, -1.45); scene.add(shelf);
+box(.7, .03, .26, M.wood, 0, 0, 0, shelf); box(.7, .3, .02, M.wood, 0, .15, -.12, shelf);
+{ const s = sprite('REGULATORS', {fg:'#1b1e22', bg:'#ffffff', scale:.22, font:'bold 15px IBM Plex Sans, sans-serif'}, shelf); s.position.set(0, .34, -.1); }
+// cutting table
+box(.9, .05, .6, M.table, 1.25, .78, .25); for (const [x,z] of [[.85,0],[1.65,0],[.85,.5],[1.65,.5]]) box(.04, .76, .04, M.steel, x, .38, z);
+for (let i = 0; i < 8; i++) box(.02, .05, .58, M.dark, .9 + i*.1, .83, .25);
+const cutPlate = box(.4, .012, .25, M.plate, 1.25, .862, .25);
+// supply bench (PPE, striker, leak detector)
+const bench = new THREE.Group(); bench.position.set(-1.0, 0, .45); scene.add(bench);
+box(.8, .04, .45, M.wood, 0, .85, 0, bench); for (const [x,z] of [[-.36,-.18],[.36,-.18],[-.36,.18],[.36,.18]]) box(.04, .85, .04, M.steel, x, .425, z, bench);
+const ppe = new THREE.Group(); ppe.position.set(-1.25, .87, .45); scene.add(ppe);
+box(.16, .05, .06, M.black, 0, .025, 0, ppe); cyl(.025, .01, M.lens, 'z', -.04, .03, .031, ppe, 16); cyl(.025, .01, M.lens, 'z', .04, .03, .031, ppe, 16);
+box(.14, .03, .2, mat(0x8a6a3e,.85,0), .2, .015, .05, ppe); box(.12, .03, .18, mat(0x8a6a3e,.85,0), .2, .045, .06, ppe);
+const striker = new THREE.Group(); striker.position.set(1.5, .875, .5); scene.add(striker);
+cyl(.006, .14, M.steel, 'x', 0, 0, 0, striker, 8); cyl(.02, .015, M.steel, 'y', .07, .005, 0, striker, 16);
+const sprayer = new THREE.Group(); sprayer.position.set(-.68, .87, .4); scene.add(sprayer);
+cyl(.035, .16, mat(0xe8eef5,.4,0), 'y', 0, .08, 0, sprayer, 18); box(.04, .05, .05, M.yellow, 0, .18, .02, sprayer);
+{ const s = sprite('LEAK TEST', {fg:'#1b1e22', bg:'#ffffff', scale:.14, font:'bold 18px IBM Plex Sans, sans-serif'}, sprayer); s.position.set(0, .3, 0); }
+const extinguisher = new THREE.Group(); extinguisher.position.set(-1.62, 0, .05); scene.add(extinguisher);
+cyl(.07, .45, M.red, 'y', 0, .26, 0, extinguisher, 20); box(.05, .06, .03, M.black, 0, .52, 0, extinguisher); const extGauge = cyl(.018, .01, M.white, 'z', .03, .48, .07, extinguisher, 14);
+
+/* ================= cart and cylinders ================= */
+const cart = new THREE.Group(); scene.add(cart);
+box(.72, .04, .46, M.cart, 0, .06, .02, cart);
+for (const x of [-.34, .34]) cyl(.016, 1.2, M.cart, 'y', x, .65, -.2, cart, 12);
+cyl(.016, .7, M.cart, 'x', 0, 1.25, -.2, cart, 12); cyl(.016, .7, M.cart, 'x', 0, .55, -.2, cart, 12);
+for (const x of [-.4, .4]){ cyl(.18, .05, M.rubber, 'x', x, .18, -.16, cart, 28); cyl(.06, .06, M.steel, 'x', x, .18, -.16, cart, 16); }
+cyl(.014, .84, M.steel, 'x', 0, .18, -.16, cart, 10);
+const handle = cyl(.02, .62, M.black, 'x', 0, 1.32, -.28, cart, 12);
+const hook = new THREE.Group(); hook.position.set(.4, 1.12, -.05); scene.add(hook); box(.03, .1, .03, M.cart, 0, 0, -.1, hook); box(.03, .03, .12, M.cart, 0, -.05, -.05, hook);
+const hoseCoil = add(new THREE.TorusGeometry(.13, .018, 8, 40), M.hoseG, .52, .42, -.22); hoseCoil.rotation.y = Math.PI/2;
+const hoseCoil2 = add(new THREE.TorusGeometry(.13, .018, 8, 40), M.hoseR, .54, .42, -.22); hoseCoil2.rotation.y = Math.PI/2; hoseCoil2.scale.setScalar(.93);
+const O = {x:-.17, z:.02, r:.115, top:1.38}, A = {x:.2, z:.04, r:.15, top:.93};
+function cylinder(c, m){ const g = new THREE.Group(); g.position.set(c.x, .08, c.z); scene.add(g); cyl(c.r, c.top - .08, m, 'y', 0, (c.top - .08)/2, 0, g, 32);
+  const d = add(new THREE.SphereGeometry(c.r, 32, 14, 0, Math.PI*2, 0, Math.PI/2), m, 0, c.top - .08, 0, g); d.scale.y = .55;
+  cyl(.035, .06, M.steel, 'y', 0, c.top - .08 + c.r*.55 + .02, 0, g, 16); return g; }
+const oxyCylG = cylinder(O, M.green), acCylG = cylinder(A, M.maroon);
+{ const s = sprite('OXYGEN', {fg:'#fff', bg:'#2e7d32', scale:.16, font:'bold 22px IBM Plex Sans, sans-serif'}); s.position.set(O.x, .95, O.z + O.r + .07); }
+{ const s = sprite('ACETYLENE', {fg:'#fff', bg:'#6d1f1f', scale:.2, font:'bold 18px IBM Plex Sans, sans-serif'}); s.position.set(A.x, .6, A.z + A.r + .08); }
+const chains = [];
+for (const [c, y] of [[O, 1.0], [A, .7]]){ const t = add(new THREE.TorusGeometry(c.r + .008, .006, 6, 48), M.steel, c.x, y, c.z); t.rotation.x = Math.PI/2; chains.push(t); }
+// valves: oxygen handwheel, acetylene square stem with T-key; outlets face the front (+z)
+const VO = V(O.x, O.top + .1, O.z), VA = V(A.x, A.top + .11, A.z);
+const oxyValve = new THREE.Group(); oxyValve.position.copy(VO); scene.add(oxyValve);
+cyl(.028, .07, M.brass, 'y', 0, 0, 0, oxyValve, 16); const oxyWheel = new THREE.Group(); oxyWheel.position.y = .055; oxyValve.add(oxyWheel);
+cyl(.04, .012, M.black, 'y', 0, 0, 0, oxyWheel, 20); for (let i = 0; i < 4; i++){ const s = box(.075, .008, .01, M.black, 0, 0, 0, oxyWheel); s.rotation.y = i*Math.PI/4; }
+const oxyOutlet = cyl(.012, .05, M.brass, 'z', 0, -.005, .04, oxyValve, 12);
+const acValve = new THREE.Group(); acValve.position.copy(VA); scene.add(acValve);
+cyl(.03, .07, M.brass, 'y', 0, 0, 0, acValve, 16); const acKey = new THREE.Group(); acKey.position.y = .05; acValve.add(acKey);
+box(.014, .03, .014, M.steel, 0, 0, 0, acKey); cyl(.006, .12, M.steel, 'x', 0, .02, 0, acKey, 8);
+const acOutlet = cyl(.012, .05, M.brass, 'z', 0, -.005, .042, acValve, 12);
+// protective caps
+function capMesh(c, at){ const g = new THREE.Group(); g.position.copy(at); scene.add(g); cyl(c === O ? .07 : .085, .17, M.steel, 'y', 0, .02, 0, g, 22); add(new THREE.SphereGeometry(c === O ? .07 : .085, 22, 10, 0, Math.PI*2, 0, Math.PI/2), M.steel, 0, .105, 0, g); return g; }
+const oxyCap = capMesh(O, VO), acCap = capMesh(A, VA);
+const CAP_HOME = {oxy:VO.clone(), ac:VA.clone()}, CAP_OFF = {oxy:V(-.25, .07, .55), ac:V(.1, .085, .6)};
+
+/* ================= regulators with gauges ================= */
+function gaugeFace(label, max, red){ const c = document.createElement('canvas'); c.width = c.height = 160; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const draw = v => { const g = c.getContext('2d'); g.clearRect(0,0,160,160); g.fillStyle = '#f4f4f0'; g.beginPath(); g.arc(80,80,76,0,Math.PI*2); g.fill();
+    g.strokeStyle = '#222'; g.lineWidth = 4; g.stroke(); const a0 = Math.PI*.75, a1 = Math.PI*2.25;
+    if (red){ g.strokeStyle = '#d32f2f'; g.lineWidth = 9; g.beginPath(); g.arc(80,80,60, a0 + (a1-a0)*red/max, a1); g.stroke(); }
+    g.strokeStyle = '#222'; g.lineWidth = 2; for (let i = 0; i <= 10; i++){ const a = a0 + (a1-a0)*i/10; g.beginPath(); g.moveTo(80 + Math.cos(a)*64, 80 + Math.sin(a)*64); g.lineTo(80 + Math.cos(a)*54, 80 + Math.sin(a)*54); g.stroke(); }
+    g.fillStyle = '#222'; g.font = 'bold 15px IBM Plex Sans, sans-serif'; g.textAlign = 'center'; g.fillText(label, 80, 112); g.font = '13px IBM Plex Sans, sans-serif'; g.fillText('0', 40, 128); g.fillText(String(max), 120, 128);
+    const a = a0 + (a1-a0)*clamp(v/max, 0, 1.02); g.strokeStyle = '#c62828'; g.lineWidth = 4; g.beginPath(); g.moveTo(80, 80); g.lineTo(80 + Math.cos(a)*58, 80 + Math.sin(a)*58); g.stroke();
+    g.fillStyle = '#222'; g.beginPath(); g.arc(80,80,7,0,Math.PI*2); g.fill(); t.needsUpdate = true; };
+  draw(0); return {t, draw, last:-1}; }
+/* union nut: plain hex = right-hand thread; notched (groove cut around the middle of the hex) = left-hand thread */
+function nutMesh(notched, parent, r = .016, h = .022){ const g = new THREE.Group(); parent.add(g); const hex = hh => new THREE.CylinderGeometry(r, r, hh, 6);
+  if (notched){ const hh = h*.39; add(hex(hh), M.brass, 0, h/2 - hh/2, 0, g); add(hex(hh), M.brass, 0, -h/2 + hh/2, 0, g); add(new THREE.CylinderGeometry(r*.74, r*.74, h*.26, 24), mat(0x6e5520,.5,.8), 0, 0, 0, g); }
+  else add(hex(h), M.brass, 0, 0, 0, g); return g; }
+function regulator(kind){ const g = new THREE.Group(); scene.add(g); const col = kind === 'oxy' ? M.hoseG : M.hoseR;
+  cyl(.042, .07, M.brass, 'z', 0, 0, 0, g, 20); cyl(.016, .05, M.brass, 'z', 0, 0, -.06, g, 12);
+  const inNut = nutMesh(kind === 'ac', g, .022, .024); inNut.position.set(0, 0, -.074); inNut.rotation.x = Math.PI/2;
+  const faces = [];
+  for (const [x, lab, max, red] of kind === 'oxy' ? [[-.06,'CYL',4000,0],[.06,'PSI',200,0]] : [[-.06,'CYL',400,0],[.06,'PSI',30,15]]){
+    cyl(.009, .04, M.brass, 'x', x/2, .03, 0, g, 8); cyl(.042, .03, M.brass, 'z', x, .055, 0, g, 24); const f = gaugeFace(lab, max, red);
+    const face = new THREE.Mesh(new THREE.CircleGeometry(.037, 32), new THREE.MeshBasicMaterial({map:f.t, toneMapped:false})); face.position.set(x, .055, .016); g.add(face);
+    const lensM = add(new THREE.CircleGeometry(.037, 32), new THREE.MeshStandardMaterial({color:0xffffff, transparent:true, opacity:.12, roughness:.05}), x, .055, .017, g); f.lens = lensM; faces.push(f); }
+  const screw = new THREE.Group(); screw.position.set(0, 0, .05); g.add(screw); cyl(.01, .05, M.steel, 'z', 0, 0, .0, screw, 10); const tbar = box(.08, .014, .014, M.black, 0, 0, .03, screw);
+  const outlet = cyl(.01, .04, M.brass, 'y', 0, -.055, 0, g, 10);
+  const tag = sprite(kind === 'oxy' ? 'O₂' : 'C₂H₂', {fg:'#fff', bg: kind === 'oxy' ? '#2e7d32' : '#b3261e', scale:.05, font:'bold 44px IBM Plex Sans, sans-serif'}, g); tag.position.set(0, .015, .04);
+  return {g, faces, screw, outlet, inNut}; }
+const oxyReg = regulator('oxy'), acReg = regulator('ac');
+const REG = { oxy:{mount:V(O.x, VO.y - .005, O.z + .14), store:V(-1.62, 1.13, -1.4)}, ac:{mount:V(A.x, VA.y - .005, A.z + .145), store:V(-1.28, 1.13, -1.4)} };
+// check valves at the hose ends (regulator side)
+const oxyCheck = cyl(.011, .045, M.brass, 'y', 0, 0, 0, scene, 10), acCheck = cyl(.011, .045, M.brass, 'y', 0, 0, 0, scene, 10);
+
+/* ================= cutting torch ================= */
+const torch = new THREE.Group(); scene.add(torch);
+cyl(.017, .24, M.brass, 'x', .12, 0, 0, torch, 16);                // handle
+cyl(.007, .2, M.copper, 'x', .34, .018, 0, torch, 10); cyl(.007, .2, M.copper, 'x', .34, -.004, 0, torch, 10);  // tubes to head
+const head = cyl(.016, .04, M.brass, 'y', .45, .005, 0, torch, 14);
+const tipM = cyl(.008, .07, M.copper, 'y', .45, -.045, 0, torch, 12, .006);
+const lever = new THREE.Group(); lever.position.set(.2, .022, 0); torch.add(lever); const leverBar = box(.2, .008, .018, M.steel, .1, .006, 0, lever);
+const acTV = new THREE.Group(); acTV.position.set(.035, .024, 0); torch.add(acTV); cyl(.013, .018, M.red, 'y', 0, .01, 0, acTV, 14);
+const oxTV = new THREE.Group(); oxTV.position.set(.035, -.024, 0); torch.add(oxTV); cyl(.013, .018, M.hoseG, 'y', 0, -.01, 0, oxTV, 14);
+const butt = cyl(.012, .03, M.brass, 'x', -.012, 0, 0, torch, 10);
+const TIP_LOCAL = V(.45, -.082, 0);
+const POSE = { hook:{p:V(.4, .72, .02), r:[0, 0, Math.PI/2]}, hand:{p:V(.98, .98, .22), r:[0, -.25, 0]}, flame:{p:V(.98, 1.12, .55), r:[Math.PI/2, 0, 0]} };
+function setTorchPose(name, anim = true){ const P = POSE[name]; const q1 = new THREE.Quaternion().setFromEuler(new THREE.Euler(...P.r)); S.pose = name;
+  if (!anim){ torch.position.copy(P.p); torch.quaternion.copy(q1); return; }
+  const p0 = torch.position.clone(), q0 = torch.quaternion.clone(); tween(.8, t => { torch.position.lerpVectors(p0, P.p, ease(t)); torch.quaternion.slerpQuaternions(q0, q1, ease(t)); }); }
+// hoses
+const hoseO = tube([V(0,0,0), V(0,-.1,0), V(0,-.2,0)], .009, M.hoseG), hoseA = tube([V(0,0,0), V(0,-.1,0), V(0,-.2,0)], .009, M.hoseR);
+const LOOSE = {oxy:V(-.05, .035, .42), ac:V(.15, .035, .45)};
+/* hose union nuts: oxygen = plain hex, right-hand thread; fuel = hex with a notch (groove cut around the middle), left-hand thread */
+function hoseNut(notched){ const g = new THREE.Group(); scene.add(g); nutMesh(notched, g); cyl(.0075, .022, M.brass, 'y', 0, -.021, 0, g, 12); return g; }
+const oxyNut = hoseNut(false), acNut = hoseNut(true);
+// wrench and turning-direction arrow shown while tightening a hose nut
+const wrenchRig = new THREE.Group(); scene.add(wrenchRig);
+const wrench = new THREE.Group(); wrenchRig.add(wrench); wrench.visible = false;
+{ const wm = mat(0xb9c0c7,.35,.85, {depthTest:false}); box(.014, .01, .056, wm, .026, 0, 0, wrench); box(.034, .01, .014, wm, .006, 0, .023, wrench); box(.034, .01, .014, wm, .006, 0, -.023, wrench); box(.2, .011, .024, wm, .13, 0, 0, wrench); }
+const turnArrow = new THREE.Group(); wrenchRig.add(turnArrow); turnArrow.visible = false;
+{ const am = new THREE.MeshBasicMaterial({color:0xf2a900, depthTest:false}); const arc = new THREE.Mesh(new THREE.TorusGeometry(.06, .0035, 8, 40, Math.PI*1.4).rotateX(Math.PI/2), am); arc.renderOrder = 5; turnArrow.add(arc);
+  const a = Math.PI*1.4, tip = new THREE.Mesh(new THREE.ConeGeometry(.01, .025, 12), am); tip.renderOrder = 5; tip.position.set(.06*Math.cos(a), 0, .06*Math.sin(a)); tip.rotation.set(Math.PI/2, 0, 0); tip.rotateOnWorldAxis(V(0,1,0), -a); turnArrow.add(tip); }
+const turnTag = sprite('', {fg:'#1b1e22', bg:'#ffd25e', scale:.045, font:'bold 34px IBM Plex Sans, sans-serif'}); turnTag.visible = false; turnTag.material.depthTest = false; turnTag.renderOrder = 6;
+function nutPos(kind){ if (S.hose[kind] && S.regAt[kind] === 'mount') return {p:REG[kind].mount.clone().add(V(0, -.119, 0)), up:true};
+  if (S.conn && S.connMode === 'hose'){ const m = REG[S.conn].mount; return {p:m.clone().add(V(kind === 'oxy' ? -.07 : .07, -.2, .07)), up:true}; }
+  return {p:LOOSE[kind].clone(), up:false}; }
+function hosePts(kind){ const bw = new THREE.Vector3(); butt.getWorldPosition(bw); const np = nutPos(kind);
+  const end = np.p.clone().add(np.up ? V(0, -.032, 0) : V(-.032, 0, 0));
+  const off = kind === 'oxy' ? -.012 : .012;
+  return [bw.clone().add(V(0, off, 0)), bw.clone().add(V(-.12, -.25, .05)), V(.55 + off, .04, .55), V(.25, .03, .6 + off), V(end.x - .05, .15, end.z + .2), end]; }
+function updateHoses(){ setTube(hoseO, hosePts('oxy'), .009); setTube(hoseA, hosePts('ac'), .009);
+  const con = S.hose.oxy && S.hose.ac; hoseO.visible = hoseA.visible = S.hosesOut; hoseCoil.visible = hoseCoil2.visible = !S.hosesOut;
+  oxyCheck.visible = S.hose.oxy && S.regAt.oxy === 'mount'; acCheck.visible = S.hose.ac && S.regAt.ac === 'mount';
+  oxyCheck.position.copy(REG.oxy.mount).add(V(0, -.085, 0)); acCheck.position.copy(REG.ac.mount).add(V(0, -.085, 0));
+  for (const [k, n] of [['oxy', oxyNut], ['ac', acNut]]){ const np = nutPos(k); n.visible = S.hosesOut; n.position.copy(np.p); n.rotation.set(0, 0, np.up ? 0 : Math.PI/2); } }
+/* p: nut centre. look: the direction the student looks along when facing the nut (from the hose / regulator side).
+   A positive turn about 'look' is clockwise as the student sees it. dir +1 = clockwise (right-hand), -1 = counterclockwise (left-hand). */
+function wrenchAt(p, look, dir, tilt = 0, tagOff = V(.075, -.035, .03), size = 1){
+  wrenchRig.position.copy(p); wrenchRig.quaternion.setFromUnitVectors(V(0, 1, 0), look.clone().normalize());
+  wrench.rotation.set(0, 0, 0); wrench.visible = true; wrench.traverse(m => { if (m.isMesh) m.renderOrder = 4; });
+  turnArrow.position.set(0, .004, 0); turnArrow.scale.set(size, size, (dir > 0 ? -1 : 1)*size); turnArrow.rotation.set(tilt, 0, 0); turnArrow.visible = true;
+  turnTag.userData.draw(dir > 0 ? 'RH ⟳' : 'LH ⟲'); turnTag.position.copy(p).add(tagOff); turnTag.visible = true;
+  tween(reduceMotion ? .3 : 1.8, t => wrench.rotation.y = dir*Math.sin(Math.PI*.5*t)*1.6, () => setTimeout(() => { wrench.visible = turnArrow.visible = turnTag.visible = false; }, 900)); }
+function wrenchAnim(k){ wrenchAt(nutPos(k).p, V(0, 1, 0), k === 'oxy' ? 1 : -1, -.65); }
+function inletNutPos(k){ return (k === 'oxy' ? oxyReg : acReg).g.position.clone().add(V(0, 0, -.074)); }
+function inletWrench(k){ wrenchAt(inletNutPos(k), V(0, 0, -1), k === 'oxy' ? 1 : -1, 0, V(.13, .09, .03), 2); }
+
+/* ---- flame ---- */
+const flame = new THREE.Group(); torch.add(flame); flame.position.copy(TIP_LOCAL);
+/* flame parts point along the torch tip axis (local -y of the flame group). Normal blending so colours read on a light shop background. */
+const fxMat = (c, o) => new THREE.MeshBasicMaterial({color:c, transparent:true, opacity:o, depthWrite:false, side:THREE.DoubleSide});
+function flameCone(r, len, c, o, parent = flame, x = 0, z = 0){ const g = new THREE.SphereGeometry(1, 20, 12, 0, Math.PI*2, Math.PI/2, Math.PI/2); /* half-ellipsoid teardrop */
+  const m = new THREE.Mesh(g, fxMat(c, o)); m.scale.set(r, len, r); m.position.set(x, 0, z); m.userData.fx = true; m.userData.base = [r, len, r]; parent.add(m); return m; }
+const fAcOut = flameCone(.026, .19, 0xff7a12, .6), fAcIn = flameCone(.014, .11, 0xffc23d, .8);                 // acetylene only: orange
+const fEnv = flameCone(.019, .15, 0x3f5cff, .27);                                                                   // outer flame (envelope)
+const RING = [...Array(6)].map((_, i) => [Math.cos(i*Math.PI/3)*.0055, Math.sin(i*Math.PI/3)*.0055]);
+const fFeather = RING.map(([x, z]) => flameCone(.0042, .05, 0xffffff, .88, flame, x, z));                       // middle flame: white acetylene feather
+const fCones = RING.map(([x, z]) => flameCone(.0024, .015, 0x38b6ff, 1, flame, x, z)); fCones.forEach(c => c.renderOrder = 3);                        // inner preheat cones
+const fJet = flameCone(.0024, .23, 0x9fe6ff, .6);                                                                  // cutting oxygen stream
+const fYellow = fAcOut;
+const fGlow = new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW, color:0xffb060, blending:THREE.AdditiveBlending, depthWrite:false, transparent:true})); fGlow.scale.setScalar(.12); flame.add(fGlow);
+const smoke = []; for (let i = 0; i < 14; i++){ const s = new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW, color:0x222222, transparent:true, opacity:0, depthWrite:false})); s.userData = {age:9, life:1.5}; scene.add(s); smoke.push(s); }
+const puff = []; for (let i = 0; i < 10; i++){ const s = new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW, color:0xe8ecf2, transparent:true, opacity:0, depthWrite:false})); s.userData = {age:9, life:.8, v:V(0,0,0)}; scene.add(s); puff.push(s); }
+const bubbles = []; for (let i = 0; i < 14; i++){ const b = new THREE.Mesh(new THREE.SphereGeometry(.0042, 12, 10), new THREE.MeshStandardMaterial({color:0xeef8ff, transparent:true, opacity:.8, roughness:.02, metalness:.1, emissive:0x223344})); b.visible = false; scene.add(b); bubbles.push(b); }
+
+/* ================= state ================= */
+const DEFECTS = {
+  hose:{part:'hoses', group:'Hoses', text:'A burned, cracked spot about 18 in. from the torch. The hose must be replaced, not taped.'},
+  gauge:{part:'oxyReg', group:'Regulators', text:'The oxygen regulator\'s cylinder gauge lens is cracked and the needle is bent off its stop pin.'},
+  oil:{part:'acReg', group:'Regulators', text:'Greasy film on the acetylene regulator inlet nut. Oil or grease near oxygen-fuel equipment can ignite violently.'},
+  tip:{part:'torch', group:'Torch and tip', text:'The tip seat is nicked and one preheat hole is plugged with slag.'},
+  ext:{part:'extinguisher', group:'Shop and PPE', text:'The fire extinguisher gauge needle is in the red: not charged.'}
+};
+const GOOD = {
+  oxyCap:'Oxygen cylinder cap is on and threaded down.', acCap:'Acetylene cylinder cap is on.', chain:'Both cylinders are upright and chained to the cart frame.', cart:'Wheels turn freely, the handle is tight, and the cart sits level and stable.',
+  oxyReg:'Oxygen regulator is stored on its shelf: gauges intact, inlet fitting straight and clean.', acReg:'Acetylene regulator is stored on its shelf: gauges intact, fittings clean.',
+  hoses:'Hoses are coiled on the cart: no cuts, burns, cracks or kinks; green on oxygen, red on fuel.', torch:'Torch valves turn smoothly, cutting lever springs back, tip seat and holes are clean.',
+  extinguisher:'Fire extinguisher is charged (needle in the green) and the area is clear of combustibles.', ppe:'Shade 5 cutting goggles, leather gloves and FR jacket are on the bench. Shop ventilation is on.'
+};
+let S;
+function freshState(){ const r = Math.random(); const keys = Object.keys(DEFECTS); return {
+  defect: r < .6 ? keys[Math.floor(Math.random()*keys.length)] : null, leak: Math.random() < .5 ? ['oxyInlet','acInlet','oxyCheck','acCheck','torchO','torchA'][Math.floor(Math.random()*6)] : null,
+  caps:{oxy:true, ac:true}, valve:{oxy:0, ac:0}, regAt:{oxy:'store', ac:'store'}, screw:{oxy:8, ac:2}, hose:{oxy:false, ac:false}, hosesOut:false, tipOK:false,
+  hi:{oxy:0, ac:0}, lo:{oxy:0, ac:0}, tv:{oxy:0, ac:0}, lit:false, lever:false, leverSeen:false, leverNeutral:false, side:false, key:true, pose:'hook',
+  seen:new Set(), decided:null, fixed:false, leakStubborn: Math.random() < .35, bubbleSpot:null, retestFail:false, sprayed:new Set(), leakFound:false, leakFixed:false, quiz:{}, over15:false, ppe:new Set(), away:false, approve:false };
+}
+const CYL = {oxy:2200, ac:240};
+function flameState(){ if (!S.lit) return 'off'; const a = S.tv.ac, o = S.tv.oxy*(S.lever ? .86 : 1);
+  if (o < .02){ if (a < .3) return 'smoky'; if (a > .85) return 'lifted'; return 'acet'; }
+  const d = o/a - 1; if (d < -.12) return 'carb'; if (d > .08) return 'oxid'; return 'neutral'; }
+const FLAME_TXT = {off:['Flame off','#666'], smoky:['Acetylene only: orange, with black soot','#e8650c'], acet:['Acetylene only: orange, no smoke','#ff9d2e'], lifted:['Too much acetylene: flame pulling away from the tip','#ff6b5e'],
+  carb:['Carburizing: three flames: outer, white middle feather, inner preheat cones','#e8ecff'], neutral:['Neutral: outer flame and sharp inner preheat cones only','#4fa3ff'], oxid:['Oxidizing: short, pointed inner cones, flame hisses','#c58bff']};
+
+/* ================= parts registry ================= */
+const parts = {};
+function reg(name, label, objs){ objs = [].concat(objs); parts[name] = {label, objs}; for (const o of objs) o.traverse(m => { if (m.isMesh){ m.userData.part = name; if (m.material.blending !== THREE.AdditiveBlending) m.material = m.material.clone(); } }); }
+reg('oxyCap', 'Oxygen cylinder cap', [oxyCap]); reg('acCap', 'Acetylene cylinder cap', [acCap]);
+reg('chain', 'Cylinder chains', chains); reg('cart', 'Cart wheels and handle', [handle]);
+reg('oxyValve', 'Oxygen cylinder valve', [oxyValve]); reg('acValve', 'Acetylene cylinder valve and key', [acValve]);
+reg('oxyOutlet', 'Oxygen valve outlet', [oxyOutlet]); reg('acOutlet', 'Acetylene valve outlet', [acOutlet]);
+reg('oxyReg', 'Oxygen regulator', [oxyReg.g]); reg('acReg', 'Acetylene regulator', [acReg.g]);
+reg('oxyScrew', 'Oxygen regulator adjusting screw', [oxyReg.screw]); reg('acScrew', 'Acetylene regulator adjusting screw', [acReg.screw]);
+reg('hoses', 'Oxy-fuel hoses', [hoseCoil, hoseCoil2, hoseO, hoseA]);
+reg('oxyCheck', 'Oxygen check valve (regulator to hose)', [oxyCheck]); reg('acCheck', 'Fuel check valve (regulator to hose)', [acCheck]);
+reg('torch', 'Cutting torch and tip', [torch]); reg('acTV', 'Acetylene torch valve (red)', [acTV]); reg('oxTV', 'Preheat oxygen torch valve (green)', [oxTV]); reg('lever', 'Cutting oxygen lever', [lever]);
+reg('torchFit', 'Hose-to-torch connections', [butt]);
+reg('hook', 'Torch holder', [hook]); reg('striker', 'Friction striker', [striker]); reg('sprayer', 'Leak-detection solution', [sprayer]);
+reg('extinguisher', 'Fire extinguisher', [extinguisher]); reg('ppe', 'PPE: goggles and gloves', [ppe]); reg('bench', 'Work area', [bench]); reg('shelf', 'Regulator storage shelf', [shelf]);
+/* invisible, larger click zones for small parts */
+const HIT = new THREE.MeshBasicMaterial({visible:false});
+function hitProxy(parent, geo, x, y, z){ const m = new THREE.Mesh(geo, HIT); m.position.set(x, y, z); parent.add(m); return m; }
+chains.forEach(c => { const h = new THREE.Mesh(new THREE.TorusGeometry(c.geometry.parameters.radius, .035, 6, 32), HIT); c.add(h); h.userData.part = 'chain'; });
+for (const c of [hoseCoil, hoseCoil2]){ const h = new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, .06, 24).rotateX(Math.PI/2), HIT); c.add(h); h.userData.part = 'hoses'; }
+const torchHit = hitProxy(torch, new THREE.CylinderGeometry(.045, .045, .5, 10).rotateZ(Math.PI/2), .22, 0, 0); torchHit.userData.part = 'torch';
+hitProxy(butt, new THREE.SphereGeometry(.03, 10, 8), 0, 0, 0).userData.part = 'torchFit';
+hitProxy(oxyCheck, new THREE.SphereGeometry(.028, 10, 8), 0, 0, 0).userData.part = 'oxyCheck'; hitProxy(acCheck, new THREE.SphereGeometry(.028, 10, 8), 0, 0, 0).userData.part = 'acCheck';
+hitProxy(oxyValve, new THREE.SphereGeometry(.024, 10, 8), 0, -.005, .045).userData.part = 'oxyOutlet'; hitProxy(acValve, new THREE.SphereGeometry(.024, 10, 8), 0, -.005, .047).userData.part = 'acOutlet';
+hitProxy(striker, new THREE.BoxGeometry(.18, .05, .07), .02, .01, 0).userData.part = 'striker'; hitProxy(hook, new THREE.BoxGeometry(.08, .14, .16), 0, -.02, -.06).userData.part = 'hook';
+function anchorAt(o, x, y, z){ const a = new THREE.Object3D(); a.position.set(x, y, z); o.add(a); o.userData.anchor = a; }
+oxyValve.userData.anchor = oxyWheel; acValve.userData.anchor = acKey;
+chains.forEach(c => anchorAt(c, 0, c.geometry.parameters.radius, 0));
+anchorAt(bench, .22, .875, -.12); anchorAt(ppe, .2, .045, .05); anchorAt(extinguisher, 0, .3, .07);
+hoseO.userData.anchorFn = () => hosePts('oxy')[3]; hoseA.userData.anchorFn = () => hosePts('ac')[3];
+reg('oxyInNut', 'Oxygen regulator inlet nut (cylinder connection)', [oxyReg.inNut]); reg('acInNut', 'Acetylene regulator inlet nut (cylinder connection)', [acReg.inNut]);
+hitProxy(oxyReg.inNut, new THREE.SphereGeometry(.032, 10, 8), 0, 0, 0).userData.part = 'oxyInNut'; hitProxy(acReg.inNut, new THREE.SphereGeometry(.032, 10, 8), 0, 0, 0).userData.part = 'acInNut';
+reg('oxyNut', 'Plain hex hose nut', [oxyNut]); reg('acNut', 'Notched hose nut (groove around the hex)', [acNut]);
+hitProxy(oxyNut, new THREE.SphereGeometry(.03, 10, 8), 0, 0, 0).userData.part = 'oxyNut'; hitProxy(acNut, new THREE.SphereGeometry(.03, 10, 8), 0, 0, 0).userData.part = 'acNut';
+/* a click on a sub-part counts as its parent part when the parent is what the step wants (regulator screw -> regulator, torch valve -> torch, ...) */
+const ALIAS = {oxyScrew:['oxyReg'], acScrew:['acReg'], oxyCheck:['oxyReg'], acCheck:['acReg'], oxyReg:['oxyInNut','oxyCheck','oxyValve'], acReg:['acInNut','acCheck','acValve'], oxyInNut:['oxyReg','oxyOutlet','oxyValve'], acInNut:['acReg','acOutlet','acValve'], acTV:['torch'], oxTV:['torch'], lever:['torch'], torchFit:['torch'], torch:['torchFit'],
+  oxyOutlet:['oxyValve'], oxyValve:['oxyOutlet'], acOutlet:['acValve'], acValve:['acOutlet'], cart:['chain'], hook:['torch'], bench:['ppe'], ppe:['bench'], striker:['bench'], sprayer:['bench']};
+function resolvePart(n){ if (!n) return n; const st = steps[cur]; if (!st) return n; const want = nextTargets(); if (want.includes(n)) return n;
+  if (st.targets?.includes(n) && !st.inspect) return n; const al = ALIAS[n] || []; const alt = al.find(x => want.includes(x)) || (st.inspect && al.find(x => st.targets.includes(x))); return alt || n; }
+// parts that move with the torch get re-parented visually, so recompute torch-local leak spot positions on demand
+const LEAKR = {oxyInlet:.027, acInlet:.027, oxyCheck:.019, acCheck:.019, torchO:.016, torchA:.016}; /* bubbles sit on the outside of the fitting */
+const LEAKSPOT = { oxyInlet:() => inletNutPos('oxy'), acInlet:() => inletNutPos('ac'), oxyCheck:() => oxyCheck.position.clone(), acCheck:() => acCheck.position.clone(),
+  torchO:() => butt.getWorldPosition(new THREE.Vector3()).add(V(0,-.012,0)), torchA:() => butt.getWorldPosition(new THREE.Vector3()).add(V(0,.012,0)) };
+const LEAKNAME = {oxyInlet:'oxygen regulator inlet nut (cylinder to regulator)', acInlet:'acetylene regulator inlet nut (cylinder to regulator)', oxyCheck:'oxygen regulator-to-hose connection', acCheck:'acetylene regulator-to-hose connection', torchO:'oxygen hose-to-torch connection', torchA:'acetylene hose-to-torch connection'};
+const SPRAYPART = {oxyInlet:'oxyInNut', acInlet:'acInNut', oxyCheck:'oxyCheck', acCheck:'acCheck', torchO:'torchFit', torchA:'torchFit'};
+
+/* ================= tweens ================= */
+const tweens = []; const ease = t => t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+function tween(dur, fn, done){ const w = {t:0, dur, fn, done}; tweens.push(w); return w; }
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function moveTo(obj, to, dur = .7, lift = .1, done){ const from = obj.position.clone(); tween(dur, t => { const e = ease(t); obj.position.lerpVectors(from, to, e); obj.position.y += Math.sin(Math.PI*e)*lift; }, done); }
+
+/* ================= scene sync ================= */
+function regTarget(kind){ if (S.regAt[kind] === 'mount') return REG[kind].mount; if (presenting()) return REG[S.conn].mount.clone().add(V(kind === 'oxy' ? -.12 : .12, .1, .17)); return REG[kind].store; }
+const presenting = () => !!(S.conn && S.connMode === 'reg');
+function placeReg(kind, anim){ const R = kind === 'oxy' ? oxyReg : acReg, to = regTarget(kind), ry = presenting() && S.regAt[kind] !== 'mount' ? (kind === 'oxy' ? -Math.PI/2 : Math.PI/2) : 0;
+  if (anim){ const r0 = R.g.rotation.y; tween(.9, t => R.g.rotation.y = r0 + (ry - r0)*ease(t)); } else R.g.rotation.y = ry;
+  if (anim) moveTo(R.g, to, .9, .15, updateHoses); else R.g.position.copy(to); }
+function setScrew(kind, psi){ S.screw[kind] = psi; const R = kind === 'oxy' ? oxyReg : acReg; R.screw.position.z = .05 + psi/(kind === 'oxy' ? 200 : 30)*.035; R.screw.rotation.z = -psi*(kind === 'oxy' ? .06 : .4); }
+function sync(){ oxyCap.position.copy(S.caps.oxy ? CAP_HOME.oxy : CAP_OFF.oxy); acCap.position.copy(S.caps.ac ? CAP_HOME.ac : CAP_OFF.ac);
+  placeReg('oxy'); placeReg('ac'); setScrew('oxy', S.screw.oxy); setScrew('ac', S.screw.ac); setTorchPose(S.pose, false); updateHoses();
+  oxyWheel.rotation.y = 0; acKey.rotation.y = 0; extGauge.material.color.setHex(S.defect === 'ext' && !S.fixed ? 0xd32f2f : 0x43b581); }
+
+/* ================= gas physics ================= */
+function gasTick(dt){
+  for (const k of ['oxy','ac']){
+    const mounted = S.regAt[k] === 'mount', open = S.valve[k] > 0 && mounted, torchOpen = S.tv[k] > .02 && S.hose[k] && mounted;
+    const leakHere = S.leak && !S.leakFixed && S.leak.startsWith(k === 'oxy' ? 'oxy' : 'ac') || (S.leak === (k === 'oxy' ? 'torchO' : 'torchA') && !S.leakFixed);
+    if (!mounted){ S.hi[k] = 0; S.lo[k] = 0; continue; }
+    if (open) S.hi[k] += (CYL[k] - S.hi[k])*Math.min(1, dt*3);
+    const set = Math.min(S.screw[k], S.hi[k]);
+    if (open && S.screw[k] > .1) S.lo[k] += (set - S.lo[k])*Math.min(1, dt*4);
+    if (torchOpen && !open){ const r = Math.min(1, dt*1.4); S.lo[k] *= 1 - r; if (S.screw[k] > .1) S.hi[k] *= 1 - r; if (S.lo[k] < .2) S.lo[k] = 0; if (S.hi[k] < .5) S.hi[k] = 0; }
+    if (leakHere && !open && !torchOpen){ S.lo[k] *= 1 - dt*.02; }
+  }
+  if (S.lo.ac > 15.05 && !S.over15){ S.over15 = true; err('Acetylene is over 15 psi! Never exceed 15 PSIG: acetylene can become unstable. Back the screw out.'); }
+  if (S.lo.ac < 14) S.over15 = false;
+}
+function renderGauges(){
+  for (const [k, R] of [['oxy', oxyReg], ['ac', acReg]]){ const v = [S.hi[k], S.lo[k]]; R.faces.forEach((f, i) => { const r = Math.round(v[i]*2)/2; if (r !== f.last){ f.last = r; f.draw(v[i]); } });
+    const cracked = k === 'oxy' && S.defect === 'gauge' && !S.fixed; R.faces[0].lens.material.opacity = cracked ? .55 : .12; R.faces[0].lens.material.color.setHex(cracked ? 0x9aa0a6 : 0xffffff); }
+  const el = $('gauges'); const show = S.regAt.oxy === 'mount' || S.regAt.ac === 'mount';
+  el.style.display = show ? '' : 'none'; if (!show) return;
+  const t = `<div class="gcard o2"><small>O₂ cylinder</small><b>${Math.round(S.hi.oxy)} psi</b></div><div class="gcard o2"><small>O₂ working</small><b>${S.lo.oxy.toFixed(1)} psi</b></div>
+    <div class="gcard ac"><small>C₂H₂ cylinder</small><b>${Math.round(S.hi.ac)} psi</b></div><div class="gcard ac ${S.lo.ac > 15 ? 'warn' : ''}"><small>C₂H₂ working</small><b>${S.lo.ac.toFixed(1)} psi</b></div>`;
+  if (el.dataset.t !== t){ el.innerHTML = t; el.dataset.t = t; } }
+const sc = (m, kx, ky) => { const b = m.userData.base; m.scale.set(b[0]*kx, b[1]*ky, b[2]*kx); };
+function renderFlame(t){ const f = flameState(); flame.visible = f !== 'off'; if (!flame.visible) return;
+  const acOnly = ['smoky','acet','lifted'].includes(f), mixed = !acOnly;
+  const fl = .9 + Math.sin(t*37)*.05 + Math.sin(t*23)*.04, fl2 = .95 + Math.sin(t*51)*.03;
+  fAcOut.visible = fAcIn.visible = acOnly; fEnv.visible = mixed; fCones.forEach(c => c.visible = mixed); fJet.visible = S.lever && mixed;
+  const a = S.tv.ac, o = S.tv.oxy*(S.lever ? .86 : 1), excess = mixed ? clamp(a/Math.max(o, .01) - 1, 0, 1.5) : 0;
+  fFeather.forEach(c => c.visible = f === 'carb');
+  if (acOnly){ const k = .55 + a*1.1, lift = f === 'lifted' ? -.03 : 0; sc(fAcOut, k*(f === 'smoky' ? 1.15 : 1), k*fl); sc(fAcIn, k, k*fl2); fAcOut.position.y = fAcIn.position.y = lift;
+    fAcOut.material.color.setHex(f === 'smoky' ? 0xe85a0c : 0xff7a12); fAcIn.material.color.setHex(f === 'smoky' ? 0xff9a2a : 0xffc23d); fGlow.material.color.setHex(0xffa040); }
+  else { sc(fEnv, .9 + a*.4, (.75 + a*.45)*(f === 'oxid' ? .75 : 1)*fl);
+    fFeather.forEach(c => sc(c, 1, (.5 + excess*1.4)*fl2));
+    fCones.forEach(c => { sc(c, f === 'oxid' ? .8 : 1, f === 'oxid' ? .62 : 1); c.material.color.setHex(f === 'oxid' ? 0x9a6bff : 0x38b6ff); });
+    if (fJet.visible) sc(fJet, 1, fl2); fGlow.material.color.setHex(0x8fa4ff); }
+  fGlow.scale.setScalar((acOnly ? .09 : .045)*fl); }
+
+/* ================= steps ================= */
+const PHASES = ['1 · Initial safety inspection','2 · Remove caps, clear outlets','3 · Install regulators, hoses, torch','4 · Pressurize and set pressures','5 · Leak-check','6 · Light and neutral flame','7 · Extinguish and close cylinders','8 · Bleed hose pressure','9 · Remove regulators and store'];
+const inspectInfo = name => { if (name === 'torch' && steps[cur]?.id === 'i3') return {bad:false, text:'Torch is hanging in its holder, not lying on the floor or cart deck. Hose connections at the torch are snug.'}; const d = S.defect && !S.fixed && Object.values(DEFECTS).find(x => x.part === name && DEFECTS[S.defect] === x); return d ? {bad:true, text:d.text} : {bad:false, text:GOOD[name] || ''}; };
+function inspStep(id, title, targets, instr, why, hint){ return { id, phase:0, title, type:'click', targets, anyOrder:true, view:'inspect', inspect:true, instr, why, hint,
+  act(n){ S.seen.add(n); const inf = inspectInfo(n); showInfo(parts[n].label, inf.text, inf.bad); }, done:'Checked.' }; }
+function showInfo(title, text, bad){ const c = $('controls'); c.innerHTML = `<div class="infocard ${bad ? 'bad' : ''}" aria-live="polite"><b>${title}</b>${text}</div>`; }
+function quiz(id, phase, title, view, instr, why, hint, key, opts, okk, extra = {}){ return Object.assign({ id, phase, title, type:'ui', view, instr, why, hint,
+  ui(el){ el.innerHTML = `<div class="opts" role="group" aria-label="${title}">${opts.map(([k, t]) => `<button class="opt" data-k="${k}" aria-pressed="${S.quiz[key] === k}"><span><b>${t}</b></span></button>`).join('')}</div>`;
+    el.querySelectorAll('.opt').forEach(b => b.onclick = () => { S.quiz[key] = b.dataset.k; el.querySelectorAll('.opt').forEach(x => x.setAttribute('aria-pressed', x === b)); }); },
+  validate(){ const a = S.quiz[key]; if (!a) return {ok:false, msg:'Pick an answer.', soft:true}; if (a === okk) return {ok:true}; return {ok:false, msg:opts.find(o => o[0] === a)[2] || 'Not right. Check the guide.'}; } }, extra); }
+function toggleUI(el, items){ el.innerHTML = items.map(([k, t]) => `<button class="toggle" data-k="${k}" aria-pressed="${!!S[k]}"><i></i><span>${t}</span></button>`).join('');
+  el.querySelectorAll('.toggle').forEach(b => b.onclick = () => { S[b.dataset.k] = !S[b.dataset.k]; b.setAttribute('aria-pressed', S[b.dataset.k]); }); }
+function sideToggle(el){ const d = document.createElement('div'); el.appendChild(d); toggleUI(d, [['side','I am standing to the side of the cylinder valve and gauges, not in front of them']]); }
+const both = (a, b) => [a, b];
+const STEPS = [
+ inspStep('i1', '1.1 Cylinder caps', ['oxyCap','acCap'], 'Make sure the protective caps are in place on both cylinders before the cart is moved to the welding or cutting location. Click each cap.', 'Never move a cylinder without its cap. If the cart tips and the valve shears off, the cylinder can become a missile.', 'The steel domes on top of each cylinder.'),
+ inspStep('i2', '1.2 Cylinder restraints', ['chain'], 'Confirm both cylinders are upright and chained to the cart. Click the chains.', 'A cylinder that falls can break its valve. The chains keep both cylinders upright while the cart is moved and used.', 'The steel chains wrapped around each cylinder.'),
+ Object.assign(inspStep('i3', '1.3 Regulators and torch storage', ['oxyReg','acReg','torch'], 'Check that the regulators and torch are stored properly with no cracked gauges, bent fittings or other damage. Click each regulator on the shelf, then the torch.', 'A damaged gauge can read wrong or burst. A bent fitting won\'t seal.', 'Regulators are on the shelf on the wall; the torch hangs on the cart holder.'), {view:'inspect3'}),
+ inspStep('i4', '1.4 Hoses, tip and torch controls', ['hoses','torch'], 'Inspect the hoses for cuts, burns, cracks, kinks and routing. Then inspect the cutting tip and torch controls. Click the hose coil, then the torch.', 'A hose leak next to a flame is a fire. Kinks restrict flow and cause flashback conditions.', 'The red and green hose coil on the side of the cart, then the torch in its holder.'),
+ Object.assign(inspStep('i5', '1.5 Oil, ventilation, fire protection, PPE', ['extinguisher','ppe'], 'Check the equipment is free of oil and grease, then check ventilation, combustibles, fire protection and your PPE.', 'Oxygen makes oil and grease ignite violently. You need a working extinguisher and PPE before any flame.', 'The fire extinguisher by the wall and the PPE on the bench.'), {view:'inspect5'}),
+ { id:'idecide', phase:0, title:'STOP or continue?', type:'ui', view:'inspect', instr:'Based on what you found, decide: is everything ready, or do you STOP and notify the instructor?',
+   test:'Make the call on your inspection.',
+   why:'The guide says STOP if anything is damaged, unsecured, contaminated or missing, and notify the instructor. Never set up around a problem.', hint:'Re-read any red inspection card.',
+   ui(el){ const groups = [...new Set(Object.values(DEFECTS).map(d => d.group))];
+     el.innerHTML = `<div class="found">${[...S.seen].map(n => { const b = inspectInfo(n).bad; return `<span class="${b ? 'bad' : ''}">${b ? '✗' : '✓'} ${parts[n].label}</span>`; }).join('')}</div>
+       <div class="opts" role="group" aria-label="Decision"><button class="opt" data-k="ok" aria-pressed="${S.decided === 'ok'}"><span><b>Everything passed: continue setup</b></span></button>
+       ${groups.map(g => `<button class="opt" data-k="${g}" aria-pressed="${S.decided === g}"><span><b>STOP: notify instructor about ${g.toLowerCase()}</b></span></button>`).join('')}</div>`;
+     el.querySelectorAll('.opt').forEach(b => b.onclick = () => { S.decided = b.dataset.k; el.querySelectorAll('.opt').forEach(x => x.setAttribute('aria-pressed', x === b)); }); },
+   validate(){ if (!S.decided) return {ok:false, msg:'Pick a decision.', soft:true}; const d = S.defect && DEFECTS[S.defect];
+     if (!d){ return S.decided === 'ok' ? {ok:true} : {ok:false, msg:'Nothing you inspected was damaged. Stopping is never wrong when unsure, but here the equipment passed. Look again at the cards.'}; }
+     if (S.decided === 'ok') return {ok:false, msg:`You missed a problem: ${d.text} STOP and notify the instructor.`};
+     if (S.decided !== d.group) return {ok:false, msg:`That item passed. The problem was with ${d.group.toLowerCase()}.`};
+     S.fixed = true; extGauge.material.color.setHex(0x43b581); return {ok:true}; },
+   get done(){ return S.defect ? `Good call. The instructor replaced the bad part (${DEFECTS[S.defect].group.toLowerCase()}) and released the cart.` : 'Inspection passed.'; } },
+ // ---- 2 ----
+ { id:'c1', phase:1, title:'2.1 Remove the cylinder caps', type:'click', targets:['oxyCap','acCap'], anyOrder:true, view:'valves',
+   instr:'With the cylinders chained, unscrew and remove both protective caps.', why:'Caps come off only once the cylinder is secured, and go back on before the cylinder moves or is stored.', hint:'Click each cap.',
+   act(n){ const k = n === 'oxyCap' ? 'oxy' : 'ac'; S.caps[k] = false; moveTo(n === 'oxyCap' ? oxyCap : acCap, CAP_OFF[k], .8, .2); }, done:'Caps off.' },
+ { id:'c2', phase:1, title:'2.2 Confirm both valves are closed', type:'click', targets:['oxyValve','acValve'], anyOrder:true, view:'valves',
+   instr:'Check that both cylinder valves are completely closed (turned fully clockwise).', why:'Opening a valve with no regulator attached releases full cylinder pressure.', hint:'Click the oxygen handwheel and the acetylene valve stem.',
+   act(n){ say(`${parts[n].label}: closed.`, 'ok'); }, done:'Both valves closed.' },
+ { id:'c3', phase:1, title:'2.3 Inspect the valve outlets', type:'click', targets:['oxyOutlet','acOutlet'], anyOrder:true, view:'valves',
+   instr:'Look into each valve outlet for debris, damage, oil or grease.', why:'Dirt blown into a regulator can damage the seat. Oil at an oxygen fitting can ignite.', hint:'The brass nipples facing you on each valve.',
+   act(n){ say(`${parts[n].label}: clean, threads undamaged.`, 'ok'); }, done:'Outlets are clean.' },
+ { id:'c4', phase:1, title:'2.4 Crack the oxygen valve', type:'click', targets:['oxyValve'], view:'valves', pre:'side',
+   instr:'Stand clear of the outlet, then briefly crack the oxygen cylinder valve and immediately close it.', test:'Clear the oxygen valve outlet.',
+   why:'A quick burst blows out dust. Standing to the side keeps you out of the path of the gas and any debris.', hint:'Check the stance box in the panel first, then click the oxygen valve.',
+   panel:() => !S.side, ui:true, uiFn(el){ sideToggle(el); },
+   act(){ oxyWheel.rotation.y = 0; tween(.6, t => oxyWheel.rotation.y = -Math.sin(Math.PI*t)*1.2); puffAt(oxyOutlet.getWorldPosition(new THREE.Vector3()), V(0,0,1)); }, done:'Oxygen outlet cleared and the valve is closed.' },
+ quiz('c5', 1, '2.5 Clean the acetylene outlet', 'valves', 'Your equipment manufacturer does not allow cracking the acetylene valve. How do you clean the acetylene outlet?',
+   'The guide: do not crack the acetylene cylinder valve if the manufacturer prohibits it. Clean the outlet by the approved oil-free method the manufacturer or instructor directs.', 'Oil-free, and approved by the manufacturer or instructor.', 'acClean',
+   [['crack','Crack it like the oxygen valve','Not on this equipment. The manufacturer prohibits cracking acetylene here: releasing fuel gas creates a fire hazard.'],
+    ['wipe','Wipe it with a clean, oil-free, lint-free cloth as the instructor directs',''],
+    ['air','Blow it out with the shop air line','Shop air carries oil and moisture from the compressor. Use only the approved oil-free method.'],
+    ['oxygen','Blow it out with oxygen from the torch','Never use oxygen as a cleaning blast. It can ignite contamination.']], 'wipe', {done:'Acetylene outlet cleaned the approved way.'}),
+ { id:'c6', phase:1, title:'2.6 Recheck that both valves are closed', type:'click', targets:['oxyValve','acValve'], anyOrder:true, view:'valves',
+   instr:'Before attaching regulators, confirm both cylinder valves are closed again.', why:'It\'s a habit that prevents a full-pressure release while you are threading on a regulator.', hint:'Click both valves.',
+   act(n){ say(`${parts[n].label}: closed.`, 'ok'); }, done:'Both valves confirmed closed.' },
+ // ---- 3 ----
+ { id:'r2', phase:2, title:'3.1 Attach the regulators', type:'click', targets:['oxyOutlet','acOutlet'], view:'valves', handle:true, panel:() => !!S.conn,
+   instr:'Click a cylinder valve outlet. Both regulators are brought over. In the panel, check the inlet union nut (plain or notched) to pick the regulator that fits, and choose which way to turn the wrench.',
+   test:'Install both regulators on the right cylinders.',
+   why:'The union nut tells you the thread, not the color. Oxygen regulator inlets (CGA 540) use a plain hex nut with a standard right-hand thread: turn clockwise to tighten. Acetylene inlets (CGA 510) use a notched nut, a groove cut around the hex, with a left-hand (reverse) thread: turn counterclockwise to tighten. Never force a fitting, never use thread tape, and snug it without overtightening.',
+   hint:'Plain nut = right-hand thread = oxygen = clockwise. Notched nut = left-hand (reverse) thread = acetylene = counterclockwise.',
+   uiFn(el){ connEl = el; renderConn(); },
+   handleFn(n){ const map = {oxyOutlet:'oxy', oxyValve:'oxy', acOutlet:'ac', acValve:'ac'};
+     if ((n === 'oxyReg' || n === 'oxyInNut' || n === 'acReg' || n === 'acInNut') && S.conn){ S.pickNut = n.startsWith('ac') ? 'notch' : 'plain'; renderConn(); return; }
+     if (n === 'oxyReg' || n === 'acReg' || n === 'oxyInNut' || n === 'acInNut'){ say('Click the cylinder valve outlet you want to fit a regulator to.'); return; }
+     if (map[n]){ const k = map[n]; if (S.regAt[k] === 'mount'){ say('That cylinder already has its regulator.'); return; }
+       S.conn = k; S.connMode = 'reg'; S.pickNut = S.pickDir = null; placeReg('oxy', true); placeReg('ac', true); renderConn(); if (autoCam) flyTo(k === 'oxy' ? 'inletO' : 'inletA');
+       say(`Regulators brought to the ${k === 'oxy' ? 'oxygen' : 'acetylene'} cylinder. Look at each inlet union nut, then choose in the panel.`, 'info'); announce('Choose the inlet nut and turning direction in the step panel.'); return; }
+     return 'pass'; },
+   done:'Both regulators on: plain right-hand nut on oxygen, notched left-hand nut on acetylene.' },
+ { id:'r1', phase:2, title:'3.2 Check the adjusting screws', type:'click', targets:['oxyScrew','acScrew'], anyOrder:true, view:'regs',
+   instr:'Now that the regulators are on the cylinders, check both adjusting screws before any valve is opened. Turn each screw counterclockwise until it is loose (backed out).', why:'An unloaded regulator is closed, so cylinder pressure can\'t slam through it into the diaphragm and hose when you open the valve.', hint:'The black T-handles on the front of each regulator.',
+   act(n){ const k = n === 'oxyScrew' ? 'oxy' : 'ac'; const s0 = S.screw[k]; tween(.6, t => setScrew(k, s0*(1 - t))); }, done:'Both screws backed out.' },
+ { id:'r3', phase:2, title:'3.3 Connect the hoses', type:'click', targets:['oxyReg','acReg'], view:'hoseStart', handle:true, panel:() => !!S.conn,
+   instr:'Click the hose coil to take out the hoses. Then click a regulator. In the panel, choose the hose nut that fits it and which way to turn the wrench.',
+   test:'Connect the hoses to the regulators.',
+   why:'Don\'t rely on hose color. Fuel-gas fittings have a left-hand (reverse) thread, and the nut is marked with a notch: a groove cut around the middle of the hex. It tightens counterclockwise. Oxygen fittings have a plain hex nut with a standard right-hand thread that tightens clockwise. Because the threads are different, the hoses can\'t be swapped.',
+   hint:'Notched nut = left-hand (reverse) thread = fuel = counterclockwise to tighten. Plain nut = right-hand thread = oxygen = clockwise.',
+   uiFn(el){ connEl = el; renderConn(); },
+   handleFn(n){ if (n === 'hoses'){ if (!S.hosesOut){ S.hosesOut = true; updateHoses(); renderConn(); say('Hoses out. Click the regulator you want to connect first.', 'info'); } return; }
+     if (n === 'oxyNut' || n === 'acNut'){ if (S.conn){ S.pickNut = n === 'acNut' ? 'notch' : 'plain'; renderConn(); } else say(`${parts[n].label}. Click a regulator first.`); return; }
+     if (n === 'oxyReg' || n === 'acReg'){ if (!S.hosesOut){ say('Take the hoses off the coil first.'); return; } const k = n === 'oxyReg' ? 'oxy' : 'ac';
+       if (S.hose[k]){ say('That regulator already has its hose.'); return; } S.conn = k; S.connMode = 'hose'; S.pickNut = S.pickDir = null; updateHoses(); renderConn(); if (autoCam) flyTo(k === 'oxy' ? 'nutO' : 'nutA');
+       say(`Both hose ends are up at the ${k === 'oxy' ? 'oxygen' : 'acetylene'} regulator. Choose the nut and the turning direction in the panel.`, 'info'); announce('Choose the hose nut and the turning direction in the step panel.'); return; }
+     return 'pass'; },
+   done:'Hoses connected: the plain right-hand nut on oxygen, the notched left-hand nut on fuel.' },
+ { id:'r3b', phase:2, title:'3.3 Verify check valves', type:'click', targets:['oxyCheck','acCheck'], anyOrder:true, view:'regs',
+   instr:'Verify the required flashback protection / check valves are fitted between each regulator and its hose.', why:'Check valves stop gas flowing backward into the other line; flashback arrestors stop a flame front. Your system design sets which are required.', hint:'The small brass bodies at each regulator outlet.',
+   act(n){ say(`${parts[n].label}: present, arrow pointing toward the torch.`, 'ok'); }, done:'Check valves verified.' },
+ { id:'r4b', phase:2, title:'3.4 Verify torch valves are closed', type:'click', targets:['acTV','oxTV'], anyOrder:true, view:'torch',
+   instr:'Verify both torch valves are closed, and route the hoses away from heat and sharp edges.', why:'Closed torch valves keep gas in the hoses when you pressurize. Hoses near slag or sharp edges get damaged.', hint:'The red and green valve knobs at the back of the torch.',
+   act(n){ say(`${parts[n].label}: closed.`, 'ok'); }, done:'Torch valves closed.' },
+ // ---- 4 ----
+ { id:'p1', phase:3, title:'4.1 Open the oxygen cylinder valve', type:'click', targets:['oxyValve'], view:'regs', pre:'side',
+   instr:'Stand to the side of the gauges. Slowly open the oxygen cylinder valve, then open it fully.', test:'Pressurize the oxygen regulator.',
+   why:'Opening slowly protects the regulator from a pressure shock. Standing to the side keeps you clear if a gauge fails. Oxygen valves are back-seating, so they go fully open.', hint:'Tick the stance box, then click the oxygen valve.',
+   panel:() => !S.side, ui:true, uiFn(el){ sideToggle(el); },
+   act(){ tween(1.6, t => oxyWheel.rotation.y = -t*8); S.valve.oxy = 1; }, delay:1700, done:'Oxygen cylinder valve fully open. Cylinder gauge reads full.' },
+ { id:'p2', phase:3, title:'4.2 Open the acetylene cylinder valve', type:'ui', view:'regs', live:['acValve'],
+   instr:'Slowly open the acetylene cylinder valve about 3/4 turn and keep the key on the valve. Drag the valve key up to open or down to close (1/4 turn per step), or use the buttons below.', test:'Pressurize the acetylene regulator.',
+   why:'Acetylene valves are opened no more than 1 1/2 turns (3/4 turn is the classroom standard) so they can be shut off fast in an emergency. That\'s also why the key stays on the stem.', hint:'Three quarter-turns open = 3/4 turn. Use Close 1/4 turn to back off if you go too far.',
+   ui(el){ const d = document.createElement('div'); d.style.cssText = 'display:flex;flex-direction:column;gap:8px'; d.innerHTML = `<div class="flamebox" id="turnN" aria-live="polite"></div><div class="row"><button class="btn" id="qt">Open 1/4 turn</button><button class="btn" id="qc">Close 1/4 turn</button></div>`; el.appendChild(d);
+     d.querySelector('#qt').onclick = () => setAcValve(S.valve.ac + .25); d.querySelector('#qc').onclick = () => setAcValve(S.valve.ac - .25); setAcValve(S.valve.ac, true);
+     const k = document.createElement('div'); el.appendChild(k); toggleUI(k, [['key','The T-key is left on the valve stem']]); sideToggle(el); },
+   validate(){ if (!S.side) return {ok:false, msg:'Stand to the side of the gauges when opening a cylinder valve.'}; if (S.valve.ac === 0) return {ok:false, msg:'Open the valve: click it on the cylinder or use the button.', soft:true};
+     if (S.valve.ac > 1.5) return {ok:false, msg:`${S.valve.ac} turns is over the 1 1/2-turn maximum. Close it back to about 3/4 turn so it can be shut quickly.`};
+     if (S.valve.ac > 1) return {ok:false, msg:'More than needed. Open it about 3/4 turn.'}; if (S.valve.ac < .5) return {ok:false, msg:'Open it about 3/4 turn.'};
+     if (!S.key) return {ok:false, msg:'Leave the key on the valve so it can be closed fast in an emergency.'}; return {ok:true}; },
+   done:'Acetylene valve open 3/4 turn, key in place.' },
+ { id:'p3', phase:3, title:'4.3 Set the working pressures', type:'ui', view:'regs', live:['oxyScrew','acScrew'],
+   instr:'Turn the adjusting screws in (clockwise) to set acetylene to 5 psi and oxygen to 35 psi. Drag the T-handles up or down on the regulators, or use the controls here.',
+   test:'Set the classroom working pressures.',
+   why:'These are the assigned classroom pressures for this tip. Follow the torch maker\'s flow-setting method (many set pressure with the torch valve open so the gauge shows flowing pressure). Never exceed 15 psig acetylene.',
+   hint:'Acetylene 5 psi, oxygen 35 psi. The acetylene gauge has a red zone above 15.',
+   ui(el){ el.insertAdjacentHTML('beforeend', `<label class="slide" for="sA"><span>Acetylene screw <output id="oA"></output></span><input type="range" id="sA" min="0" max="25" step=".5"></label>
+     <label class="slide" for="sO"><span>Oxygen screw <output id="oO"></output></span><input type="range" id="sO" min="0" max="80" step="1"></label>`);
+     const sA = el.querySelector('#sA'), sO = el.querySelector('#sO'), oA = el.querySelector('#oA'), oO = el.querySelector('#oO');
+     screwUI = () => { sA.value = S.screw.ac; sO.value = S.screw.oxy; oA.textContent = `${S.screw.ac.toFixed(1)} psi set`; oO.textContent = `${Math.round(S.screw.oxy)} psi set`; sA.setAttribute('aria-valuetext', oA.textContent); sO.setAttribute('aria-valuetext', oO.textContent); };
+     screwUI(); sA.oninput = () => { setScrew('ac', +sA.value); screwUI(); }; sO.oninput = () => { setScrew('oxy', +sO.value); screwUI(); }; },
+   validate(){ const a = S.lo.ac, o = S.lo.oxy; if (a > 15) return {ok:false, msg:'Acetylene is above 15 psi. Back it down to 5.'};
+     if (Math.abs(a - 5) > .6) return {ok:false, msg:`Acetylene reads ${a.toFixed(1)} psi. Set it to 5.`}; if (Math.abs(o - 35) > 2.5) return {ok:false, msg:`Oxygen reads ${o.toFixed(1)} psi. Set it to 35.`}; return {ok:true}; },
+   done:'Working pressures: acetylene 5 psi, oxygen 35 psi.' },
+ quiz('p4', 3, '4.4 Tip rating and acetylene limit', 'regs', 'Before going on: what is the maximum working pressure you may ever set on acetylene?', 'Above 15 psig, acetylene can decompose violently. The instructor must also verify that the installed tip is rated for 5/35 psi.', 'It\'s printed in red on the gauge.', 'max15',
+   [['5','5 psig','5 psi is our working pressure, not the limit.'],['15','15 psig',''],['25','25 psig','Far too high. Acetylene can become unstable above 15 psig.'],['35','35 psig','35 psi is our oxygen pressure. Acetylene must never exceed 15 psig.']], '15', {done:'Never exceed 15 psig acetylene. Tip rating confirmed by the instructor.'}),
+ // ---- 5 ----
+ quiz('l1', 4, '5.1 Choose the leak detector', 'bench', 'Torch valves are closed. What do you use to find leaks?', 'Use only an approved, oxygen-compatible, oil-free leak-detection solution. Never look for leaks with a flame.', 'Oil-free and oxygen-compatible.', 'leakSol',
+   [['ok','Approved oxygen-compatible, oil-free leak-detection solution',''],['soap','Kitchen dish soap and water','Household soaps can contain oils and aren\'t approved for oxygen fittings.'],['flame','A lit striker held near each fitting','Never use a flame to find a leak. That\'s how fires and explosions start.'],['nose','Smell and listen only','Acetylene has an odor, but oxygen doesn\'t. Small leaks need a bubble test.']], 'ok', {done:'Approved leak-detection solution.'}),
+ { id:'l2', phase:4, title:'5.2 Test every connection', type:'click', targets:['oxyInlet','acInlet','oxyCheck','acCheck','torchO','torchA'], anyOrder:true, view:'leak', spray:true,
+   instr:'Apply solution to each connection: cylinder-to-regulator, regulator-to-hose, and hose-to-torch, for both gases. Watch for bubbles. Click each connection.',
+   test:'Leak-test the pressurized system.', why:'Every threaded joint is a possible leak. The test is done with the system pressurized and torch valves closed.',
+   hint:'Six spots: two regulator inlet nuts, two regulator outlets, and the torch end (click it twice, once per hose).',
+   done:'All six connections tested.' },
+ { id:'l3', phase:4, title:'5.3 Respond to what you found', type:'ui', get view(){ return S.leak ? 'leakspot' : 'leak'; },
+   instr:'Did any connection bubble? Choose the right response.',
+   why:'Bubbles mean gas is escaping. Never tighten a fitting under pressure. Close that cylinder valve, bleed the line to zero, then snug the nut with the correct wrench without overtightening. Reopen and retest. If it still bubbles, close the valve and notify the instructor.',
+   hint:'Make it safe first: no pressure on the fitting before you put a wrench on it.',
+   ui(el){ const opts = [['none','No bubbles anywhere: the system passes'],['ignore','Small bubbles are normal: keep going'],['hot','Bubbles: tighten the nut right now, with the system pressurized'],
+       ['depress','Bubbles: close that cylinder valve, bleed the line to zero, then snug the nut (don\'t overtighten)'],['notify','Bubbles: leave everything on and go get the instructor']];
+     el.innerHTML = `<div class="opts">${opts.map(([k,t]) => `<button class="opt" data-k="${k}" aria-pressed="${S.quiz.lr === k}"><span><b>${t}</b></span></button>`).join('')}</div>`;
+     el.querySelectorAll('.opt').forEach(b => b.onclick = () => { S.quiz.lr = b.dataset.k; el.querySelectorAll('.opt').forEach(x => x.setAttribute('aria-pressed', x === b)); }); },
+   validate(){ const a = S.quiz.lr; if (!a) return {ok:false, msg:'Pick a response.', soft:true};
+     if (!S.leak) return a === 'none' ? {ok:true} : {ok:false, msg:'Look again: none of the connections bubbled.'};
+     if (a === 'depress') return {ok:true};
+     if (a === 'none') return {ok:false, msg:`The ${LEAKNAME[S.leak]} is bubbling. Look at your test results.`};
+     if (a === 'hot') return {ok:false, msg:'Never put a wrench on a fitting under pressure. Close the cylinder valve and bleed the line to zero first.'};
+     if (a === 'notify') return {ok:false, msg:'Make it safe and try first: close the cylinder valve, bleed the line, snug the nut. Notify the instructor if it still bubbles after that.'};
+     return {ok:false, msg:'Any bubbles are a leak. Deal with it before going on.'}; },
+   get done(){ return S.leak ? 'Right: depressurize the line before you put a wrench on it.' : 'No leaks. System passes.'; } },
+ { id:'l4', phase:4, title:'5.3 Leak: close the cylinder valve', type:'click', get targets(){ return [leakGas() === 'oxy' ? 'oxyValve' : 'acValve']; }, view:'regs', skipIf:() => !S.leak,
+   instr:'Close the cylinder valve on the leaking side.', why:'This stops the supply to the leaking fitting. The bubbles keep going until the line is bled down.', hint:'The valve on the cylinder that feeds the bubbling nut.',
+   act(n){ const g = leakGas(); S.valve[g] = 0; if (g === 'oxy') tween(.8, t => oxyWheel.rotation.y *= 1 - t); else setAcValve(0, true); }, get done(){ return `${leakGas() === 'oxy' ? 'Oxygen' : 'Acetylene'} cylinder valve closed. The line is still pressurized.`; } },
+ { id:'l5', phase:4, title:'5.3 Leak: bleed the line to zero', type:'click', get targets(){ return [leakGas() === 'oxy' ? 'oxTV' : 'acTV']; }, view:'torch', handle:true, skipIf:() => !S.leak,
+   get instr(){ return `With the torch pointed away and unlit, open only the ${leakGas() === 'oxy' ? 'oxygen' : 'acetylene'} torch valve. Watch both of its gauges fall to zero, then close the torch valve.`; },
+   why:'A fitting must be at zero pressure before you put a wrench on it. Only bleed the leaking side.', hint:'Torch valve open, wait for zero on both gauges, torch valve closed.',
+   handleFn(n){ return bleedHandle(n, leakGas(), 'Only bleed the leaking line. Leave the other torch valve closed.'); }, tick(){ bleedTick(leakGas()); },
+   done:'Line at zero.' },
+ { id:'l6', phase:4, title:'5.3 Leak: snug the nut', type:'ui', view:'leakspot', skipIf:() => !S.leak,
+   get instr(){ return `The ${LEAKNAME[S.leak]} is at zero pressure. Choose which way to turn the wrench and how far to snug it.`; },
+   why:'Check the nut before you turn it. A notched nut is a left-hand (reverse) thread and tightens counterclockwise. Snug it only a little past firm: overtightening crushes the brass seat and strips threads, which makes the leak worse.',
+   hint:'Notched nut: counterclockwise. Plain nut: clockwise. Only a small snug, never a cheater bar.',
+   ui(el){ const lh = leakGas() === 'ac', o = (g, v, t) => `<button class="opt" data-g="${g}" data-v="${v}" aria-pressed="${S['sn' + g] === v}"><span><b>${t}</b></span></button>`;
+     el.innerHTML = `<div class="infocard nutcard">${lh ? NUT_SVG.notch : NUT_SVG.plain}<span><b>${lh ? 'Notched nut' : 'Plain hex nut'}</b>${lh ? 'Groove cut around the hex.' : 'No groove.'}</span></div>
+       <fieldset><legend>Which way tightens this nut?</legend><div class="opts">${o('Dir','cw','Clockwise ⟳ (standard)')}${o('Dir','ccw','Counterclockwise ⟲ (reverse)')}</div></fieldset>
+       <fieldset><legend>How far do you tighten it?</legend><div class="opts">${o('Amt','snug','Snug it a little past firm with the correct wrench')}${o('Amt','crank','As tight as it will go, with a cheater bar if needed')}</div></fieldset>`;
+     el.querySelectorAll('.opt').forEach(b => b.onclick = () => { S['sn' + b.dataset.g] = b.dataset.v; el.querySelectorAll(`.opt[data-g="${b.dataset.g}"]`).forEach(x => x.setAttribute('aria-pressed', x === b)); }); },
+   confirmLabel:'Tighten the nut',
+   validate(){ if (!S.snDir || !S.snAmt) return {ok:false, msg:'Choose a direction and how far.', soft:true}; const lh = leakGas() === 'ac';
+     if (S.snDir !== (lh ? 'ccw' : 'cw')) return {ok:false, msg: lh ? 'That nut is notched: a left-hand (reverse) thread. Clockwise loosens it. Turn counterclockwise to tighten.' : 'That is a plain nut with a standard right-hand thread. Turn clockwise to tighten.'};
+     if (S.snAmt !== 'snug') return {ok:false, msg:'Never crank on brass fittings. Overtightening crushes the seat and strips threads, and the leak gets worse. Snug it only.'};
+     leakWrench(); if (!S.leakStubborn) S.leakFixed = true; return {ok:true}; }, delay:1800,
+   done:'Nut snugged. Now reopen and retest.' },
+ { id:'l7', phase:4, title:'5.3 Leak: reopen and retest', type:'click', get targets(){ return ['retest']; }, view:'leak', skipIf:() => !S.leak, retest:true, panel:() => !!S.retestFail,
+   get instr(){ return `Reopen the ${leakGas() === 'oxy' ? 'oxygen cylinder valve (fully)' : 'acetylene cylinder valve (3/4 turn)'}, then spray the ${LEAKNAME[S.leak]} again.`; },
+   why:'A repair is not done until it passes a leak test under pressure. If it still bubbles after a careful snug, the fitting or seat is damaged: close the valve and notify the instructor.',
+   hint:'Cylinder valve first, then the nut.', uiFn(el){ retestEl = el; renderRetest(); },
+   done:'Retest passed: no bubbles.' },
+ // ---- 6 ----
+ { id:'f1', phase:5, title:'6.1 Approval, PPE, and aim', type:'ui', view:'bench',
+   instr:'Put on your cutting PPE, point the torch away from people and combustibles, and get instructor approval.',
+   why:'Cutting throws sparks and slag several feet. Shade 5 goggles protect your eyes from the flame; gloves and FR clothing protect from spatter. Instructor approval comes after all torch-maker pre-lighting checks.',
+   hint:'Shade 5 goggles, leather gloves, FR jacket. Not shorts, not a shade 10 helmet.',
+   ui(el){ const items = [['goggles','Shade 5 cutting goggles'],['gloves','Leather gauntlet gloves'],['fr','FR jacket / long sleeves'],['helmet','Welding helmet set to shade 10'],['shorts','Shorts and sneakers']];
+     el.innerHTML = `<fieldset><legend>Wear</legend>${items.map(([k,t]) => `<button class="toggle" data-p="${k}" aria-pressed="${S.ppe.has(k)}"><i></i><span>${t}</span></button>`).join('')}</fieldset>`;
+     el.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { const k = b.dataset.p; S.ppe.has(k) ? S.ppe.delete(k) : S.ppe.add(k); b.setAttribute('aria-pressed', S.ppe.has(k)); });
+     const d = document.createElement('div'); d.style.cssText = 'display:flex;flex-direction:column;gap:6px'; el.appendChild(d); toggleUI(d, [['away','Torch pointed away from people, cylinders and combustibles'],['approve','Instructor approval received']]); },
+   validate(){ const p = S.ppe; if (p.has('shorts')) return {ok:false, msg:'No shorts or sneakers around cutting: sparks and slag burn skin and melt shoes.'};
+     if (p.has('helmet')) return {ok:false, msg:'A shade 10 welding lens is too dark to see the flame and puddle for cutting. Use shade 5 cutting goggles.'};
+     if (!p.has('goggles') || !p.has('gloves') || !p.has('fr')) return {ok:false, msg:'You need shade 5 goggles, gloves and FR clothing.'};
+     if (!S.away) return {ok:false, msg:'Point the torch away from people and combustibles.'}; if (!S.approve) return {ok:false, msg:'Get instructor approval before lighting.', soft:true}; return {ok:true}; },
+   onDone(){ setTorchPose('flame'); }, done:'PPE on, torch pointed away from people and combustibles, instructor approved.' },
+ { id:'f2', phase:5, title:'6.2 Open acetylene slightly and ignite', type:'click', targets:['acTV','striker'], view:'light', handle:true,
+   instr:'Open the acetylene torch valve slightly (click it), then ignite with the friction striker. Use only the striker.',
+   test:'Light the torch.', why:'Light acetylene alone, a little at a time. Never use matches or a lighter: your hand would be at the tip.', hint:'Acetylene torch valve first, then the striker on the cutting table.',
+   handleFn(n){ if (n === 'oxTV'){ err('Never open the oxygen valve to light. Light acetylene only.'); return; }
+     if (n === 'acTV'){ S.tv.ac = .18; acTV.rotation.y = -1; say('Acetylene torch valve cracked open. Now strike.', 'info'); return; }
+     if (n === 'striker'){ if (S.tv.ac < .02){ say('Nothing lights: no gas is flowing. Open the acetylene torch valve slightly first.'); return; } S.lit = true; sparkAt(); return 'complete'; }
+     return 'pass'; },
+   done:'Lit. The acetylene flame is smoky: open it more.' },
+ { id:'f3', phase:5, title:'6.3 Increase acetylene', type:'ui', view:'flame', live:['acTV'],
+   instr:'The flame is orange: acetylene only. Open the acetylene torch valve more until the black soot stops and the flame stays attached to the tip. Drag the acetylene torch valve, or use the slider.',
+   why:'Too little acetylene makes a lazy orange flame with black soot. Too much pulls the flame away from the tip. The right amount is a bright orange flame, no smoke, touching the tip.', hint:'Stop when the smoke stops but before the flame jumps off the tip.',
+   ui(el){ flameUI(el, [['ac','Acetylene torch valve']]); },
+   validate(){ const f = flameState(); if (f === 'smoky') return {ok:false, msg:'Still smoking. Open the acetylene a bit more.'}; if (f === 'lifted') return {ok:false, msg:'The flame has lifted off the tip. Back the acetylene off a little.'}; return {ok:true}; },
+   done:'Stable acetylene flame, no smoke.' },
+ { id:'f4', phase:5, title:'6.4 Add preheat oxygen to neutral', type:'ui', view:'flame', live:['oxTV'],
+   instr:'Gradually open the preheat oxygen valve. The orange flame turns into three flames: an outer flame, a white middle feather, and small inner preheat cones at each hole. Keep adding oxygen until the middle feather disappears, leaving only the outer flame and sharp inner preheat cones: neutral.',
+   why:'Three flames = carburizing (excess acetylene): outer flame, white middle feather, inner preheat cones. Two flames = neutral: outer flame and sharp inner preheat cones. Too much oxygen = oxidizing: the inner cones get short and pointed and the flame hisses.', hint:'Stop the moment the white middle feather merges into the inner preheat cones.',
+   ui(el){ flameUI(el, [['oxy','Preheat oxygen valve']]); },
+   validate(){ const f = flameState(); if (f === 'neutral') return {ok:true}; if (f === 'carb') return {ok:false, msg:'Still carburizing: you can see the feather. Add a little more oxygen.'}; if (f === 'oxid') return {ok:false, msg:'Oxidizing: cones are short and pointed. Back the oxygen off.'}; return {ok:false, msg:'Add preheat oxygen.', soft:true}; },
+   done:'Neutral flame.' },
+ { id:'f5', phase:5, title:'6.5 Cutting lever and readjust', type:'ui', view:'flame', live:['oxTV','lever'],
+   instr:'Hold the cutting oxygen lever down. You\'ll see the long cutting oxygen stream from the center hole, and a small white middle feather comes back on the preheat flames (slightly carburizing). Add a little preheat oxygen until the feather is gone again, then release the lever.',
+   why:'Cutting oxygen draws pressure from the preheat side, so the preheat flame changes when the lever is down. Set neutral with the lever down. Then get instructor approval before cutting.',
+   hint:'Toggle the lever on, nudge the oxygen up until neutral, toggle the lever off.',
+   ui(el){ const b = document.createElement('button'); b.className = 'btn primary'; b.id = 'lev'; el.appendChild(b);
+     const lab = () => { b.textContent = S.lever ? 'Release the cutting lever' : 'Hold the cutting lever down'; b.setAttribute('aria-pressed', S.lever); }; lab(); b.onclick = () => { setLever(!S.lever); lab(); };
+     const n = document.createElement('p'); n.className = 'note'; n.textContent = 'In the sim this button holds the lever for you, so your hand is free for the oxygen valve.'; el.appendChild(n);
+     flameUI(el, [['oxy','Preheat oxygen valve']]); const d = document.createElement('div'); el.appendChild(d); toggleUI(d, [['approve2','Instructor approval received to cut']]); },
+   tick(){ if (S.lever) { S.leverSeen = true; if (flameState() === 'neutral') S.leverNeutral = true; } },
+   validate(){ if (!S.leverSeen) return {ok:false, msg:'Hold the cutting lever down first.', soft:true}; if (!S.leverNeutral) return {ok:false, msg:'Readjust preheat oxygen to neutral while the lever is held down.'};
+     if (S.lever) return {ok:false, msg:'Release the cutting lever.', soft:true}; if (!S.approve2) return {ok:false, msg:'Get instructor approval before cutting.', soft:true}; return {ok:true}; },
+   done:'Preheat set with the lever down. Approved to cut.' },
+ // ---- 7 ----
+ { id:'x2', phase:6, title:'7.1 Close the torch valves', type:'click', targets:['acTV','oxTV'], ordered:true, view:'flame',
+   instr:'Your cut is done and the cutting lever is released. Close the acetylene torch valve first to put out the flame, then close the preheat oxygen torch valve.', test:'Shut off the flame.',
+   why:'Shutting off the fuel puts the flame out right away; then the oxygen is closed. Always follow your torch manufacturer\'s shutdown sequence.', hint:'Acetylene torch valve first, then oxygen.',
+   onEnter(){ setLever(false); },
+   act(n){ if (n === 'acTV'){ setTV('ac', 0); S.lit = false; say('Acetylene closed: the flame is out. Now close the oxygen.', 'ok'); } else { setTV('oxy', 0); } },
+   wrongOrder:'Close the acetylene (fuel) torch valve first to put out the flame, then the oxygen.', done:'Both torch valves closed. Flame out.' },
+ { id:'x3', phase:6, title:'7.2 Confirm the flame is out', type:'click', targets:['hook'], view:'overview',
+   instr:'Confirm the flame is out, then hang the hot torch in its holder to cool.', why:'A hot torch laid on the floor or a hose can burn the hose or someone\'s hand.', hint:'The holder on the side of the cart.',
+   act(){ setTorchPose('hook'); setTimeout(updateHoses, 850); }, done:'Torch in the holder.' },
+ { id:'x4', phase:6, title:'7.3 Close both cylinder valves', type:'click', targets:['acValve','oxyValve'], anyOrder:true, view:'regs',
+   instr:'Fully close the acetylene cylinder valve and the oxygen cylinder valve.', why:'Closing the cylinders isolates the supply. The hoses and regulators still hold pressure until you bleed them.', hint:'Click both cylinder valves.',
+   act(n){ if (n === 'acValve'){ S.valve.ac = 0; tween(.5, t => acKey.rotation.y *= 1 - t); } else { S.valve.oxy = 0; tween(.8, t => oxyWheel.rotation.y *= 1 - t); } }, done:'Both cylinder valves closed. Gauges still show trapped pressure.' },
+ // ---- 8 ----
+ { id:'b1', phase:7, title:'8.1 Point the torch safely', type:'click', targets:['torch'], view:'overview',
+   instr:'With both cylinder valves closed, take the unlit torch and point it away from people and ignition sources.', why:'Bleeding releases gas from the tip. Point it where there\'s nothing to ignite.', hint:'Click the torch in its holder.',
+   act(){ setTorchPose('hand'); }, delay:900, done:'Torch pointed at the cutting table.' },
+ { id:'b2', phase:7, title:'8.2 Bleed oxygen', type:'click', targets:['oxTV'], view:'torch', handle:true,
+   instr:'Open only the oxygen torch valve. The view moves to the regulators: watch both oxygen gauges fall to zero, then close the torch valve.', why:'One gas at a time keeps oxygen and fuel from mixing in the torch. Both gauges must read zero.', hint:'Open the oxygen torch valve, watch the oxygen gauges reach zero, close it.',
+   handleFn(n){ return bleedHandle(n, 'oxy', 'Bleed one gas at a time: oxygen first here. Never open both together.'); }, tick(){ bleedTick('oxy'); }, done:'Oxygen lines at zero, valve closed.' },
+ { id:'b3', phase:7, title:'8.3 Bleed acetylene', type:'click', targets:['acTV'], view:'torch', handle:true,
+   instr:'Now open only the acetylene torch valve. Watch both acetylene gauges fall to zero, then close it.', why:'Same as oxygen: one gas at a time, all the way to zero.', hint:'Open the acetylene torch valve, watch the acetylene gauges reach zero, close it.',
+   handleFn(n){ return bleedHandle(n, 'ac', 'The oxygen valve stays closed while bleeding acetylene. Never open both together.'); }, tick(){ bleedTick('ac'); }, done:'Acetylene lines at zero, valve closed.' },
+ quiz('b4', 7, '8.4 One gas at a time', 'regs', 'Why do you never open the oxygen and acetylene torch valves together while bleeding?', 'Bleeding both at once mixes oxygen and fuel in the torch and hoses, which can lead to a flashback or explosion if anything ignites it.', 'Think about what both gases together make.', 'bothQ',
+   [['mix','Both together mix fuel and oxygen in the torch and hoses: a flashback hazard',''],['slow','It bleeds too slowly','Speed isn\'t the issue: mixed gases are.'],['gauges','The gauges can break','The danger is the mixture, not the gauges.']], 'mix', {done:'Right: never mix them while bleeding.'}),
+ // ---- 9 ----
+ { id:'s1', phase:8, title:'9.1 Back out the adjusting screws', type:'click', targets:['oxyScrew','acScrew'], anyOrder:true, view:'regs',
+   instr:'Turn both regulator adjusting screws counterclockwise until the springs are unloaded.', why:'Unloaded regulators are ready for the next setup and won\'t be shocked when a cylinder is opened.', hint:'Both T-handles.',
+   act(n){ const k = n === 'oxyScrew' ? 'oxy' : 'ac'; const s0 = S.screw[k]; tween(.6, t => setScrew(k, s0*(1 - t))); }, done:'Screws backed out.' },
+ { id:'s2', phase:8, title:'9.2 Confirm zero and closed', type:'ui', view:'regs',
+   instr:'Read all four gauges and confirm both cylinder valves are closed.', why:'Never remove a regulator under pressure: the fitting can blow off.', hint:'All four gauges must read 0.',
+   ui(el){ toggleUI(el, [['z1','All four gauges read zero'],['z2','Both cylinder valves are closed']]); },
+   validate(){ if (!S.z1 || !S.z2) return {ok:false, msg:'Check both items.', soft:true}; if (S.hi.oxy + S.lo.oxy + S.hi.ac + S.lo.ac > 1) return {ok:false, msg:'A gauge still shows pressure. Bleed it first.'}; return {ok:true}; }, done:'All zero, all closed.' },
+ { id:'s3', phase:8, title:'9.3 Remove and store the regulators', type:'click', targets:['oxyReg','acReg'], anyOrder:true, view:'overview',
+   instr:'Disconnect each hose, remove both regulators, and store them on the regulator shelf.', why:'Never store a cylinder with the regulator attached. Stored regulators stay clean and protected.', hint:'Click each regulator.',
+   act(n){ const k = n === 'oxyReg' ? 'oxy' : 'ac'; S.hose[k] = false; S.regAt[k] = 'store'; placeReg(k, true); updateHoses(); }, done:'Regulators on the shelf.' },
+ { id:'s4', phase:8, title:'9.4 Install both caps', type:'click', targets:['oxyCap','acCap'], anyOrder:true, view:'capsFloor',
+   instr:'Install the protective caps on both cylinders.', why:'The cap protects the valve if a cylinder is knocked over or moved.', hint:'The caps are on the floor in front of the cart.',
+   act(n){ const k = n === 'oxyCap' ? 'oxy' : 'ac'; S.caps[k] = true; moveTo(n === 'oxyCap' ? oxyCap : acCap, CAP_HOME[k], .8, .3); }, done:'Both caps on.' },
+ { id:'s5', phase:8, title:'9.5 Coil the hoses, hang the torch', type:'click', targets:['hoses','hook'], anyOrder:true, view:'hookView',
+   instr:'Let the torch and tip cool, inspect and coil the hoses, and place the torch in its holder.', why:'Coiled hoses don\'t get run over or kinked; a holstered torch doesn\'t get dropped.', hint:'Click the hoses, then the holder.',
+   act(n){ if (n === 'hoses'){ S.hosesOut = false; updateHoses(); } else { setTorchPose('hook'); } }, done:'Hoses coiled, torch stored.' },
+ { id:'s6', phase:8, title:'9.6 Secure the cylinders and clean up', type:'click', targets:['chain','bench'], anyOrder:true, view:'overview',
+   instr:'Confirm the cylinders are upright and chained, clean the work area, and report any damage to the instructor.', why:'The cart is stored ready for the next person, and problems get fixed before someone else uses it.', hint:'Click the chains, then the bench.',
+   act(n){ say(n === 'chain' ? 'Cylinders upright and chained.' : 'Area clean. Nothing to report.', 'ok'); }, done:'Cart stored.' }
+];
+function setLever(on){ S.lever = on; lever.rotation.z = on ? -.12 : 0; }
+let screwUI = null, flameUIFn = null, connEl = null, retestEl = null;
+const leakGas = () => S.leak && (S.leak.startsWith('oxy') || S.leak === 'torchO') ? 'oxy' : 'ac';
+function leakWrench(){ const spot = S.leak, g = leakGas(), dir = g === 'oxy' ? 1 : -1;
+  if (spot.endsWith('Inlet')) wrenchAt(inletNutPos(g), V(0, 0, -1), dir, 0, V(.13, .09, .03), 2);
+  else if (spot.endsWith('Check')) wrenchAt((g === 'oxy' ? oxyNut : acNut).position.clone(), V(0, 1, 0), dir, -.65);
+  else { const p = butt.getWorldPosition(new THREE.Vector3()).add(V(0, g === 'oxy' ? -.012 : .012, 0)); wrenchAt(p, V(1, 0, 0).applyQuaternion(torch.quaternion), dir, 0); } }
+function bleedHandle(n, g, otherMsg){ const mine = g === 'oxy' ? 'oxTV' : 'acTV', other = g === 'oxy' ? 'acTV' : 'oxTV', name = g === 'oxy' ? 'oxygen' : 'acetylene';
+  if (n === other){ err(otherMsg); return; }
+  if (n !== mine) return 'pass';
+  if (S.tv[g] < .02){ setTV(g, 1); steps[cur]._zero = false; say(`${name[0].toUpperCase() + name.slice(1)} bleeding. Watch both ${name} gauges fall to zero.`, 'info'); if (autoCam) flyTo('regs'); return; }
+  if (S.hi[g] > .5 || S.lo[g] > .2){ err(`Wait until both ${name} gauges read zero before closing the valve.`); return; }
+  setTV(g, 0); return 'complete'; }
+function bleedTick(g){ const st = steps[cur]; if (S.tv[g] > .02 && !st._zero && S.hi[g] <= .5 && S.lo[g] <= .2){ st._zero = true; say(`Both ${g === 'oxy' ? 'oxygen' : 'acetylene'} gauges read zero. Close the torch valve.`, 'ok'); announce('Gauges at zero. Close the torch valve.'); if (autoCam) flyTo('torch'); } }
+function renderRetest(){ const el = retestEl; if (!el || !el.isConnected) return;
+  if (!S.retestFail){ el.innerHTML = ''; return; }
+  const o = (v, t) => `<button class="opt" data-v="${v}" aria-pressed="${S.rtAns === v}"><span><b>${t}</b></span></button>`;
+  el.innerHTML = `<fieldset><legend>It still bubbles after a careful snug. What now?</legend><div class="opts">${o('more','Tighten it harder until it stops')}${o('notify','Close the cylinder valve and notify the instructor')}${o('tape','Wrap the threads with thread tape')}</div></fieldset><button class="btn primary" id="rtOk">Confirm</button>`;
+  el.querySelectorAll('.opt').forEach(b => b.onclick = () => { S.rtAns = b.dataset.v; el.querySelectorAll('.opt').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+  el.querySelector('#rtOk').onclick = () => { startTimer(); if (!S.rtAns){ say('Pick an answer.', 'info'); return; }
+    if (S.rtAns === 'more'){ err('More force will crush the seat and strip the threads. The fitting is damaged: close the valve and notify the instructor.'); return; }
+    if (S.rtAns === 'tape'){ err('Never use thread tape on oxy-fuel fittings. They seal on the seat, not the threads, and tape can contaminate the system.'); return; }
+    const g = leakGas(); S.valve[g] = 0; if (g === 'oxy') tween(.8, t => oxyWheel.rotation.y *= 1 - t); else setAcValve(0, true);
+    S.retestFail = false; S.leakStubborn = false; S.leakFixed = true; steps[cur]._phase = 0; renderRetest();
+    say('Valve closed. The instructor replaced the damaged fitting. Reopen the cylinder valve and retest.', 'ok'); };
+}
+const NUT_SVG = {plain:'<svg viewBox="0 0 44 30" aria-hidden="true"><polygon points="8,4 36,4 42,15 36,26 8,26 2,15" fill="#c9a14a" stroke="#5c4410" stroke-width="2"/></svg>',
+  notch:'<svg viewBox="0 0 44 30" aria-hidden="true"><polygon points="8,4 36,4 42,15 36,26 8,26 2,15" fill="#c9a14a" stroke="#5c4410" stroke-width="2"/><rect x="1" y="12.5" width="42" height="5" fill="#5c4410"/></svg>'};
+function renderConn(){ const el = connEl; if (!el || !el.isConnected) return; const k = S.conn, isReg = steps[cur]?.id === 'r2';
+  const nuts = `<div class="infocard nutcard">${NUT_SVG.plain}<span><b>Plain hex nut</b>Standard right-hand thread. Turn clockwise to tighten.</span>${NUT_SVG.notch}<span><b>Notched nut</b>Groove cut around the hex = left-hand (reverse) thread. Turn counterclockwise to tighten.</span></div>`;
+  if (!k){ const msg = isReg ? `Click the outlet on the cylinder valve you want to fit${S.regAt.oxy === 'mount' || S.regAt.ac === 'mount' ? ' next' : ''}.`
+      : S.hosesOut ? `Click the regulator you want to connect next${S.hose.oxy || S.hose.ac ? '.' : ' (oxygen or acetylene).'}` : 'Click the hose coil on the cart to take out the hoses.';
+    el.innerHTML = `<p class="note">${msg}</p>` + (mode === 'test' ? '' : nuts); return; }
+  const gas = k === 'oxy' ? 'oxygen' : 'acetylene (fuel)';
+  const q1 = isReg ? `Which regulator's inlet union nut fits the ${gas} cylinder valve?` : `Which hose nut fits the ${gas} regulator?`;
+  const o = (grp, v, t) => `<button class="opt" data-g="${grp}" data-v="${v}" aria-pressed="${S['pick' + grp] === v}"><span><b>${t}</b></span></button>`;
+  el.innerHTML = `<fieldset><legend>${q1}</legend><div class="opts">${o('Nut','plain', NUT_SVG.plain.replace('<svg','<svg style="width:34px;height:22px;vertical-align:middle;margin-right:6px"') + 'Plain hex nut')}${o('Nut','notch', NUT_SVG.notch.replace('<svg','<svg style="width:34px;height:22px;vertical-align:middle;margin-right:6px"') + 'Notched nut (groove around the hex)')}</div></fieldset>
+    <fieldset><legend>Which way do you turn the wrench to tighten it?</legend><div class="opts">${o('Dir','cw','Clockwise ⟳ (standard)')}${o('Dir','ccw','Counterclockwise ⟲ (reverse)')}</div></fieldset>
+    <div class="row"><button class="btn primary" id="tightenB">Thread it on and tighten</button><button class="btn" id="cancelB">${isReg ? 'Pick another cylinder' : 'Pick another regulator'}</button></div>`;
+  el.querySelectorAll('.opt').forEach(b => b.onclick = () => { S['pick' + b.dataset.g] = b.dataset.v; el.querySelectorAll(`.opt[data-g="${b.dataset.g}"]`).forEach(x => x.setAttribute('aria-pressed', x === b)); });
+  el.querySelector('#cancelB').onclick = () => { S.conn = null; if (isReg){ placeReg('oxy', true); placeReg('ac', true); } updateHoses(); renderConn(); if (autoCam) flyTo(isReg ? 'valves' : 'regs'); };
+  el.querySelector('#tightenB').onclick = () => { startTimer(); if (!S.pickNut || !S.pickDir){ say('Choose a nut and a direction.', 'info'); return; }
+    const okNut = k === 'oxy' ? 'plain' : 'notch', okDir = k === 'oxy' ? 'cw' : 'ccw';
+    if (S.pickNut !== okNut){ err(isReg
+        ? (S.pickNut === 'notch' ? 'The notched nut is a left-hand (reverse) thread: that is the acetylene regulator (CGA 510). It will not fit the oxygen valve. Never force it.' : 'The plain nut is a standard right-hand thread: that is the oxygen regulator (CGA 540). It will not fit the acetylene valve.')
+        : (S.pickNut === 'notch' ? 'The notched nut has a left-hand (reverse) thread. It belongs on the fuel regulator, never on oxygen.' : 'The plain nut has a standard right-hand thread and only fits oxygen. The fuel regulator takes the notched, left-hand nut.')); return; }
+    if (S.pickDir !== okDir){ err(k === 'ac' ? 'The notched nut is a left-hand (reverse) thread. Turning it clockwise loosens it. Turn it counterclockwise to tighten.' : 'The plain nut is a standard right-hand thread. Turn clockwise to tighten.'); return; }
+    S.conn = null;
+    if (isReg){ S.regAt[k] = 'mount'; placeReg('oxy', true); placeReg('ac', true); renderConn(); if (autoCam) flyTo(k === 'oxy' ? 'inletFO' : 'inletFA'); setTimeout(() => inletWrench(k), 950);
+      say(k === 'oxy' ? 'Plain nut (right-hand thread, CGA 540) turned clockwise onto the oxygen valve. Snug, not overtightened.' : 'Notched nut (left-hand reverse thread, CGA 510) turned counterclockwise onto the acetylene valve. Snug, not overtightened.', 'ok');
+      if (S.regAt.oxy === 'mount' && S.regAt.ac === 'mount'){ busy = true; setTimeout(() => { busy = false; complete(); }, 3600); } else if (autoCam) setTimeout(() => steps[cur]?.id === 'r2' && !S.conn && flyTo('valves'), 3400); return; }
+    S.hose[k] = true; updateHoses(); wrenchAnim(k); renderConn();
+    say(k === 'oxy' ? 'Plain nut on oxygen, turned clockwise (right-hand thread). Snug, not overtightened.' : 'Notched nut on fuel, turned counterclockwise: reverse, left-hand thread. Snug, not overtightened.', 'ok');
+    if (S.hose.oxy && S.hose.ac){ busy = true; setTimeout(() => { busy = false; complete(); }, 2600); } else if (autoCam) setTimeout(() => steps[cur]?.id === 'r3' && !S.conn && flyTo('regs'), 2400); };
+}
+function flameUI(el, which){ const box = document.createElement('div'); box.style.cssText = 'display:flex;flex-direction:column;gap:8px'; el.appendChild(box);
+  box.innerHTML = `<div class="flamebox" aria-live="polite"><i id="fDot"></i><span id="fTxt"></span></div>` + which.map(([k, t]) => `<label class="slide" for="tv_${k}"><span>${t} <output id="tvo_${k}"></output></span><input type="range" id="tv_${k}" min="0" max="1" step=".02"></label>`).join('');
+  flameUIFn = () => { const f = flameState(); const [t, c] = FLAME_TXT[f]; const d = box.querySelector('#fDot'); if (!d){ flameUIFn = null; return; } d.style.background = c; box.querySelector('#fTxt').textContent = t + (S.lever ? ' · lever down' : '');
+    which.forEach(([k]) => { const r = box.querySelector('#tv_' + k); r.value = S.tv[k]; box.querySelector('#tvo_' + k).textContent = Math.round(S.tv[k]*100) + '% open'; r.setAttribute('aria-valuetext', `${Math.round(S.tv[k]*100)} percent open, ${t}`); }); };
+  which.forEach(([k]) => box.querySelector('#tv_' + k).oninput = e => setTV(k, +e.target.value)); flameUIFn(); }
+function setTV(k, v){ S.tv[k] = clamp(v, 0, 1); (k === 'oxy' ? oxTV : acTV).rotation.y = -S.tv[k]*1.6; flameUIFn?.(); }
+function puffAt(p, dir){ for (const s of puff){ s.userData.age = Math.random()*.1; s.userData.life = .7; s.position.copy(p); s.userData.v = dir.clone().multiplyScalar(.5 + Math.random()*.4).add(V((Math.random()-.5)*.3, Math.random()*.2, (Math.random()-.5)*.3)); } }
+function sparkAt(){ const p = flame.getWorldPosition(new THREE.Vector3()); for (const s of puff){ s.userData.age = 0; s.userData.life = .3; s.position.copy(p); s.material.color.setHex(0xffc060); s.userData.v = V((Math.random()-.5), Math.random(), (Math.random()-.5)).multiplyScalar(.4); } setTimeout(() => puff.forEach(s => s.material.color.setHex(0xe8ecf2)), 400); }
+
+/* ================= views ================= */
+const VIEWS = { overview:[[1.6,1.55,2.3],[.05,.9,0]], inspect:[[.9,1.5,2.2],[-.25,.95,-.3]], valves:[[.45,1.95,1.25],[.02,1.3,.05]], regs:[[.55,1.72,1.45],[.02,1.3,.12]],
+  shelf:[[-.95,1.45,-.3],[-1.45,1.12,-1.4]], inspect3:[[-.35,1.8,2.75],[-.55,1.0,-.5]], inspect5:[[-.35,1.5,2.35],[-1.2,.6,.2]], hoseStart:[[1.15,1.55,1.75],[.2,1.05,0]], leak:[[.85,1.6,1.9],[.15,1.1,.05]], capsFloor:[[.7,1.3,1.75],[0,.25,.4]], hookView:[[1.35,1.5,1.95],[.3,.55,.3]], bench:[[-.45,1.35,1.4],[-.95,.9,.45]], torch:[[.95,1.35,.95],[.6,.95,.15]], flame:[[1.35,1.08,.75],[1.4,.9,.22]] };
+function flyTo(name){ let v = VIEWS[name]; if (!v && !['nutO','nutA','inletO','inletA','inletFO','inletFA','flame','light','torch','leakspot'].includes(name)) return;
+  if (['inletO','inletA','inletFO','inletFA'].includes(name)){ const m = REG[name.endsWith('O') ? 'oxy' : 'ac'].mount;
+    v = name.startsWith('inletF') ? [[m.x + .04, m.y + .06, m.z + .5], [m.x, m.y, m.z - .07]] : [[m.x, m.y + .22, m.z + .68], [m.x, m.y + .1, m.z + .17]]; }
+  if (name === 'nutO' || name === 'nutA'){ const m = REG[name === 'nutO' ? 'oxy' : 'ac'].mount; v = [[m.x + .1, m.y - .34, m.z + .36], [m.x, m.y - .14, m.z + .03]]; }
+  if (name === 'torch'){ const p = partCenter('torch'); v = [[p.x + .3, p.y + .25, p.z + .75], [p.x, p.y, p.z]]; }
+  if (name === 'flame'){ torch.updateWorldMatrix(true, true); const p = flame.getWorldPosition(new THREE.Vector3()), d = V(0, -1, 0).applyQuaternion(torch.quaternion).normalize();
+    const side = new THREE.Vector3().crossVectors(d, V(0, 1, 0)); if (side.lengthSq() < .01) side.set(0, 0, 1); side.normalize(); const c = p.clone().addScaledVector(d, .07);
+    v = [[c.x + side.x*.22, c.y + .03, c.z + side.z*.22], [c.x, c.y, c.z]]; }
+  if (name === 'leakspot'){ const p = LEAKSPOT[S.leak](); v = S.leak.endsWith('Inlet') ? [[p.x + .24, p.y + .09, p.z + .02], [p.x, p.y, p.z]] : [[p.x + .12, p.y + .07, p.z + .24], [p.x, p.y, p.z]]; }
+  if (name === 'light'){ const p = flame.getWorldPosition(new THREE.Vector3()), q = striker.position; v = [[(p.x + q.x)/2 + .45, Math.max(p.y, q.y) + .3, (p.z + q.z)/2 + .55], [(p.x + q.x)/2, (p.y + q.y)/2, (p.z + q.z)/2]]; }
+  const p0 = camera.position.clone(), t0 = controls.target.clone(), p1 = V(...v[0]), t1 = V(...v[1]);
+  for (let i = tweens.length - 1; i >= 0; i--) if (tweens[i].cam) tweens.splice(i, 1); /* a new camera move replaces any move still running */
+  if (reduceMotion){ camera.position.copy(p1); controls.target.copy(t1); return; } tween(1.0, k => { const e = ease(k); camera.position.lerpVectors(p0, p1, e); controls.target.lerpVectors(t0, t1, e); }).cam = true; }
+function orbit(dAz, dEl = 0, zoom = 1){ const off = camera.position.clone().sub(controls.target); const sph = new THREE.Spherical().setFromVector3(off);
+  sph.theta += dAz; sph.phi = Math.max(.1, Math.min(Math.PI*.495, sph.phi + dEl)); sph.radius = Math.max(controls.minDistance, Math.min(controls.maxDistance, sph.radius*zoom)); camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph)); }
+
+/* ================= flow ================= */
+let steps = STEPS, firstEnter = true, mode = 'guided', cur = 0, stepErr = [], hintsUsed = [], totalErr = 0, totalHints = 0, t0 = null, tEnd = null, autoCam = true, showLabels = false, busy = false;
+const fmtTime = ms => { const s = Math.floor(ms/1000); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; };
+function say(msg, kind = 'info'){ const f = $('feedback'); f.dataset.kind = kind; f.textContent = msg; }
+function announce(t){ const r = $('sr'); r.textContent = ''; setTimeout(() => r.textContent = t, 60); }
+const startTimer = () => { if (!t0) t0 = performance.now(); };
+function err(msg){ stepErr[cur]++; totalErr++; say((mode === 'guided' ? '' : '✗ ') + msg, 'bad'); updateStats(); }
+function updateStats(){ $('stStep').textContent = `${Math.min(cur+1, steps.length)}/${steps.length}`; $('stErr').textContent = totalErr; $('stHint').textContent = totalHints; $('progbar').style.width = (cur/steps.length*100) + '%'; }
+function renderSteps(){ const nav = $('steps'); nav.innerHTML = '';
+  PHASES.forEach((ph, pi) => { const list = steps.map((s, i) => [s, i]).filter(([s]) => s.phase === pi);
+    const sec = document.createElement('div'); sec.innerHTML = `<h3><span>${ph}</span><span>${list.filter(([,i]) => i < cur).length}/${list.length}</span></h3><ol>${list.map(([s,i]) => `<li class="${i < cur ? 'done' : i === cur ? 'cur' : ''}"><span class="n">${i < cur ? '✓' : String(i+1).padStart(2,'0')}</span><span>${s.title}</span><span class="e">${stepErr[i] ? '×' + stepErr[i] : ''}</span></li>`).join('')}</ol>`; nav.appendChild(sec); }); }
+function enterStep(){
+  let st = steps[cur]; busy = false; if (!st){ finish(); return; }
+  if (st.skipIf?.()){ cur++; return enterStep(); }
+  const ae = document.activeElement, lost = !ae || ae === document.body || $('controls').contains(ae);
+  st._done = new Set(); st._fired = false; screwUI = null; flameUIFn = null; connEl = null; S.held = null; S.conn = null;
+  if (st.retest){ st._phase = 0; S.retestFail = false; S.rtAns = null; }
+  st.onEnter?.();
+  $('cPhase').textContent = `Section ${PHASES[st.phase]}`; $('cTitle').textContent = st.title;
+  $('cInstr').textContent = mode === 'test' && st.test ? st.test : st.instr;
+  $('cWhyText').textContent = st.why; $('cWhy').style.display = mode === 'test' ? 'none' : ''; $('cWhy').open = false;
+  $('hintBtn').textContent = mode === 'test' ? 'Use a hint (counts)' : 'Show hint';
+  const c = $('controls'); c.innerHTML = '';
+  if (st.type === 'ui'){ const b = document.createElement('div'); b.style.cssText = 'display:flex;flex-direction:column;gap:10px'; c.appendChild(b); st.ui(b);
+    if (st.confirm !== false){ const k = document.createElement('button'); k.className = 'btn primary'; k.textContent = st.confirmLabel || 'Confirm'; k.onclick = tryConfirm; c.appendChild(k); } }
+  else if (st.uiFn){ const b = document.createElement('div'); b.style.cssText = 'display:flex;flex-direction:column;gap:10px'; c.appendChild(b); st.uiFn(b); }
+  renderSteps(); updateStats(); refreshKb();
+  announce(`${st.title}. ${$('cInstr').textContent}`);
+  if (lost && document.activeElement !== canvas && !firstEnter) $('cTitle').focus(); firstEnter = false;
+  if (autoCam) flyTo(st.view);
+}
+function tryConfirm(){ startTimer(); const st = steps[cur]; const r = st.validate(); if (r.ok) complete(); else if (r.soft) say(r.msg, 'info'); else err(r.msg); }
+function complete(){ if (busy) return; busy = true; const st = steps[cur]; st.onDone?.(); say('✓ ' + (st.done || 'Done.'), 'ok'); cur++; setTimeout(enterStep, 700); updateStats(); }
+const TURN_TXT = ['closed','1/4 turn','1/2 turn','3/4 turn','1 turn','1 1/4 turns','1 1/2 turns','1 3/4 turns','2 turns'];
+function setAcValve(v, quiet){ startTimer(); const old = S.valve.ac; S.valve.ac = clamp(Math.round(v*4)/4, 0, 2); acKey.rotation.y = -S.valve.ac*Math.PI*2;
+  const t = TURN_TXT[S.valve.ac*4], n = $('turnN'); if (n) n.textContent = `Acetylene valve: ${t === 'closed' ? 'closed' : t + ' open'}`; if (!quiet) announce(t === 'closed' ? 'Valve closed' : t + ' open');
+  if (!quiet && S.valve.ac > 1.5 && old <= 1.5) err('Over 1 1/2 turns! Acetylene valves must be quick to close. Close it back to about 3/4 turn.'); }
+function liveAction(name){
+  if (name === 'acValve'){ setAcValve(S.valve.ac + .25); return; }
+  if (name === 'lever'){ setLever(!S.lever); const b = $('lev'); if (b){ b.textContent = S.lever ? 'Release the cutting lever' : 'Hold the cutting lever down'; } return; }
+  if (name === 'oxyScrew' || name === 'acScrew' || name === 'oxTV' || name === 'acTV'){ say(`${parts[name].label}: drag it up or down to turn it, or use the controls in the panel.`); }
+}
+function onPartClick(name){
+  startTimer(); const st = steps[cur]; if (!st || busy || !parts[name] && name !== 'retest') return; const label = parts[name]?.label || '';
+  if (st.spray){ const spot = Object.keys(SPRAYPART).find(k => SPRAYPART[k] === name && !st._done.has(k)); if (!spot){ if (Object.values(SPRAYPART).includes(name)) say('Already tested.'); else err(`That's the ${label.toLowerCase()}. Spray the connections.`); return; }
+    st._done.add(spot); sprayAt(spot); if (st._done.size === st.targets.length){ busy = true; setTimeout(() => { busy = false; complete(); }, 1600); } return; }
+  if (st.retest){ if (S.retestFail){ say('Decide in the step panel what to do about the bubbles.'); return; }
+    const g = leakGas(), order = [g === 'oxy' ? 'oxyValve' : 'acValve', SPRAYPART[S.leak]], want = order[st._phase];
+    if (name !== want){ err(st._phase === 0 ? `Reopen the ${g === 'oxy' ? 'oxygen' : 'acetylene'} cylinder valve first.` : `Spray the ${LEAKNAME[S.leak]}.`); return; }
+    if (st._phase === 0){ if (g === 'oxy'){ S.valve.oxy = 1; tween(1, t => oxyWheel.rotation.y = -t*8); say('Oxygen cylinder valve open.', 'ok'); } else { setAcValve(.75, true); say('Acetylene cylinder valve open 3/4 turn.', 'ok'); } st._phase = 1; return; }
+    sprayAt(S.leak); if (S.leak && !S.leakFixed){ S.retestFail = true; S.rtAns = null; renderRetest(); say(`Still bubbling at the ${LEAKNAME[S.leak]}. Decide what to do in the step panel.`, 'bad'); return; }
+    busy = true; setTimeout(() => { busy = false; complete(); }, 1500); return; }
+  if (st.handle){ const r = st.handleFn(name); if (r === 'complete'){ busy = true; setTimeout(() => { busy = false; complete(); }, st.delay ?? 900); } if (r !== 'pass') return; }
+  if (st.live?.includes(name)){ liveAction(name); return; }
+  if (st.type === 'click' && st.targets.includes(name)){
+    if (st._done.has(name)){ if (st.inspect){ const inf = inspectInfo(name); showInfo(label, inf.text, inf.bad); } else say(`${label}: already done.`); return; }
+    if (st.pre === 'side' && !S.side){ err('Stand to the side first: tick the stance box in the panel.'); return; }
+    if (st.ordered){ const next = st.targets.find(t => !st._done.has(t)); if (next !== name){ err(st.wrongOrder || `Do the ${parts[next].label.toLowerCase()} first.`); return; } }
+    st._done.add(name); st.act(name);
+    if (st._done.size === st.targets.length){ busy = true; setTimeout(() => { busy = false; complete(); }, st.delay ?? 800); }
+    return; }
+  if (st.inspect){ const inf = inspectInfo(name); if (GOOD[name]){ S.seen.add(name); showInfo(label, inf.text, inf.bad); return; } }
+  if (st.type === 'ui'){ say(`That's the ${label.toLowerCase()}. This step uses the controls in the panel.`); return; }
+  err(`That's the ${label.toLowerCase()}. It isn't the next step.${mode === 'guided' ? ' Look for the pulsing amber marker.' : ''}`);
+}
+let sprayFx = [];
+function leakPressure(){ const g = leakGas(); return S.leak.endsWith('Inlet') ? S.hi[g] : S.lo[g]; }
+function sprayAt(spot){ const leak = spot === S.leak && !S.leakFixed && leakPressure() > .5;
+  if (spot === S.leak){ S.bubbleSpot = spot; const r = LEAKR[spot]; bubbles.forEach((b, i) => { const d = V(Math.random()*2 - 1, Math.random()*1.3 - .3, Math.random()*1.6 - .4).normalize(); b.userData.off = d.multiplyScalar(r); b.userData.offFor = spot; b.userData.t0 = performance.now() + i*110; }); }
+  if (leak){ S.leakFound = true; say(`BUBBLES at the ${LEAKNAME[spot]}!`, 'bad'); announce(`Bubbles at the ${LEAKNAME[spot]}`); }
+  else say(`${LEAKNAME[spot][0].toUpperCase() + LEAKNAME[spot].slice(1)}: no bubbles.`, 'ok'); }
+function finish(){
+  tEnd = performance.now(); $('progbar').style.width = '100%';
+  const time = fmtTime(tEnd - (t0 ?? tEnd)), score = Math.max(0, 100 - totalErr*3 - totalHints*2);
+  const rows_ = steps.map((s, i) => s.skipIf?.() ? '' : `<tr><td>${s.title}</td><td class="num">${stepErr[i] || ''}</td><td class="num">${hintsUsed[i] ? '•' : ''}</td></tr>`).join('');
+  $('modalBox').innerHTML = `<span class="eyebrow">${mode === 'test' ? 'Test' : 'Guided practice'} complete</span><h2 id="mTitle">Cart stored</h2><button class="btn" id="closeM" style="align-self:flex-start">Close (Esc)</button>
+    <div class="big"><div><small>Score</small><b>${score}</b></div><div><small>Errors</small><b>${totalErr}</b></div><div><small>Hints</small><b>${totalHints}</b></div><div><small>Time</small><b>${time}</b></div></div>
+    <p class="note">This run: ${S.defect ? `inspection problem (${DEFECTS[S.defect].group.toLowerCase()})` : 'no inspection problem'} · ${S.leak ? `leak at the ${LEAKNAME[S.leak]}` : 'no leak'}. Score = 100 − 3 per error − 2 per hint. ${$('student').value ? 'Student: ' + esc($('student').value) : 'Add your name in the sidebar before copying results.'}</p>
+    <div style="overflow-x:auto"><table><caption class="sr-only">Errors and hints by step</caption><thead><tr><th scope="col">Step</th><th scope="col">Errors</th><th scope="col">Hint</th></tr></thead><tbody>${rows_}</tbody></table></div>
+    <div class="row"><button class="btn primary" id="copyR">Copy results</button><button class="btn" id="againR">Run again</button><button class="btn" id="testR">Start test mode</button></div>`;
+  $('modal').style.display = 'grid';
+  $('copyR').onclick = async e => { const txt = `Oxy-Acetylene Cutting Cart Trainer\nStudent: ${$('student').value || '(no name)'}\nMode: ${mode}\nScore: ${score}\nErrors: ${totalErr}\nHints: ${totalHints}\nTime: ${time}\nDate: ${new Date().toLocaleString()}\nScenario: ${S.defect ? DEFECTS[S.defect].group : 'no defect'}; ${S.leak ? 'leak at ' + LEAKNAME[S.leak] : 'no leak'}\n` + steps.map((s, i) => stepErr[i] || hintsUsed[i] ? `  ${s.title}: ${stepErr[i]} error(s)${hintsUsed[i] ? ', hint' : ''}` : '').filter(Boolean).join('\n');
+    try { await navigator.clipboard.writeText(txt); e.target.textContent = 'Copied'; } catch { e.target.textContent = 'Copy blocked: select and copy the table'; } };
+  $('closeM').onclick = closeModal; $('againR').onclick = () => { closeModal(); restart(); }; $('testR').onclick = () => { closeModal(); setTrainMode('test'); }; $('againR').focus(); }
+function closeModal(){ $('modal').style.display = 'none'; $('restartBtn').focus(); }
+$('modal').addEventListener('keydown', e => { if (e.key === 'Escape'){ e.preventDefault(); closeModal(); return; } if (e.key !== 'Tab') return;
+  const f = [...$('modal').querySelectorAll('button,[href],input')]; const a = f[0], z = f[f.length-1];
+  if (e.shiftKey && document.activeElement === a){ e.preventDefault(); z.focus(); } else if (!e.shiftKey && document.activeElement === z){ e.preventDefault(); a.focus(); } });
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+function restart(){ S = freshState(); cur = 0; stepErr = steps.map(() => 0); hintsUsed = steps.map(() => false); totalErr = 0; totalHints = 0; t0 = null; tEnd = null; tweens.length = 0;
+  setTV('oxy', 0); setTV('ac', 0); setLever(false); sync();
+  say(mode === 'test' ? 'Test mode: no markers or explanations. Wrong actions and hints lower your score. Something on this cart may be wrong.' : 'Guided mode: click the pulsing amber parts, or use the panel controls. Each run may hide a damaged part or a leak.', 'info'); enterStep(); }
+function setTrainMode(m){ mode = m; $('mGuided').setAttribute('aria-pressed', m === 'guided'); $('mTest').setAttribute('aria-pressed', m === 'test'); restart(); }
+$('mGuided').onclick = () => setTrainMode('guided'); $('mTest').onclick = () => setTrainMode('test');
+$('hintBtn').onclick = () => { const st = steps[cur]; if (!st) return; if (mode === 'test' && !hintsUsed[cur]){ hintsUsed[cur] = true; totalHints++; updateStats(); } else if (mode === 'guided') hintsUsed[cur] = true; say('Hint: ' + st.hint, 'info'); };
+$('focusBtn').onclick = () => steps[cur] && flyTo(steps[cur].view); $('overviewBtn').onclick = () => flyTo('overview'); $('restartBtn').onclick = () => restart();
+$('camBtn').onclick = e => { autoCam = !autoCam; e.currentTarget.setAttribute('aria-pressed', autoCam); };
+$('labelsBtn').onclick = e => { showLabels = !showLabels; e.currentTarget.setAttribute('aria-pressed', showLabels); };
+$('rotL').onclick = () => orbit(-.26); $('rotR').onclick = () => orbit(.26); $('zIn').onclick = () => orbit(0,0,.8); $('zOut').onclick = () => orbit(0,0,1.25);
+
+/* ================= guided targets / keyboard ================= */
+const PART_ORDER = ['oxyCap','acCap','oxyValve','acValve','oxyOutlet','acOutlet','chain','cart','oxyReg','acReg','oxyInNut','acInNut','oxyScrew','acScrew','oxyCheck','acCheck','hoses','oxyNut','acNut','torch','torchFit','acTV','oxTV','lever','hook','striker','sprayer','ppe','extinguisher','bench','shelf'];
+const DRAGGABLE = {oxyScrew:'oxy', acScrew:'ac', oxTV:'toxy', acTV:'tac', acValve:'acv'};
+let kbIdx = -1, kbList = [];
+function nextTargets(){ const st = steps[cur]; if (!st) return [];
+  if (st.spray) return [...new Set(st.targets.filter(t => !st._done.has(t)).map(t => SPRAYPART[t]))];
+  if (st.retest) return S.retestFail ? [] : [[leakGas() === 'oxy' ? 'oxyValve' : 'acValve', SPRAYPART[S.leak]][st._phase || 0]];
+  if (st.id === 'r2') return S.conn ? [] : ['oxyOutlet','acOutlet'].filter(n => S.regAt[n === 'oxyOutlet' ? 'oxy' : 'ac'] !== 'mount');
+  if (st.id === 'r3') return S.conn ? [] : S.hosesOut ? ['oxyReg','acReg'].filter(n => !S.hose[n === 'oxyReg' ? 'oxy' : 'ac']) : ['hoses'];
+  if (st.id === 'f2') return S.tv.ac > .02 ? ['striker'] : ['acTV'];
+  if (st.id === 'f1') return ['ppe'];
+  if (st.live) return st.live;
+  if (st.type !== 'click') return [];
+  const rem = st.targets.filter(t => !st._done?.has(t)); return st.ordered ? rem.slice(0,1) : rem; }
+function refreshKb(){ const keep = kbList[kbIdx]; kbList = PART_ORDER.filter(n => parts[n] && parts[n].objs.some(o => visibleChain(o))); kbIdx = keep ? kbList.indexOf(keep) : kbIdx; if (kbIdx >= kbList.length) kbIdx = kbList.length - 1; }
+function kbAnnounce(){ const n = kbList[kbIdx]; const tag = mode === 'guided' && n && nextTargets().includes(n) ? ', next' : '';
+  $('kbState').textContent = n ? `Selected: ${parts[n].label}. ${kbIdx+1} of ${kbList.length}.` : ''; announce(n ? `${parts[n].label}${tag}, ${kbIdx+1} of ${kbList.length}` : ''); }
+function turnPart(n, d){ const st = steps[cur]; if (!st?.live?.includes(n)) return false;
+  if (n === 'acValve'){ setAcValve(S.valve.ac + Math.sign(d)*.25); return true; }
+  if (n === 'oxyScrew'){ setScrew('oxy', clamp(S.screw.oxy + d, 0, 80)); screwUI?.(); return true; }
+  if (n === 'acScrew'){ setScrew('ac', clamp(S.screw.ac + d*.5, 0, 25)); screwUI?.(); return true; }
+  if (n === 'oxTV' || n === 'acTV'){ const k = n === 'oxTV' ? 'oxy' : 'ac'; setTV(k, S.tv[k] + d*.02); return true; } return false; }
+canvas.addEventListener('keydown', e => { let n = kbList[kbIdx]; const k = e.key;
+  if (k === 'ArrowUp' || k === 'ArrowDown'){ const lv = (steps[cur]?.live || []).filter(x => DRAGGABLE[x]); if (!(n && DRAGGABLE[n] && lv.includes(n)) && lv.length === 1) n = lv[0]; }
+  if (k.toLowerCase() === 'n'){ e.preventDefault(); refreshKb(); const nt = nextTargets().find(t => kbList.includes(t)); if (nt){ kbIdx = kbList.indexOf(nt); kbAnnounce(); } else announce('Nothing to select in the 3D view for this step. Use the step panel.'); return; }
+  if (k === 'ArrowRight' || k === 'ArrowLeft'){ e.preventDefault(); refreshKb(); if (!kbList.length) return; kbIdx = kbIdx < 0 ? 0 : (kbIdx + (k === 'ArrowRight' ? 1 : -1) + kbList.length) % kbList.length; kbAnnounce(); return; }
+  if ((k === 'ArrowUp' || k === 'ArrowDown') && n && DRAGGABLE[n]){ e.preventDefault(); if (turnPart(n, (k === 'ArrowUp' ? 1 : -1)*(e.shiftKey ? 5 : 1)) && n !== 'acValve'){ setTimeout(() => announce(n.endsWith('TV') ? `${Math.round(S.tv[n === 'oxTV' ? 'oxy' : 'ac']*100)} percent, ${FLAME_TXT[flameState()][0]}` : `${n === 'oxyScrew' ? 'Oxygen' : 'Acetylene'} ${S.lo[n === 'oxyScrew' ? 'oxy' : 'ac'].toFixed(1)} psi`), 250); } return; }
+  if (k === 'Enter' || k === ' '){ e.preventDefault(); if (!n){ announce('No part selected. Use the left and right arrow keys.'); return; } onPartClick(n); setTimeout(refreshKb, 900); return; }
+  const cam = {a:[-.2,0,1], d:[.2,0,1], w:[0,-.12,1], s:[0,.12,1], '+':[0,0,.8], '=':[0,0,.8], '-':[0,0,1.25], '_':[0,0,1.25]}[k.toLowerCase()]; if (cam){ e.preventDefault(); orbit(...cam); return; }
+  if (k.toLowerCase() === 'f'){ e.preventDefault(); steps[cur] && flyTo(steps[cur].view); } });
+let kbUsed = false; /* keyboard marker only after real keyboard use, never after a mouse click */
+window.addEventListener('keydown', () => { kbUsed = true; }, true); window.addEventListener('pointerdown', () => { kbUsed = false; }, true);
+canvas.addEventListener('focus', () => { refreshKb(); if (kbIdx < 0 && kbList.length){ const nt = nextTargets(); kbIdx = mode === 'guided' && nt.length && kbList.includes(nt[0]) ? kbList.indexOf(nt[0]) : 0; } kbAnnounce(); });
+
+/* ================= mouse ================= */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function visibleChain(o){ for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; }
+function pick(e){ const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1); ray.setFromCamera(ndc, camera);
+  let cand = null; /* invisible click zones are a fallback: a real part just behind one still wins */
+  for (const h of ray.intersectObjects(scene.children, true)){ if (!h.object.isMesh || !visibleChain(h.object)) continue; if (h.object.material?.blending === THREE.AdditiveBlending || h.object.userData.fx) continue;
+    if (h.object.material === HIT){ if (!cand) cand = h; continue; }
+    if (cand && (!h.object.userData.part || h.distance - cand.distance > .09)) return resolvePart(cand.object.userData.part);
+    return resolvePart(h.object.userData.part) || null; }
+  return cand ? resolvePart(cand.object.userData.part) : null; }
+let down = null, grab = null;
+function endGrab(){ if (!grab) return; grab = null; controls.enabled = true; canvas.style.cursor = ''; }
+canvas.addEventListener('pointerdown', e => { down = {x:e.clientX, y:e.clientY}; const st = steps[cur]; if (!st || busy) return; const p = pick(e);
+  if (p && DRAGGABLE[p] && st.live?.includes(p)){ startTimer(); grab = {part:p, y:e.clientY, acc:0, moved:false}; controls.enabled = false; canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'ns-resize'; } });
+canvas.addEventListener('pointercancel', endGrab); window.addEventListener('pointerup', () => { if (grab) setTimeout(endGrab, 0); });
+canvas.addEventListener('pointerup', e => { const moved = down ? Math.hypot(e.clientX - down.x, e.clientY - down.y) : 99; down = null;
+  if (grab){ const g = grab; endGrab(); if (!g.moved) onPartClick(g.part); return; } if (moved > 6) return; const p = pick(e); if (p) onPartClick(p); });
+const tipEl = $('tip');
+canvas.addEventListener('pointermove', e => {
+  if (grab){ const d = (grab.y - e.clientY)/(grab.part === 'acValve' ? 22 : 5), s = Math.trunc(d - grab.acc); if (Math.abs(grab.y - e.clientY) > 4) grab.moved = true; if (s){ grab.acc += s; turnPart(grab.part, s); } return; }
+  if (e.buttons){ tipEl.style.display = 'none'; return; } const p = pick(e), r = stage.getBoundingClientRect();
+  if (p && parts[p]){ tipEl.textContent = parts[p].label + (DRAGGABLE[p] && steps[cur]?.live?.includes(p) ? ' · drag to turn' : ''); tipEl.style.left = (e.clientX - r.left) + 'px'; tipEl.style.top = (e.clientY - r.top) + 'px'; tipEl.style.display = 'block'; canvas.style.cursor = 'pointer'; }
+  else { tipEl.style.display = 'none'; canvas.style.cursor = ''; } });
+canvas.addEventListener('pointerleave', () => tipEl.style.display = 'none');
+
+/* ================= overlay ================= */
+const overlay = $('overlay'), _b = new THREE.Box3(), _v = new THREE.Vector3(), _mb = new THREE.Box3();
+/* bounds of the visible meshes only: hidden flame, smoke etc. must not pull markers off the part */
+function expandVisible(o){ o.updateWorldMatrix(true, true); o.traverseVisible(m => { if (!m.isMesh || m.material === HIT || m.userData.fx || m.material?.blending === THREE.AdditiveBlending) return; if (!m.geometry.boundingBox) m.geometry.computeBoundingBox(); _mb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld); _b.union(_mb); }); }
+function partCenter(n){ if (!parts[n]) return null; _b.makeEmpty(); for (const o of parts[n].objs){ if (!visibleChain(o)) continue; expandVisible(o); } return _b.isEmpty() ? null : _b.getCenter(new THREE.Vector3()); }
+function toScreen(p){ _v.copy(p).project(camera); if (_v.z > 1) return null; const r = canvas.getBoundingClientRect(); return {x:(_v.x*.5 + .5)*r.width, y:(-_v.y*.5 + .5)*r.height}; }
+const LABEL_PARTS = ['oxyCap','acCap','oxyValve','acValve','chain','oxyReg','acReg','hoses','torch','lever','acTV','oxTV','hook','striker','sprayer','extinguisher','ppe','shelf'];
+function hl(){ return mode === 'guided' && !busy ? nextTargets() : []; }
+function drawOverlay(){ let html = '';
+  const seenMk = []; for (const t of hl()){ for (const o of parts[t]?.objs || []){ if (!visibleChain(o)) continue; let wp; if (o.userData.anchorFn) wp = o.userData.anchorFn(); else if (o.userData.anchor){ o.updateWorldMatrix(true, true); wp = o.userData.anchor.getWorldPosition(new THREE.Vector3()); } else { _b.makeEmpty(); expandVisible(o); wp = _b.getCenter(new THREE.Vector3()); } const s = toScreen(wp); if (!s || seenMk.some(q => Math.hypot(q.x - s.x, q.y - s.y) < 24)) continue; seenMk.push(s); html += `<div class="mk" style="left:${s.x}px;top:${s.y}px"></div>`; } }
+  if (showLabels) for (const n of LABEL_PARTS){ const c = partCenter(n), s = c && toScreen(c); if (s) html += `<div class="lbl" style="left:${s.x}px;top:${s.y}px">${parts[n].label}</div>`; }
+  if (kbUsed && document.activeElement === canvas && kbList[kbIdx]){ const c = partCenter(kbList[kbIdx]), s = c && toScreen(c); if (s) html += `<div class="kf" style="left:${s.x}px;top:${s.y}px"></div><div class="kfl" style="left:${s.x}px;top:${s.y}px">${parts[kbList[kbIdx]].label}</div>`; }
+  overlay.innerHTML = html; }
+function updateHighlights(t){ const on = new Set(hl()); const k = .35 + .3*Math.sin(t*5);
+  for (const [name, p] of Object.entries(parts)){ const h = on.has(name); for (const o of p.objs) o.traverse(m => { if (m.isMesh && m.material.emissive && m.material.blending !== THREE.AdditiveBlending) m.material.emissive.setRGB(h ? .9*k : 0, h ? .55*k : 0, 0); }); } }
+
+/* ================= loop ================= */
+function resize(){ const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / Math.max(1, r.height); camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage);
+const clock = new THREE.Clock(); let lastHud = 0;
+function loop(){ const dt = Math.min(clock.getDelta(), .1), t = clock.elapsedTime;
+  for (let i = tweens.length - 1; i >= 0; i--){ const w = tweens[i]; w.t = Math.min(1, w.t + dt/(reduceMotion ? w.dur*.35 : w.dur)); w.fn(w.t); if (w.t >= 1){ tweens.splice(i, 1); w.done?.(); } }
+  const st = steps[cur]; st?.tick?.call(st, dt); gasTick(dt);
+  { const c = $('controls'); const need = !!st && !busy && c.childElementCount > 0 && (st.panel ? st.panel() : (st.type === 'ui' || !!st.uiFn)); if (c.classList.contains('task') !== need) c.classList.toggle('task', need); }
+  if (S.pose === 'hand' || S.hosesOut) updateHoses();
+  renderGauges(); renderFlame(t); flameUIFn?.();
+  const f = flameState();
+  smoke.forEach(s => { const u = s.userData; if (u.age > u.life){ if (f === 'smoky' && Math.random() < dt*12){ u.age = 0; s.position.copy(flame.getWorldPosition(new THREE.Vector3())).add(V(0, .08, 0)); } else { s.material.opacity = 0; return; } }
+    u.age += dt; const q = u.age/u.life; s.position.y += dt*.35; s.position.x += dt*.05; s.scale.setScalar(.05 + q*.18); s.material.opacity = .45*Math.sin(Math.PI*q); });
+  puff.forEach(s => { const u = s.userData; if (u.age > u.life){ s.material.opacity = 0; return; } u.age += dt; const q = u.age/u.life; s.position.addScaledVector(u.v, dt); s.scale.setScalar(.02 + q*.1); s.material.opacity = .6*(1 - q); });
+  { const on = !!(S.leak && S.bubbleSpot === S.leak && !S.leakFixed && leakPressure() > .5), bp = on ? LEAKSPOT[S.leak]() : null; bubbles.forEach(b => { b.visible = on; if (on){ if (!b.userData.off || b.userData.offFor !== S.leak){ b.userData.off = V(Math.random()*2 - 1, Math.random()*1.3 - .3, Math.random()*1.6 - .4).normalize().multiplyScalar(LEAKR[S.leak]); b.userData.offFor = S.leak; } b.position.copy(bp).add(b.userData.off); } }); }
+  bubbles.forEach((b, i) => { if (!b.visible) return; const a = ((performance.now() - (b.userData.t0 || 0))/900) % 1; b.scale.setScalar(.45 + a*.9); b.position.y += Math.sin(t*3 + i)*.00005; });
+  updateHighlights(t); controls.update(); renderer.render(scene, camera); drawOverlay();
+  if (t - lastHud > .25){ lastHud = t; $('stTime').textContent = fmtTime(t0 ? ((tEnd ?? performance.now()) - t0) : 0); }
+  requestAnimationFrame(loop); }
+resize(); restart(); $('loading').remove(); loop();
+window.__o = {sync:() => sync(), pose:n => setTorchPose(n, false), fly:n => flyTo(n), leakGas:() => leakGas(), bubblesOn:() => bubbles[0].visible, goto:id=>{ const i = steps.findIndex(s => s.id === id); S.caps = {oxy:false, ac:false}; S.regAt = {oxy:"mount", ac:"mount"}; sync(); cur = i; enterStep(); }, pickAt:(x,y)=>pick({clientX:x, clientY:y}), markers:()=>[...overlay.querySelectorAll('.mk')].map(m=>{const r=m.getBoundingClientRect(); return [r.x+r.width/2, r.y+r.height/2];}), want:()=>nextTargets(), canvasRect:()=>{const r=canvas.getBoundingClientRect(); return [r.left,r.top,r.right,r.bottom];}, hits:(x,y)=>{const r=canvas.getBoundingClientRect(); ndc.set(((x-r.left)/r.width)*2-1, -((y-r.top)/r.height)*2+1); ray.setFromCamera(ndc,camera); return ray.intersectObjects(scene.children,true).slice(0,6).map(h=>[h.object.type, h.object.userData.part||'-', h.object.material===HIT, visibleChain(h.object), +h.distance.toFixed(3)]);}, get steps(){ return steps; }, get cur(){ return cur; }, onPartClick, tryConfirm, S:() => S, setScrew, setTV, setLever, flameState, liveAction, screenOf:n => { const c = partCenter(n); const q = c && toScreen(c); const r = canvas.getBoundingClientRect(); return q && {x:q.x + r.left, y:q.y + r.top}; }, label:n => parts[n]?.label};
+</script>
+</body>
+</html>
